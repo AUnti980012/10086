@@ -56,13 +56,17 @@ async function sendUserMessage() {
             body: JSON.stringify({ messages: conversationHistory.slice(-20) })
         });
         let data = await res.json();
-        let reply = data.choices?.[0]?.message?.content || '抱歉，无法回答';
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${data.error || '请求失败'}`);
+        }
+        let reply = data.choices?.[0]?.message?.content || '抱歉，未收到有效回复';
         conversationHistory.push({ role: "assistant", content: reply });
         removeTypingIndicator();
         addMessageToUI('bot', reply);
     } catch (e) {
         removeTypingIndicator();
-        addMessageToUI('bot', '请求失败，请配置后端API。');
+        addMessageToUI('bot', `请求失败：${e.message}`);
+        console.error('Chat error:', e);
     } finally {
         isWaitingReply = false;
         let btn = document.getElementById('sendChatBtn');

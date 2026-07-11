@@ -235,11 +235,15 @@ async function doubaoDeepDetect() {
             body: JSON.stringify({ messages: [{ role: "system", content: "反诈专家" }, { role: "user", content: `分析诈骗风险：${txt}` }] })
         });
         let data = await resp.json();
+        if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status}: ${data.error || '请求失败'}`);
+        }
         let reply = data.choices?.[0]?.message?.content || '分析完成';
         resDiv.textContent = `【DeepSeek深度判定】\n${reply}`;
         if (systemSettings.autoSave) addHistory('detect', reply.substring(0, 200));
     } catch (e) {
-        resDiv.textContent = '判定失败：请配置后端API。';
+        resDiv.textContent = `判定失败：${e.message}`;
+        console.error('DeepDetect error:', e);
     }
 }
 
