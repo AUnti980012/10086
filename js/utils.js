@@ -50,3 +50,36 @@ function hideLoader() {
         setTimeout(() => { loader.style.display = 'none'; }, 500);
     }
 }
+
+// ===== Toast 通知组件 =====
+let toastQueue = [];
+let toastActive = false;
+
+function showToast(message, type = 'success') {
+    // type: 'success' | 'error' | 'warning'
+    const icons = { success: '✓', error: '✕', warning: '⚠' };
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <span>${icons[type] || '●'}</span>
+        <span>${message}</span>
+        <button class="toast-close" aria-label="关闭">×</button>
+    `;
+    toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
+    container.appendChild(toast);
+
+    // 3秒后自动消失
+    const timer = setTimeout(() => dismissToast(toast), 3000);
+    toast._timer = timer;
+}
+
+function dismissToast(toast) {
+    if (toast._dismissed) return;
+    toast._dismissed = true;
+    clearTimeout(toast._timer);
+    toast.classList.add('toast-out');
+    toast.addEventListener('animationend', () => toast.remove(), { once: true });
+}

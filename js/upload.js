@@ -6,11 +6,15 @@
 let identifyImages = [];
 let reportImages = [];
 let billData = null;
+let isOcrRunning = false; // 防止并发OCR
 
 // ===== 文件处理（Promise.all等待所有FileReader完成） =====
 function handleFiles(files, container, cb) {
     let valid = Array.from(files).filter(f => f.type.includes('image/'));
-    if (!valid.length) return;
+    if (!valid.length) {
+        if (files.length > 0) showToast('请选择图片文件（JPG/PNG）', 'warning');
+        return;
+    }
     let imageFiles = [];
     container.innerHTML = '';
 
@@ -33,14 +37,33 @@ function handleFiles(files, container, cb) {
             del.className = 'preview-del';
             del.textContent = '×';
             let rid = r.id;
-            del.onclick = () => {
+            del.onclick = (e) => {
+                e.stopPropagation();
                 imageFiles = imageFiles.filter(i => i.id !== rid);
                 div.remove();
+                // 更新计数文字
+                let countEl = container.parentElement.querySelector('.upload-count');
+                if (countEl) {
+                    if (imageFiles.length === 0) {
+                        countEl.remove();
+                    } else {
+                        countEl.textContent = `已上传 ${imageFiles.length} 张图片`;
+                    }
+                }
             };
             div.appendChild(img);
             div.appendChild(del);
             container.appendChild(div);
         });
+        // 显示上传数量提示
+        let countEl = container.parentElement.querySelector('.upload-count');
+        if (!countEl) {
+            countEl = document.createElement('div');
+            countEl.className = 'upload-count';
+            countEl.style.cssText = 'font-size:12px;color:var(--text-muted);margin:4px 0;';
+            container.parentElement.insertBefore(countEl, container.nextSibling);
+        }
+        countEl.textContent = `已上传 ${results.filter(Boolean).length} 张图片`;
         cb(imageFiles);
     });
 }
@@ -112,10 +135,16 @@ async function ocrWithTesseract(file, index, total) {
 
 async function ocrImagesWithTesseract(images) {
     if (!images.length) return;
+    if (isOcrRunning) {
+        showToast('OCR 正在运行中，请勿重复点击', 'warning');
+        return;
+    }
+    isOcrRunning = true;
+    try {
     // 确保Tesseract已加载
     await loadTesseract();
     if (typeof Tesseract === 'undefined') {
-        alert('Tesseract.js 尚未加载完成，请稍后再试。');
+        showToast('Tesseract.js 尚未加载完成，请稍后再试。', 'error');
         return;
     }
     let ocrDiv = document.getElementById('ocrResult');
@@ -134,10 +163,18 @@ async function ocrImagesWithTesseract(images) {
     }
     hideOcrProgress();
     let combined = allText.join('\n\n');
+    if (!combined.trim()) {
+        isOcrRunning = false;
+        ocrDiv.innerHTML = `⚠️ 未识别到任何文字`;
+        return;
+    }
     if (document.getElementById('desensitizeSwitch').checked) combined = desensitizeText(combined);
     fraudTextarea.value = fraudTextarea.value ? fraudTextarea.value + "\n\n" + combined : combined;
     globalOcrText = combined;
     ocrDiv.innerHTML = `✅ Tesseract OCR 完成，已填入文本框。证据文本已暂存，可在报案填报中引用。`;
+    } finally {
+        isOcrRunning = false;
+    }
 }
 
 // ===== 初始化上传组件 =====
@@ -170,11 +207,11 @@ function initBillUpload() {
                     let wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
                     billData = { raw: wb, type: 'xlsx' };
                 } catch (e) {
-                    alert('文件格式错误，无法解析Excel文件。');
+                    showToast('文件格式错误，无法解析Excel文件。', 'error');
                     return;
                 }
             }
-            alert('账单已上传');
+            showToast('账单已上传', 'success');
         };
         ext === 'csv' ? reader.readAsText(file) : reader.readAsArrayBuffer(file);
     });
