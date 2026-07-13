@@ -44,12 +44,8 @@ async function sendUserMessage() {
     let inp = document.getElementById('chatInput');
     let msg = inp.value.trim();
     if (!msg || isWaitingReply) return;
-
-    // 防止重复发送：禁用发送按钮
-    let btn = document.getElementById('sendChatBtn');
-    if (btn) btn.disabled = true;
-
     addMessageToUI('user', msg);
+    inp.value = '';
     isWaitingReply = true;
     showTypingIndicator();
     try {
@@ -59,24 +55,21 @@ async function sendUserMessage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ messages: conversationHistory.slice(-20) })
         });
-        if (!res.ok) {
-            let errText;
-            try { errText = (await res.json()).error || res.statusText; } catch { errText = res.statusText; }
-            throw new Error(`HTTP ${res.status}: ${errText}`);
-        }
         let data = await res.json();
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${data.error || '请求失败'}`);
+        }
         let reply = data.choices?.[0]?.message?.content || '抱歉，未收到有效回复';
         conversationHistory.push({ role: "assistant", content: reply });
         removeTypingIndicator();
         addMessageToUI('bot', reply);
-        inp.value = ''; // 成功后才清空输入
     } catch (e) {
         removeTypingIndicator();
         addMessageToUI('bot', `请求失败：${e.message}`);
-        inp.value = msg; // 失败时恢复用户输入
         console.error('Chat error:', e);
     } finally {
         isWaitingReply = false;
+        let btn = document.getElementById('sendChatBtn');
         if (btn) btn.disabled = false;
     }
 }
@@ -87,13 +80,10 @@ function clearChat() {
         role: "system",
         content: "你是反诈科普与思政教育智能助手，专为大学生服务。结合法治意识、诚信责任，解析诈骗套路，给出预防建议，语气温和专业。"
     }];
-    isWaitingReply = false;
     let container = document.getElementById('chatMessages');
     if (container) {
         container.innerHTML = '<div class="message bot"><div class="message-avatar">🤖</div><div class="message-bubble">对话已清空，请问有什么可以帮助你的？</div></div>';
     }
-    let btn = document.getElementById('sendChatBtn');
-    if (btn) btn.disabled = false;
 }
 
 // 暴露给全局

@@ -59,9 +59,7 @@ export async function onRequest(context) {
 
     if (!resp.ok) {
       const errorText = await resp.text();
-      // 截断过长错误信息，避免泄露敏感配置
-      const safeMsg = errorText.length > 200 ? errorText.substring(0, 200) + '...' : errorText;
-      throw new Error(`DeepSeek API error ${resp.status}: ${safeMsg}`);
+      throw new Error(`DeepSeek API error ${resp.status}: ${errorText}`);
     }
 
     const data = await resp.json();

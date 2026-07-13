@@ -15,8 +15,8 @@ function renderMarkdown(text) {
     let html = escapeHtml(text);
     // 加粗 **text**
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // 斜体 *text*（兼容半角 * 和全角 ＊）
-    html = html.replace(/[＊*](.+?)[＊*]/g, '<em>$1</em>');
+    // 斜体 *text*
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     // 行内代码 `text`
     html = html.replace(/`(.+?)`/g, '<code>$1</code>');
     // 引用 > text
@@ -32,8 +32,8 @@ function desensitizeText(text) {
     text = text.replace(/\b\d{17}[\dXx]\b|\b\d{15}\b/g, (m) => m.slice(0, 6) + '********' + m.slice(-4));
     // 2. 再处理手机号(11位，带边界)
     text = text.replace(/\b1[3-9]\d{9}\b/g, (m) => m.slice(0, 3) + '****' + m.slice(7));
-    // 3. 最后处理银行卡号(16-19位，以常见银行卡前缀开头：62/4/5)
-    text = text.replace(/\b(62|4[0-9]|5[1-5])\d{4}(\d{8,10})\d{4}\b/g, (m) => m.slice(0, 6) + '***********' + m.slice(-4));
+    // 3. 最后处理银行卡号(16-19位，带边界)
+    text = text.replace(/\b\d{6}(\d{8,10})\d{4}\b/g, (m) => m.slice(0, 6) + '***********' + m.slice(-4));
     return text;
 }
 
@@ -49,37 +49,4 @@ function hideLoader() {
         loader.style.opacity = '0';
         setTimeout(() => { loader.style.display = 'none'; }, 500);
     }
-}
-
-// ===== Toast 通知组件 =====
-let toastQueue = [];
-let toastActive = false;
-
-function showToast(message, type = 'success') {
-    // type: 'success' | 'error' | 'warning'
-    const icons = { success: '✓', error: '✕', warning: '⚠' };
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-        <span>${icons[type] || '●'}</span>
-        <span>${message}</span>
-        <button class="toast-close" aria-label="关闭">×</button>
-    `;
-    toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
-    container.appendChild(toast);
-
-    // 3秒后自动消失
-    const timer = setTimeout(() => dismissToast(toast), 3000);
-    toast._timer = timer;
-}
-
-function dismissToast(toast) {
-    if (toast._dismissed) return;
-    toast._dismissed = true;
-    clearTimeout(toast._timer);
-    toast.classList.add('toast-out');
-    toast.addEventListener('animationend', () => toast.remove(), { once: true });
 }

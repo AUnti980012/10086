@@ -3,105 +3,11 @@
  * 包含：表单验证、报案生成、账单解析、PDF导出、历史记录、设置、导航、初始化
  */
 
-// ===== 图片灯箱功能 =====
-function initImageLightbox() {
-    const lightbox = document.getElementById('imageLightbox');
-    const lightboxImg = document.getElementById('lightboxImg');
-    const lightboxCounter = document.getElementById('lightboxCounter');
-    const closeBtn = document.getElementById('lightboxClose');
-    const prevBtn = document.getElementById('lightboxPrev');
-    const nextBtn = document.getElementById('lightboxNext');
-    const backdrop = lightbox?.querySelector('.lightbox-backdrop');
-
-    let currentIndex = 0;
-    let thumbnails = [];
-
-    // 监听预览区的图片点击
-    document.getElementById('identifyPreview')?.addEventListener('click', (e) => {
-        const item = e.target.closest('.preview-item');
-        if (!item) return;
-        const img = item.querySelector('img');
-        if (!img) return;
-
-        // 收集所有缩略图的 src
-        thumbnails = Array.from(document.querySelectorAll('#identifyPreview .preview-item img')).map(i => i.src);
-        currentIndex = thumbnails.indexOf(img.src);
-        openLightbox();
-    });
-
-    // 报案页的图片也支持放大
-    document.getElementById('reportPreview')?.addEventListener('click', (e) => {
-        const item = e.target.closest('.preview-item');
-        if (!item) return;
-        const img = item.querySelector('img');
-        if (!img) return;
-
-        thumbnails = Array.from(document.querySelectorAll('#reportPreview .preview-item img')).map(i => i.src);
-        currentIndex = thumbnails.indexOf(img.src);
-        openLightbox();
-    });
-
-    function openLightbox() {
-        if (!lightbox || !thumbnails[currentIndex]) return;
-        lightboxImg.src = thumbnails[currentIndex];
-        lightboxCounter.textContent = `${currentIndex + 1} / ${thumbnails.length}`;
-        lightbox.classList.add('active');
-        document.body.style.overflow = 'hidden'; // 禁止背景滚动
-    }
-
-    function closeLightbox() {
-        lightbox.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    function showPrev() {
-        if (thumbnails.length <= 1) return;
-        currentIndex = (currentIndex - 1 + thumbnails.length) % thumbnails.length;
-        lightboxImg.src = thumbnails[currentIndex];
-        lightboxCounter.textContent = `${currentIndex + 1} / ${thumbnails.length}`;
-    }
-
-    function showNext() {
-        if (thumbnails.length <= 1) return;
-        currentIndex = (currentIndex + 1) % thumbnails.length;
-        lightboxImg.src = thumbnails[currentIndex];
-        lightboxCounter.textContent = `${currentIndex + 1} / ${thumbnails.length}`;
-    }
-
-    closeBtn?.addEventListener('click', closeLightbox);
-    backdrop?.addEventListener('click', closeLightbox);
-    prevBtn?.addEventListener('click', showPrev);
-    nextBtn?.addEventListener('click', showNext);
-
-    // 键盘支持
-    document.addEventListener('keydown', (e) => {
-        if (!lightbox?.classList.contains('active')) return;
-        if (e.key === 'Escape') closeLightbox();
-        if (e.key === 'ArrowLeft') showPrev();
-        if (e.key === 'ArrowRight') showNext();
-    });
-
-    // 触摸滑动支持
-    let touchStartX = 0;
-    lightboxImg?.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-    lightboxImg?.addEventListener('touchend', (e) => {
-        const diff = e.changedTouches[0].screenX - touchStartX;
-        if (Math.abs(diff) > 50) {
-            if (diff > 0) showPrev();
-            else showNext();
-        }
-    }, { passive: true });
-}
-
 // ===== 全局变量 =====
 let historyRecords = [];
 let systemSettings = { autoSave: true, defaultDesensitize: true };
 let globalOcrText = '';
 let globalUserInputText = '';
-let currentStep = 1;
-const totalSteps = 3;
 
 // ===== localStorage安全读写（try/catch保护） =====
 function safeLocalStorageGet(key, defaultVal) {
@@ -144,9 +50,9 @@ function importEvidenceFromIdentify() {
     }
     updateEvidenceTextBox();
     if (globalOcrText.trim() || globalUserInputText.trim()) {
-        showToast('证据文本已导入！可在报案材料生成时一并导出到PDF。', 'success');
+        alert('证据文本已导入！可在报案材料生成时一并导出到PDF。');
     } else {
-        showToast('暂无可导入的证据文本。请先在"诈骗识别"页面输入文本或上传图片进行OCR识别。', 'warning');
+        alert('暂无可导入的证据文本。请先在"诈骗识别"页面输入文本或上传图片进行OCR识别。');
     }
 }
 
@@ -157,78 +63,6 @@ function clearEvidenceText() {
         globalUserInputText = '';
         updateEvidenceTextBox();
     }
-}
-
-// ===== 步骤导航 =====
-function showStep(step) {
-    // 隐藏所有步骤
-    document.querySelectorAll('.step-content').forEach(el => {
-        el.style.display = 'none';
-    });
-    // 显示目标步骤
-    let target = document.getElementById('step' + step);
-    if (target) {
-        target.style.display = 'block';
-        // 重新触发动画
-        target.classList.remove('step-content');
-        void target.offsetWidth; // force reflow
-        target.classList.add('step-content');
-    }
-    // 更新步骤指示器
-    document.querySelectorAll('.step-item').forEach((item, idx) => {
-        let s = idx + 1;
-        item.classList.remove('step-active', 'step-completed');
-        if (s === step) item.classList.add('step-active');
-        else if (s < step) item.classList.add('step-completed');
-    });
-    // 更新连接线
-    document.querySelectorAll('.step-connector').forEach((conn, idx) => {
-        conn.classList.toggle('completed', idx < step - 1);
-    });
-    currentStep = step;
-}
-
-function validateStep(step) {
-    let fields = [];
-    if (step === 1) {
-        fields = [
-            { id: 'formName', getValue: () => document.getElementById('name').value.trim(), test: v => !!v },
-            { id: 'formIdNo', getValue: () => document.getElementById('idNo').value.trim().toUpperCase(), test: v => /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dX]$/.test(v) },
-            { id: 'formPhone', getValue: () => document.getElementById('phone').value.trim(), test: v => /^1[0-9]{10}$/.test(v) },
-        ];
-    } else if (step === 2) {
-        fields = [
-            { id: 'formAccusedName', getValue: () => document.getElementById('accusedName').value.trim(), test: v => !!v },
-        ];
-    } else if (step === 3) {
-        fields = [
-            { id: 'formTime', getValue: () => document.getElementById('fraudTime').value.trim(), test: v => !!v },
-            { id: 'formLocation', getValue: () => document.getElementById('fraudLocation').value.trim(), test: v => !!v },
-            { id: 'formPlatform', getValue: () => document.getElementById('fraudPlatform').value.trim(), test: v => !!v },
-            { id: 'formType', getValue: () => document.getElementById('fraudType').value.trim(), test: v => !!v },
-            { id: 'formMoney', getValue: () => document.getElementById('fraudMoney').value.trim(), test: v => v && !isNaN(parseFloat(v)) && parseFloat(v) > 0 },
-            { id: 'formDetail', getValue: () => document.getElementById('fraudDetail').value.trim(), test: v => !!v },
-        ];
-    }
-    let isValid = true;
-    let firstError = null;
-    fields.forEach(f => {
-        let val = f.getValue();
-        if (!f.test(val)) {
-            markError(f.id, true);
-            isValid = false;
-            if (!firstError) firstError = document.getElementById(f.id);
-        } else {
-            markError(f.id, false);
-        }
-    });
-    // 聚焦第一个错误字段
-    if (firstError) {
-        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        let input = firstError.querySelector('input, textarea');
-        if (input) input.focus();
-    }
-    return isValid;
 }
 
 // ===== 表单验证 =====
@@ -276,11 +110,15 @@ function markError(formId, isError) {
 
 // ===== 生成报案报告 =====
 function generateReport() {
+    if (!validateReportForm()) {
+        alert('请正确填写所有必填项（控告人姓名、身份证号、电话；被控告人网名/姓名；被骗时间、地点、平台、类型、金额、详细经过）。');
+        return;
+    }
     let name = document.getElementById('name').value.trim();
     let idNo = document.getElementById('idNo').value.trim();
     let phone = document.getElementById('phone').value.trim();
     let address = document.getElementById('address').value.trim() || '未填写';
-    let accusedName = document.getElementById('accusedName').value.trim() || '未知';
+    let accusedName = document.getElementById('accusedName').value.trim();
     let accusedPhone = document.getElementById('accusedPhone').value.trim() || '未知';
     let accusedWechat = document.getElementById('accusedWechat').value.trim() || '未知';
     let accusedAlipay = document.getElementById('accusedAlipay').value.trim() || '未知';
@@ -291,9 +129,7 @@ function generateReport() {
     let contactMethod = document.getElementById('contactMethod').value.trim() || '未填写';
     let platform = document.getElementById('fraudPlatform').value.trim();
     let fType = document.getElementById('fraudType').value.trim();
-    let moneyVal = parseFloat(document.getElementById('fraudMoney').value.trim());
-    if (isNaN(moneyVal)) moneyVal = 0;
-    let money = moneyVal.toFixed(2);
+    let money = parseFloat(document.getElementById('fraudMoney').value.trim()).toFixed(2);
     let detail = document.getElementById('fraudDetail').value.trim();
     let evidenceCount = reportImages.length;
     let hasOcr = globalOcrText.trim() ? true : false;
@@ -360,67 +196,33 @@ ${hasOcr ? '证据4：OCR识别提取的文本内容（附后）\n' : ''}${hasUs
 }
 
 // ===== 诈骗识别 =====
-async function detectFraud() {
+function detectFraud() {
     let txt = document.getElementById('fraudText').value.trim();
-    let hasImages = identifyImages && identifyImages.length > 0;
-
-    // 如果有图片，优先执行 OCR
-    if (hasImages) {
-        try {
-            await ocrImagesWithTesseract(identifyImages);
-            // OCR 完成后，如果还有文本，也做关键词检测
-            txt = document.getElementById('fraudText').value.trim();
-        } catch (e) {
-            showToast('OCR 识别失败：' + e.message, 'error');
-            return;
-        }
-    }
-
-    if (!txt && !hasImages) {
-        showToast('请输入文本或上传图片', 'warning');
-        return;
-    }
-
-    // 关键词检测（仅在有文本时）
-    if (txt) {
-        globalUserInputText = txt;
-        updateEvidenceTextBox();
-        let type = document.querySelector('.corpus-btn.active').getAttribute('data-type');
-        let kwMap = {
-            police: ['公安局', '安全账户'],
-            loan: ['贷款', '手续费'],
-            service: ['客服', '退款'],
-            leader: ['领导', '转账'],
-            all: ['刷单', '返利', '验证码']
-        };
-        let matched = kwMap[type] || kwMap.all;
-        let result = matched.filter(k => txt.includes(k)).length
-            ? `⚠️ 疑似诈骗，请提高警惕`
-            : `✅ 未发现明显诈骗特征`;
-        let resDiv = document.getElementById('detectResult');
-        resDiv.textContent = result;
-        resDiv.classList.add('show');
-        if (systemSettings.autoSave) addHistory('detect', result);
-    }
+    if (!txt) { alert('请输入文本或上传图片'); return; }
+    globalUserInputText = txt;
+    updateEvidenceTextBox();
+    let type = document.querySelector('.corpus-btn.active').getAttribute('data-type');
+    let kwMap = {
+        police: ['公安局', '安全账户'],
+        loan: ['贷款', '手续费'],
+        service: ['客服', '退款'],
+        leader: ['领导', '转账'],
+        all: ['刷单', '返利', '验证码']
+    };
+    let matched = kwMap[type] || kwMap.all;
+    let result = matched.filter(k => txt.includes(k)).length
+        ? `⚠️ 疑似诈骗，请提高警惕`
+        : `✅ 未发现明显诈骗特征`;
+    let resDiv = document.getElementById('detectResult');
+    resDiv.textContent = result;
+    resDiv.classList.add('show');
+    if (systemSettings.autoSave) addHistory('detect', result);
 }
 
 // ===== DeepSeek深度判定 =====
 async function doubaoDeepDetect() {
     let txt = document.getElementById('fraudText').value.trim();
-    let hasImages = identifyImages && identifyImages.length > 0;
-
-    // 如果有图片，先执行 OCR 提取文本
-    if (hasImages) {
-        try {
-            await ocrImagesWithTesseract(identifyImages);
-            txt = document.getElementById('fraudText').value.trim();
-        } catch (e) {
-            showToast('OCR 识别失败：' + e.message, 'error');
-            return;
-        }
-    }
-
-    if (!txt) return showToast('请输入内容或上传图片', 'warning');
+    if (!txt) return alert('请输入内容');
     globalUserInputText = txt;
     updateEvidenceTextBox();
     let resDiv = document.getElementById('detectResult');
@@ -432,14 +234,12 @@ async function doubaoDeepDetect() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ messages: [{ role: "system", content: "反诈专家" }, { role: "user", content: `分析诈骗风险：${txt}` }] })
         });
-        if (!resp.ok) {
-            let errText;
-            try { errText = (await resp.json()).error || resp.statusText; } catch { errText = resp.statusText; }
-            throw new Error(`HTTP ${resp.status}: ${errText}`);
-        }
         let data = await resp.json();
+        if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status}: ${data.error || '请求失败'}`);
+        }
         let reply = data.choices?.[0]?.message?.content || '分析完成';
-        resDiv.innerHTML = `【DeepSeek深度判定】\n${renderMarkdown(reply)}`;
+        resDiv.textContent = `【DeepSeek深度判定】\n${reply}`;
         if (systemSettings.autoSave) addHistory('detect', reply.substring(0, 200));
     } catch (e) {
         resDiv.textContent = `判定失败：${e.message}`;
@@ -450,7 +250,7 @@ async function doubaoDeepDetect() {
 // ===== 填充到报案表 =====
 function fillToReport() {
     let res = document.getElementById('detectResult').textContent;
-    if (res && !res.includes('判定失败') && !res.includes('疑似诈骗') && !res.includes('未发现') && !res.includes('DeepSeek')) {
+    if (res && !res.includes('判定失败')) {
         document.getElementById('fraudDetail').value = res;
     }
     let fraudTextarea = document.getElementById('fraudText');
@@ -472,13 +272,11 @@ function clearIdentify() {
     // 重置全局变量
     globalOcrText = '';
     globalUserInputText = '';
-    updateEvidenceTextBox();
 }
 
 // ===== 账单解析 =====
 function parseBill() {
-    if (typeof XLSX === 'undefined') { showToast('XLSX 库尚未加载，请检查网络后重试。', 'error'); return; }
-    if (!billData) { showToast('请先上传账单文件', 'warning'); return; }
+    if (!billData) { alert('请先上传账单文件'); return; }
     let billRes = document.getElementById('billResult');
     billRes.innerHTML = '<div class="loading-tip"><span class="loading-spin"></span>解析中...</div>';
     billRes.classList.add('show');
@@ -522,7 +320,7 @@ function billToReport() {
         document.getElementById('fraudMoney').value = billData.parsed.totalOut;
         switchPage('reportPage');
     } else {
-        showToast('请先解析账单', 'warning');
+        alert('请先解析账单');
     }
 }
 
@@ -530,12 +328,9 @@ function billToReport() {
 function copyReport() {
     let div = document.getElementById('reportResult');
     if (div.classList.contains('show')) {
-        navigator.clipboard.writeText(div.textContent).then(
-            () => showToast('已复制到剪贴板', 'success'),
-            () => showToast('复制失败，请手动复制', 'error')
-        );
+        navigator.clipboard.writeText(div.textContent).then(() => alert('复制成功'));
     } else {
-        showToast('请先生成刑事控告书', 'warning');
+        alert('请先生成刑事控告书');
     }
 }
 
@@ -547,25 +342,23 @@ function exportTxt() {
         a.href = URL.createObjectURL(blob);
         a.download = `刑事控告书_${new Date().toISOString().slice(0,10)}.txt`;
         a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-        showToast('TXT 文件已下载', 'success');
     } else {
-        showToast('请先生成刑事控告书', 'warning');
+        alert('请先生成刑事控告书');
     }
 }
 
 async function exportPdf() {
     let div = document.getElementById('reportResult');
     if (!div.classList.contains('show') || !div.textContent.trim()) {
-        showToast('请先生成刑事控告书', 'warning');
+        alert('请先生成刑事控告书');
         return;
     }
     try {
-        if (typeof html2canvas === 'undefined') { showToast('html2canvas 未加载，请检查网络后重试。', 'error'); return; }
-        if (typeof window.jspdf === 'undefined') { showToast('jsPDF 未加载，请检查网络后重试。', 'error'); return; }
+        if (typeof html2canvas === 'undefined') { alert('html2canvas未加载，请检查网络后重试。'); return; }
+        if (typeof window.jspdf === 'undefined') { alert('jsPDF未加载，请检查网络后重试。'); return; }
         const canvas = await html2canvas(div, {
-            scale: 1.5,
-            backgroundColor: '#1A2740',
+            scale: 1.5, // 降低scale减少内存占用
+            backgroundColor: '#ffffff',
             logging: false
         });
         const imgData = canvas.toDataURL('image/png');
@@ -586,15 +379,8 @@ async function exportPdf() {
             heightLeft -= (pdfHeight - 20);
         }
         pdf.save(`刑事控告书_${Date.now()}.pdf`);
-        showToast('PDF 文件已生成', 'success');
     } catch (error) {
-        let msg = 'PDF 生成失败';
-        if (error.name === 'AbortError' || error.message?.includes('memory')) {
-            msg = 'PDF 生成失败：内存不足，请尝试使用导出 TXT 功能。';
-        } else if (error.message?.includes('network')) {
-            msg = 'PDF 生成失败：网络连接异常，请检查网络后重试。';
-        }
-        showToast(msg, 'error');
+        alert('PDF生成失败，请重试或使用导出TXT功能。');
         console.error(error);
     }
 }
@@ -636,45 +422,30 @@ function initSettings() {
     if (autoSaveEl) autoSaveEl.checked = systemSettings.autoSave;
     if (defaultDescEl) defaultDescEl.checked = systemSettings.defaultDesensitize;
     if (descEl) descEl.checked = systemSettings.defaultDesensitize;
-    // 监听识别页脱敏开关变化
-    if (descEl) {
-        descEl.addEventListener('change', () => {
-            systemSettings.defaultDesensitize = descEl.checked;
-            safeLocalStorageSet('systemSettings', systemSettings);
-        });
-    }
 }
 
 function saveSettings() {
     systemSettings.autoSave = document.getElementById('autoSaveSwitch').checked;
     systemSettings.defaultDesensitize = document.getElementById('defaultDesensitizeSwitch').checked;
     safeLocalStorageSet('systemSettings', systemSettings);
-    showToast('设置已保存', 'success');
+    alert('设置已保存');
 }
 
 function resetSettings() {
     systemSettings = { autoSave: true, defaultDesensitize: true };
     initSettings();
     safeLocalStorageSet('systemSettings', systemSettings);
-    showToast('已恢复默认设置', 'success');
+    alert('已恢复默认');
 }
 
 // ===== 导航 =====
 function switchPage(pageId) {
-    // 清除所有页面的残留状态
-    document.querySelectorAll('.page .form-group.error').forEach(g => g.classList.remove('error'));
-
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     let el = document.getElementById(pageId);
     if (el) el.classList.add('active');
     updateNavActive(pageId);
-
-    // 根据目标页面重置对应状态
-    if (pageId === 'reportPage') {
-        updateEvidenceTextBox();
-        showStep(1);
-    }
-    // 切换到诈骗识别页时预加载Tesseract（静默加载，不阻塞）
+    if (pageId === 'reportPage') updateEvidenceTextBox();
+    // 切换到诈骗识别页时预加载Tesseract
     if (pageId === 'identifyPage') {
         loadTesseract();
     }
@@ -699,47 +470,6 @@ function updateUnderline() {
     underline.style.left = `${rect.left - parentRect.left + active.parentElement.scrollLeft}px`;
 }
 
-// ===== 字体后台加载（非阻塞） =====
-let fontLoaded = false;
-
-function initFontLoad() {
-    if (fontLoaded) return;
-    fontLoaded = true;
-
-    // 立即注入字体 CSS（font-display: optional 让浏览器决定策略）
-    const style = document.createElement('style');
-    style.textContent = `
-        @font-face {
-            font-family: 'PingFang SC';
-            font-style: normal;
-            font-weight: 600;
-            font-display: optional;
-            src: url('fonts/PingFangSC-Semibold.ttf') format('truetype');
-        }
-        @font-face {
-            font-family: 'Kumbh Sans';
-            font-style: normal;
-            font-weight: 400;
-            font-display: optional;
-            src: url('fonts/KumbhSans-Regular.ttf') format('truetype');
-        }
-    `;
-    document.head.appendChild(style);
-
-    // 后台静默预加载字体，不阻塞页面
-    preloadFontAsync('fonts/PingFangSC-Semibold.ttf', 'PingFang SC', '600');
-    preloadFontAsync('fonts/KumbhSans-Regular.ttf', 'Kumbh Sans', '400');
-}
-
-function preloadFontAsync(url, name, weight) {
-    const fontFace = new FontFace(name, `url(${url})`, { weight, style: 'normal' });
-    fontFace.load().then((font) => {
-        document.fonts.add(font);
-    }).catch(() => {
-        // 字体加载失败不影响页面使用
-    });
-}
-
 // ===== 初始化 =====
 window.onload = function() {
     // 从localStorage安全读取
@@ -761,9 +491,6 @@ window.onload = function() {
         initBillUpload();
         updateEvidenceTextBox();
 
-        // 字体后台加载（非阻塞，不弹窗）
-        initFontLoad();
-
         // 事件绑定
         document.getElementById('startDetectBtn')?.addEventListener('click', detectFraud);
         document.getElementById('doubaoBtn')?.addEventListener('click', doubaoDeepDetect);
@@ -781,18 +508,6 @@ window.onload = function() {
         document.getElementById('importEvidenceBtn')?.addEventListener('click', importEvidenceFromIdentify);
         document.getElementById('clearEvidenceBtn')?.addEventListener('click', clearEvidenceText);
 
-        // 步骤导航
-        document.getElementById('nextStep1')?.addEventListener('click', () => {
-            if (validateStep(1)) showStep(2);
-            else showToast('请完成当前步骤的必填项', 'error');
-        });
-        document.getElementById('nextStep2')?.addEventListener('click', () => {
-            if (validateStep(2)) showStep(3);
-            else showToast('请完成当前步骤的必填项', 'error');
-        });
-        document.getElementById('prevStep2')?.addEventListener('click', () => showStep(1));
-        document.getElementById('prevStep3')?.addEventListener('click', () => showStep(2));
-
         document.querySelectorAll('.corpus-btn').forEach(btn => btn.addEventListener('click', function() {
             document.querySelectorAll('.corpus-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
@@ -808,9 +523,6 @@ window.onload = function() {
         });
 
         window.addEventListener('resize', updateUnderline);
-
-        // ===== 图片灯箱：点击缩略图放大查看 =====
-        initImageLightbox();
     }, 300);
 };
 
@@ -842,6 +554,3 @@ window.resetSettings = resetSettings;
 window.switchPage = switchPage;
 window.updateNavActive = updateNavActive;
 window.updateUnderline = updateUnderline;
-window.showStep = showStep;
-window.validateStep = validateStep;
-window.initImageLightbox = initImageLightbox;
