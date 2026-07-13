@@ -354,6 +354,39 @@ ${hasOcr ? '证据4：OCR识别提取的文本内容（附后）\n' : ''}${hasUs
     if (systemSettings.autoSave) addHistory('report', report.substring(0, 200));
 }
 
+// ===== 关键词字典懒加载 =====
+let kwMapLoaded = false;
+let kwMapResolve = null;
+
+function loadKeywordsAsync() {
+    if (kwMapLoaded) return Promise.resolve();
+    kwMapLoaded = true;
+
+    return new Promise((resolve) => {
+        kwMapResolve = resolve;
+
+        // 如果字典已通过独立文件加载完成
+        if (window.fraudKeywordsMap) {
+            resolve();
+            return;
+        }
+
+        // 动态注入 <script> 按需加载
+        const script = document.createElement('script');
+        script.src = 'js/fraud-keywords.js';
+        script.async = true;
+        script.onload = () => {
+            if (kwMapResolve) kwMapResolve();
+        };
+        script.onerror = () => {
+            console.warn('关键词字典加载失败，将使用空字典');
+            window.fraudKeywordsMap = {};
+            if (kwMapResolve) kwMapResolve();
+        };
+        document.head.appendChild(script);
+    });
+}
+
 // ===== 诈骗识别 =====
 async function detectFraud() {
     let txt = document.getElementById('fraudText').value.trim();
@@ -363,7 +396,6 @@ async function detectFraud() {
     if (hasImages) {
         try {
             await ocrImagesWithTesseract(identifyImages);
-            // OCR 完成后，如果还有文本，也做关键词检测
             txt = document.getElementById('fraudText').value.trim();
         } catch (e) {
             showToast('OCR 识别失败：' + e.message, 'error');
@@ -376,97 +408,97 @@ async function detectFraud() {
         return;
     }
 
-    // 关键词检测（仅在有文本时）
+    // 关键词检测（懒加载字典）
     if (txt) {
         globalUserInputText = txt;
         updateEvidenceTextBox();
-        let type = document.querySelector('.corpus-btn.active').getAttribute('data-type');
-        let kwMap = {
-            police: [
-                '公安局','安全账户','检察院','法院','通缉令','逮捕令',
-                '涉嫌洗钱','涉嫌犯罪','资金审查','电话笔录','保密',
-                '不要告诉家人','警官证','远程办案','虚假通缉令','资产冻结令',
-                '安全防护APP','资金核查','下载笔录软件','名下银行卡涉案',
-                '拦截资金','最高检','公安部','线上报案','安装安全软件',
-                '屏幕共享做笔录','伪造警官证链接',
-                '公检法','跨境抓捕','资金清查','涉案账户','担保金',
-                '清白账户','身份核实','配合调查','传唤','司法冻结',
-                '不配合就抓捕','刑事强制措施','取保候审','网上追逃',
-            ],
-            loan: [
-                '贷款','手续费','无抵押','低息','秒批','不看征信',
-                '解冻费','保证金','刷流水','验证还款能力','会员费',
-                '提额','注销校园贷','征信洗白','银行卡号填错',
-                '需要交钱改卡号','综合评分不足','开通会员才能提现',
-                '验证流水','刷流水提额','包装资料','分期贷',
-                '无视黑白户','黑户也能下款','强制下款','高炮',
-                '砍头息','借款合同冻结',
-                '工本费','认证金','放款费','还款能力证明','信用修复',
-                'AB贷','代理贷款','贷款APP','网贷','现金贷',
-                '下款前收费','先交费后放款','额度费','账户异常需充值',
-            ],
-            service: [
-                '客服','退款','理赔','商品质量问题','取消会员',
-                '关闭业务','扣费','屏幕共享','备用金','退款链接',
-                '快递丢件','三倍赔偿','注销代理商','指导操作',
-                '误开会员','铂金会员','关闭百万保障','微信百万保障到期',
-                '百万医疗保险扣费','自动续费','理赔金领取',
-                '官方客服核实','远程协助关闭业务','注销京东金条',
-                '关闭京东白条','微粒贷账户异常','快递阳性销毁理赔',
-                '电商退款','淘宝客服','拼多多退款','京东售后',
-                '订单异常','商品召回','运费险','保单到期续保',
-                '关闭保险','账户冻结需解冻','验证身份','激活账户',
-                '误开通VIP','代取消业务','退订服务','退费通道',
-            ],
-            leader: [
-                '领导','转账','换号了','这是我的新号','不方便接电话',
-                '急用钱','垫付','转给供应商','亲戚借款','事后补手续',
-                '个人账户','帮我转一下','领导新号','老领导',
-                '转账后补手续','会议中不方便语音','急事转账',
-                '转了延迟到账','截图已发','帮领导转一下',
-                '私事不便明说','亲戚急用','替我垫付一下','事后退还',
-                '董事长','总经理','局长','主任','老板','老板换号了',
-                '新手机号','不方便接听','在开会','在外地','出差中',
-                '不方便接电话','帮我打个招呼','替我转交','紧急周转',
-                '项目款','合同款','保证金垫付','先垫一下',
-            ],
-            all: [
-                '刷单','返利','验证码','兼职','做任务','点赞关注',
-                '押大小','博彩','赌博漏洞','内部消息','稳赚不赔',
-                '高额回报','导师','投资理财','杀猪盘','屏幕共享',
-                '不点击链接','不透露密码','做任务返佣金','垫付单',
-                '连单任务','补单','充值返现','竞猜下注',
-                '赌博平台漏洞','数据对冲套利','虚拟币投资','炒股群',
-                '荐股老师','内幕票','带你赚钱','稳赚不赔群',
-                '恋爱交友投资','网恋对象推荐','刷信誉','代付兼职',
-                '兼职打字员','手工活外发','共享屏幕操作','远程操作转账',
-                '不告诉任何人','瞒着家人',
-                '加群领红包','关注点赞赚钱','点赞佣金','抖音点赞',
-                '快手关注','小红书关注','公众号关注','游戏代练',
-                '跑分','码商','USDT','虚拟货币交易','场外交易',
-                '资金盘','互助盘','消费返利','购物返现','众筹投资',
-                '养老投资','健康投资','农业补贴','扶贫项目',
-                '民族资产解冻','慈善募捐','公益捐赠','假慈善',
-                '冒充熟人','冒充客服','冒充公检法','冒充电商',
-                '冒充领导','冒充老师','冒充银行','冒充快递',
-                '虚假网站','钓鱼链接','不明二维码','中奖信息',
-                '税费','关税','个人所得税补缴','退税',
-                '注销账号','解绑银行卡','解除支付限制','实名认证异常',
-                '人脸识别','活体检测','录指纹','采集人脸',
-                '征信逾期','信用卡提额','套现','养卡',
-            ],
-        };
-        let matched = kwMap[type] || kwMap.all;
-        let hitCount = matched.filter(k => txt.includes(k)).length;
-        let matchedKeywords = matched.filter(k => txt.includes(k));
-        let result;
-        if (hitCount === 0) {
-            result = `✅ 未发现明显诈骗特征`;
-        } else if (hitCount <= 2) {
-            result = `⚠️ 疑似诈骗，请提高警惕（匹配关键词：${matchedKeywords.join('、')}）`;
-        } else {
-            result = `🚨 高度疑似诈骗！（匹配关键词：${matchedKeywords.join('、')}，共 ${hitCount} 个）`;
+
+        // 确保关键词字典已加载
+        await loadKeywordsAsync();
+
+        let kwMap = window.fraudKeywordsMap || {};
+        if (!Object.keys(kwMap).length) {
+            let resDiv = document.getElementById('detectResult');
+            resDiv.textContent = '⚠️ 关键词字典尚未加载，请稍后再试';
+            resDiv.classList.add('show');
+            return;
         }
+
+        // 清除之前的高亮状态
+        document.querySelectorAll('.corpus-btn').forEach(btn => {
+            btn.classList.remove('highlighted', 'multi-highlighted');
+        });
+
+        // 逐个分类检测匹配
+        let categories = ['police', 'loan', 'service', 'leader'];
+        let matchedCategories = [];
+
+        for (let cat of categories) {
+            let keywords = kwMap[cat];
+            if (!keywords) continue;
+            let hits = keywords.filter(k => txt.includes(k));
+            if (hits.length > 0) {
+                matchedCategories.push({ cat, keywords: hits, count: hits.length });
+                // 高亮对应的按钮
+                let btn = document.querySelector(`.corpus-btn[data-type="${cat}"]`);
+                if (btn) btn.classList.add('highlighted');
+            }
+        }
+
+        // 检测"全类型"（all）关键词
+        let allKeywords = kwMap.all || [];
+        let allHits = allKeywords.filter(k => txt.includes(k));
+
+        let result;
+        let labelEl = document.getElementById('corpusLabel');
+
+        if (matchedCategories.length === 0 && allHits.length === 0) {
+            // 无任何匹配
+            result = `✅ 未发现明显诈骗特征`;
+            if (labelEl) labelEl.textContent = '全类型诈骗';
+        } else if (matchedCategories.length === 0 && allHits.length > 0) {
+            // 只有"all"匹配 → 亮起"全类型诈骗"标签（红色）
+            result = `🚨 高度疑似诈骗！（匹配关键词：${allHits.join('、')}，共 ${allHits.length} 个）`;
+            if (labelEl) {
+                labelEl.textContent = '全类型诈骗';
+                labelEl.style.color = 'var(--danger)';
+                labelEl.style.borderColor = 'var(--danger)';
+                labelEl.style.background = 'var(--danger-bg)';
+            }
+        } else if (matchedCategories.length >= 2) {
+            // 多个分类同时匹配 → 红色高亮 + "全类型诈骗"
+            let allHitKeywords = [];
+            matchedCategories.forEach(m => {
+                allHitKeywords.push(...m.keywords);
+            });
+            result = `🚨 高度疑似诈骗！（匹配关键词：${[...new Set(allHitKeywords)].join('、')}，共 ${allHitKeywords.length} 个）`;
+            // 所有匹配的分类按钮变红
+            matchedCategories.forEach(m => {
+                let btn = document.querySelector(`.corpus-btn[data-type="${m.cat}"]`);
+                if (btn) {
+                    btn.classList.remove('highlighted');
+                    btn.classList.add('multi-highlighted');
+                }
+            });
+            if (labelEl) {
+                labelEl.textContent = '全类型诈骗';
+                labelEl.style.color = 'var(--danger)';
+                labelEl.style.borderColor = 'var(--danger)';
+                labelEl.style.background = 'var(--danger-bg)';
+            }
+        } else if (matchedCategories.length === 1) {
+            // 单一分类匹配 → 蓝色高亮 + 显示分类名
+            let m = matchedCategories[0];
+            let catNames = { police: '公安诈骗', loan: '贷款诈骗', service: '冒充客服', leader: '冒充领导熟人' };
+            result = `⚠️ 疑似${catNames[m.cat]}（匹配关键词：${m.keywords.join('、')}）`;
+            if (labelEl) {
+                labelEl.textContent = catNames[m.cat] || '疑似诈骗';
+                labelEl.style.color = '';
+                labelEl.style.borderColor = '';
+                labelEl.style.background = '';
+            }
+        }
+
         let resDiv = document.getElementById('detectResult');
         resDiv.textContent = result;
         resDiv.classList.add('show');
@@ -923,8 +955,22 @@ window.onload = function() {
         document.getElementById('prevStep3')?.addEventListener('click', () => showStep(2));
 
         document.querySelectorAll('.corpus-btn').forEach(btn => btn.addEventListener('click', function() {
-            document.querySelectorAll('.corpus-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
+            // 点击按钮清除所有高亮状态（重置检测结果）
+            document.querySelectorAll('.corpus-btn').forEach(b => {
+                b.classList.remove('active', 'highlighted', 'multi-highlighted');
+            });
+            // 重置标签
+            let labelEl = document.getElementById('corpusLabel');
+            if (labelEl) {
+                labelEl.textContent = '全类型诈骗';
+                labelEl.style.color = '';
+                labelEl.style.borderColor = '';
+                labelEl.style.background = '';
+            }
+            // 清空检测结果
+            let resDiv = document.getElementById('detectResult');
+            if (resDiv) resDiv.textContent = '';
+            resDiv.classList.remove('show');
         }));
 
         document.querySelectorAll('[data-goto]').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-goto'))));

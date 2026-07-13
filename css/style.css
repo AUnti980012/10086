@@ -80,6 +80,7 @@
     --danger-dim: #DC2626;
     --danger-bg: rgba(239, 68, 68, 0.1);
     --danger-border: rgba(239, 68, 68, 0.3);
+    --danger-glow: rgba(239, 68, 68, 0.15);
     --success: #22C55E;
     --success-bg: rgba(34, 197, 94, 0.1);
     --success-border: rgba(34, 197, 94, 0.3);
@@ -869,6 +870,35 @@ body {
     color: var(--text-inverse);
     border-color: var(--primary);
     box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* 指示类标签（不可点击，显示当前检测类型） */
+.corpus-label {
+    padding: 5px 12px;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    user-select: none;
+}
+
+/* 匹配到的分类按钮高亮（蓝色） */
+.corpus-btn.highlighted {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-subtle);
+    box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+/* 多分类同时匹配（红色） */
+.corpus-btn.multi-highlighted {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: var(--danger-bg);
+    box-shadow: 0 0 0 2px var(--danger-glow);
+    font-weight: 700;
 }
 
 /* ===== 开关 ===== */
