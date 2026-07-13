@@ -117,6 +117,20 @@ function hideOcrProgress() {
     if (container) container.classList.remove('active');
 }
 
+// ===== OCR 模型下载进度（页面内显示） =====
+function showModelDownloadProgress(downloaded, total, message) {
+    const container = document.getElementById('ocrProgressContainer');
+    const fill = document.getElementById('ocrProgressFill');
+    const status = document.getElementById('ocrProgressStatus');
+    const percent = document.getElementById('ocrProgressPercent');
+    if (!container || !fill || !status) return;
+    container.classList.add('active');
+    const pct = Math.round((downloaded / total) * 100);
+    fill.style.width = pct + '%';
+    percent.textContent = pct + '%';
+    status.textContent = message || '正在下载 OCR 模型...';
+}
+
 // ===== OCR识别 =====
 async function ocrWithTesseract(file, index, total) {
     return new Promise((resolve, reject) => {
@@ -147,18 +161,9 @@ async function ocrImagesWithTesseract(images) {
     let allText = [];
     showOcrProgress(images.length);
 
-    // 确保Tesseract已加载（含模型下载进度）
+    // 确保Tesseract已加载（含模型下载进度，显示在页面进度条上）
     await loadTesseract((downloaded, total, message) => {
-        // 模型下载占 10% 进度
-        const modelProgress = Math.round((downloaded / total) * 10);
-        const fill = document.getElementById('ocrProgressFill');
-        const status = document.getElementById('ocrProgressStatus');
-        const percent = document.getElementById('ocrProgressPercent');
-        if (fill && status) {
-            fill.style.width = modelProgress + '%';
-            percent.textContent = modelProgress + '%';
-            status.textContent = message || '正在加载 OCR 模型...';
-        }
+        showModelDownloadProgress(downloaded, total, message);
     });
     if (typeof Tesseract === 'undefined') {
         showToast('Tesseract.js 尚未加载完成，请稍后再试。', 'error');
