@@ -3,11 +3,100 @@
  * 包含：表单验证、报案生成、账单解析、PDF导出、历史记录、设置、导航、初始化
  */
 
+// ===== 图片灯箱功能 =====
+function initImageLightbox() {
+    const lightbox = document.getElementById('imageLightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxCounter = document.getElementById('lightboxCounter');
+    const closeBtn = document.getElementById('lightboxClose');
+    const prevBtn = document.getElementById('lightboxPrev');
+    const nextBtn = document.getElementById('lightboxNext');
+    const backdrop = lightbox?.querySelector('.lightbox-backdrop');
+
+    let currentIndex = 0;
+    let thumbnails = [];
+
+    // 事件委托：监听容器级 click，避免重复绑定
+    const identifyPreview = document.getElementById('identifyPreview');
+    const reportPreview = document.getElementById('reportPreview');
+
+    function handleClick(e) {
+        const item = e.target.closest('.preview-item');
+        if (!item) return;
+        const img = item.querySelector('img');
+        if (!img) return;
+
+        // 收集所有缩略图的 src
+        const container = item.parentElement;
+        thumbnails = Array.from(container.querySelectorAll('.preview-item img')).map(i => i.src);
+        currentIndex = thumbnails.indexOf(img.src);
+        openLightbox();
+    }
+
+    identifyPreview?.addEventListener('click', handleClick);
+    reportPreview?.addEventListener('click', handleClick);
+
+    function openLightbox() {
+        if (!lightbox || !thumbnails[currentIndex]) return;
+        lightboxImg.src = thumbnails[currentIndex];
+        lightboxCounter.textContent = `${currentIndex + 1} / ${thumbnails.length}`;
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden'; // 禁止背景滚动
+    }
+
+    function closeLightbox() {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function showPrev() {
+        if (thumbnails.length <= 1) return;
+        currentIndex = (currentIndex - 1 + thumbnails.length) % thumbnails.length;
+        lightboxImg.src = thumbnails[currentIndex];
+        lightboxCounter.textContent = `${currentIndex + 1} / ${thumbnails.length}`;
+    }
+
+    function showNext() {
+        if (thumbnails.length <= 1) return;
+        currentIndex = (currentIndex + 1) % thumbnails.length;
+        lightboxImg.src = thumbnails[currentIndex];
+        lightboxCounter.textContent = `${currentIndex + 1} / ${thumbnails.length}`;
+    }
+
+    closeBtn?.addEventListener('click', closeLightbox);
+    backdrop?.addEventListener('click', closeLightbox);
+    prevBtn?.addEventListener('click', showPrev);
+    nextBtn?.addEventListener('click', showNext);
+
+    // 键盘支持
+    document.addEventListener('keydown', (e) => {
+        if (!lightbox?.classList.contains('active')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') showPrev();
+        if (e.key === 'ArrowRight') showNext();
+    });
+
+    // 触摸滑动支持
+    let touchStartX = 0;
+    lightboxImg?.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    lightboxImg?.addEventListener('touchend', (e) => {
+        const diff = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) showPrev();
+            else showNext();
+        }
+    }, { passive: true });
+}
+
 // ===== 全局变量 =====
 let historyRecords = [];
 let systemSettings = { autoSave: true, defaultDesensitize: true };
 let globalOcrText = '';
 let globalUserInputText = '';
+let currentStep = 1;
+const totalSteps = 3;
 
 // ===== localStorage安全读写（try/catch保护） =====
 function safeLocalStorageGet(key, defaultVal) {
@@ -50,9 +139,9 @@ function importEvidenceFromIdentify() {
     }
     updateEvidenceTextBox();
     if (globalOcrText.trim() || globalUserInputText.trim()) {
-        alert('证据文本已导入！可在报案材料生成时一并导出到PDF。');
+        showToast('证据文本已导入！可在报案材料生成时一并导出到PDF。', 'success');
     } else {
-        alert('暂无可导入的证据文本。请先在"诈骗识别"页面输入文本或上传图片进行OCR识别。');
+        showToast('暂无可导入的证据文本。请先在"诈骗识别"页面输入文本或上传图片进行OCR识别。', 'warning');
     }
 }
 
@@ -63,6 +152,78 @@ function clearEvidenceText() {
         globalUserInputText = '';
         updateEvidenceTextBox();
     }
+}
+
+// ===== 步骤导航 =====
+function showStep(step) {
+    // 隐藏所有步骤
+    document.querySelectorAll('.step-content').forEach(el => {
+        el.style.display = 'none';
+    });
+    // 显示目标步骤
+    let target = document.getElementById('step' + step);
+    if (target) {
+        target.style.display = 'block';
+        // 重新触发动画
+        target.classList.remove('step-content');
+        void target.offsetWidth; // force reflow
+        target.classList.add('step-content');
+    }
+    // 更新步骤指示器
+    document.querySelectorAll('.step-item').forEach((item, idx) => {
+        let s = idx + 1;
+        item.classList.remove('step-active', 'step-completed');
+        if (s === step) item.classList.add('step-active');
+        else if (s < step) item.classList.add('step-completed');
+    });
+    // 更新连接线
+    document.querySelectorAll('.step-connector').forEach((conn, idx) => {
+        conn.classList.toggle('completed', idx < step - 1);
+    });
+    currentStep = step;
+}
+
+function validateStep(step) {
+    let fields = [];
+    if (step === 1) {
+        fields = [
+            { id: 'formName', getValue: () => document.getElementById('name').value.trim(), test: v => !!v },
+            { id: 'formIdNo', getValue: () => document.getElementById('idNo').value.trim().toUpperCase(), test: v => /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dX]$/.test(v) },
+            { id: 'formPhone', getValue: () => document.getElementById('phone').value.trim(), test: v => /^1[0-9]{10}$/.test(v) },
+        ];
+    } else if (step === 2) {
+        fields = [
+            { id: 'formAccusedName', getValue: () => document.getElementById('accusedName').value.trim(), test: v => !!v },
+        ];
+    } else if (step === 3) {
+        fields = [
+            { id: 'formTime', getValue: () => document.getElementById('fraudTime').value.trim(), test: v => !!v },
+            { id: 'formLocation', getValue: () => document.getElementById('fraudLocation').value.trim(), test: v => !!v },
+            { id: 'formPlatform', getValue: () => document.getElementById('fraudPlatform').value.trim(), test: v => !!v },
+            { id: 'formType', getValue: () => document.getElementById('fraudType').value.trim(), test: v => !!v },
+            { id: 'formMoney', getValue: () => document.getElementById('fraudMoney').value.trim(), test: v => v && !isNaN(parseFloat(v)) && parseFloat(v) > 0 },
+            { id: 'formDetail', getValue: () => document.getElementById('fraudDetail').value.trim(), test: v => !!v },
+        ];
+    }
+    let isValid = true;
+    let firstError = null;
+    fields.forEach(f => {
+        let val = f.getValue();
+        if (!f.test(val)) {
+            markError(f.id, true);
+            isValid = false;
+            if (!firstError) firstError = document.getElementById(f.id);
+        } else {
+            markError(f.id, false);
+        }
+    });
+    // 聚焦第一个错误字段
+    if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        let input = firstError.querySelector('input, textarea');
+        if (input) input.focus();
+    }
+    return isValid;
 }
 
 // ===== 表单验证 =====
@@ -110,15 +271,11 @@ function markError(formId, isError) {
 
 // ===== 生成报案报告 =====
 function generateReport() {
-    if (!validateReportForm()) {
-        alert('请正确填写所有必填项（控告人姓名、身份证号、电话；被控告人网名/姓名；被骗时间、地点、平台、类型、金额、详细经过）。');
-        return;
-    }
     let name = document.getElementById('name').value.trim();
     let idNo = document.getElementById('idNo').value.trim();
     let phone = document.getElementById('phone').value.trim();
     let address = document.getElementById('address').value.trim() || '未填写';
-    let accusedName = document.getElementById('accusedName').value.trim();
+    let accusedName = document.getElementById('accusedName').value.trim() || '未知';
     let accusedPhone = document.getElementById('accusedPhone').value.trim() || '未知';
     let accusedWechat = document.getElementById('accusedWechat').value.trim() || '未知';
     let accusedAlipay = document.getElementById('accusedAlipay').value.trim() || '未知';
@@ -129,7 +286,9 @@ function generateReport() {
     let contactMethod = document.getElementById('contactMethod').value.trim() || '未填写';
     let platform = document.getElementById('fraudPlatform').value.trim();
     let fType = document.getElementById('fraudType').value.trim();
-    let money = parseFloat(document.getElementById('fraudMoney').value.trim()).toFixed(2);
+    let moneyVal = parseFloat(document.getElementById('fraudMoney').value.trim());
+    if (isNaN(moneyVal)) moneyVal = 0;
+    let money = moneyVal.toFixed(2);
     let detail = document.getElementById('fraudDetail').value.trim();
     let evidenceCount = reportImages.length;
     let hasOcr = globalOcrText.trim() ? true : false;
@@ -195,34 +354,175 @@ ${hasOcr ? '证据4：OCR识别提取的文本内容（附后）\n' : ''}${hasUs
     if (systemSettings.autoSave) addHistory('report', report.substring(0, 200));
 }
 
+// ===== 关键词字典懒加载 =====
+let kwMapLoaded = false;
+let kwMapResolve = null;
+
+function loadKeywordsAsync() {
+    if (kwMapLoaded) return Promise.resolve();
+    kwMapLoaded = true;
+
+    return new Promise((resolve) => {
+        kwMapResolve = resolve;
+
+        // 如果字典已通过独立文件加载完成
+        if (window.fraudKeywordsMap) {
+            resolve();
+            return;
+        }
+
+        // 动态注入 <script> 按需加载
+        const script = document.createElement('script');
+        script.src = 'js/fraud-keywords.js';
+        script.async = true;
+        script.onload = () => {
+            if (kwMapResolve) kwMapResolve();
+        };
+        script.onerror = () => {
+            console.warn('关键词字典加载失败，将使用空字典');
+            window.fraudKeywordsMap = {};
+            if (kwMapResolve) kwMapResolve();
+        };
+        document.head.appendChild(script);
+    });
+}
+
 // ===== 诈骗识别 =====
-function detectFraud() {
+async function detectFraud() {
     let txt = document.getElementById('fraudText').value.trim();
-    if (!txt) { alert('请输入文本或上传图片'); return; }
-    globalUserInputText = txt;
-    updateEvidenceTextBox();
-    let type = document.querySelector('.corpus-btn.active').getAttribute('data-type');
-    let kwMap = {
-        police: ['公安局', '安全账户'],
-        loan: ['贷款', '手续费'],
-        service: ['客服', '退款'],
-        leader: ['领导', '转账'],
-        all: ['刷单', '返利', '验证码']
-    };
-    let matched = kwMap[type] || kwMap.all;
-    let result = matched.filter(k => txt.includes(k)).length
-        ? `⚠️ 疑似诈骗，请提高警惕`
-        : `✅ 未发现明显诈骗特征`;
-    let resDiv = document.getElementById('detectResult');
-    resDiv.textContent = result;
-    resDiv.classList.add('show');
-    if (systemSettings.autoSave) addHistory('detect', result);
+    let hasImages = identifyImages && identifyImages.length > 0;
+
+    // 如果有图片，优先执行 OCR
+    if (hasImages) {
+        try {
+            await ocrImagesWithTesseract(identifyImages);
+            txt = document.getElementById('fraudText').value.trim();
+        } catch (e) {
+            showToast('OCR 识别失败：' + e.message, 'error');
+            return;
+        }
+    }
+
+    if (!txt && !hasImages) {
+        showToast('请输入文本或上传图片', 'warning');
+        return;
+    }
+
+    // 关键词检测（懒加载字典）
+    if (txt) {
+        globalUserInputText = txt;
+        updateEvidenceTextBox();
+
+        // 确保关键词字典已加载
+        await loadKeywordsAsync();
+
+        let kwMap = window.fraudKeywordsMap || {};
+        if (!Object.keys(kwMap).length) {
+            let resDiv = document.getElementById('detectResult');
+            resDiv.textContent = '⚠️ 关键词字典尚未加载，请稍后再试';
+            resDiv.classList.add('show');
+            return;
+        }
+
+        // 清除之前的高亮状态
+        document.querySelectorAll('.corpus-btn').forEach(btn => {
+            btn.classList.remove('highlighted', 'multi-highlighted');
+        });
+
+        // 逐个分类检测匹配
+        let categories = ['police', 'loan', 'service', 'leader'];
+        let matchedCategories = [];
+
+        for (let cat of categories) {
+            let keywords = kwMap[cat];
+            if (!keywords) continue;
+            let hits = keywords.filter(k => txt.includes(k));
+            if (hits.length > 0) {
+                matchedCategories.push({ cat, keywords: hits, count: hits.length });
+                // 高亮对应的按钮
+                let btn = document.querySelector(`.corpus-btn[data-type="${cat}"]`);
+                if (btn) btn.classList.add('highlighted');
+            }
+        }
+
+        // 检测"全类型"（all）关键词
+        let allKeywords = kwMap.all || [];
+        let allHits = allKeywords.filter(k => txt.includes(k));
+
+        let result;
+        let labelEl = document.getElementById('corpusLabel');
+
+        if (matchedCategories.length === 0 && allHits.length === 0) {
+            // 无任何匹配
+            result = `✅ 未发现明显诈骗特征`;
+            if (labelEl) labelEl.textContent = '全类型诈骗';
+        } else if (matchedCategories.length === 0 && allHits.length > 0) {
+            // 只有"all"匹配 → 亮起"全类型诈骗"标签（红色）
+            result = `🚨 高度疑似诈骗！（匹配关键词：${allHits.join('、')}，共 ${allHits.length} 个）`;
+            if (labelEl) {
+                labelEl.textContent = '全类型诈骗';
+                labelEl.style.color = 'var(--danger)';
+                labelEl.style.borderColor = 'var(--danger)';
+                labelEl.style.background = 'var(--danger-bg)';
+            }
+        } else if (matchedCategories.length >= 2) {
+            // 多个分类同时匹配 → 红色高亮 + "全类型诈骗"
+            let allHitKeywords = [];
+            matchedCategories.forEach(m => {
+                allHitKeywords.push(...m.keywords);
+            });
+            result = `🚨 高度疑似诈骗！（匹配关键词：${[...new Set(allHitKeywords)].join('、')}，共 ${allHitKeywords.length} 个）`;
+            // 所有匹配的分类按钮变红
+            matchedCategories.forEach(m => {
+                let btn = document.querySelector(`.corpus-btn[data-type="${m.cat}"]`);
+                if (btn) {
+                    btn.classList.remove('highlighted');
+                    btn.classList.add('multi-highlighted');
+                }
+            });
+            if (labelEl) {
+                labelEl.textContent = '全类型诈骗';
+                labelEl.style.color = 'var(--danger)';
+                labelEl.style.borderColor = 'var(--danger)';
+                labelEl.style.background = 'var(--danger-bg)';
+            }
+        } else if (matchedCategories.length === 1) {
+            // 单一分类匹配 → 蓝色高亮 + 显示分类名
+            let m = matchedCategories[0];
+            let catNames = { police: '公安诈骗', loan: '贷款诈骗', service: '冒充客服', leader: '冒充领导熟人' };
+            result = `⚠️ 疑似${catNames[m.cat]}（匹配关键词：${m.keywords.join('、')}）`;
+            if (labelEl) {
+                labelEl.textContent = catNames[m.cat] || '疑似诈骗';
+                labelEl.style.color = '';
+                labelEl.style.borderColor = '';
+                labelEl.style.background = '';
+            }
+        }
+
+        let resDiv = document.getElementById('detectResult');
+        resDiv.textContent = result;
+        resDiv.classList.add('show');
+        if (systemSettings.autoSave) addHistory('detect', result);
+    }
 }
 
 // ===== DeepSeek深度判定 =====
-async function doubaoDeepDetect() {
+async function deepDetect() {
     let txt = document.getElementById('fraudText').value.trim();
-    if (!txt) return alert('请输入内容');
+    let hasImages = identifyImages && identifyImages.length > 0;
+
+    // 如果有图片，先执行 OCR 提取文本
+    if (hasImages) {
+        try {
+            await ocrImagesWithTesseract(identifyImages);
+            txt = document.getElementById('fraudText').value.trim();
+        } catch (e) {
+            showToast('OCR 识别失败：' + e.message, 'error');
+            return;
+        }
+    }
+
+    if (!txt) return showToast('请输入内容或上传图片', 'warning');
     globalUserInputText = txt;
     updateEvidenceTextBox();
     let resDiv = document.getElementById('detectResult');
@@ -234,23 +534,25 @@ async function doubaoDeepDetect() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ messages: [{ role: "system", content: "反诈专家" }, { role: "user", content: `分析诈骗风险：${txt}` }] })
         });
-        let data = await resp.json();
         if (!resp.ok) {
-            throw new Error(`HTTP ${resp.status}: ${data.error || '请求失败'}`);
+            let errText;
+            try { errText = (await resp.json()).error || resp.statusText; } catch { errText = resp.statusText; }
+            throw new Error(`HTTP ${resp.status}: ${errText}`);
         }
+        let data = await resp.json();
         let reply = data.choices?.[0]?.message?.content || '分析完成';
-        resDiv.textContent = `【DeepSeek深度判定】\n${reply}`;
+        resDiv.innerHTML = `【DeepSeek深度判定】\n${renderMarkdown(reply)}`;
         if (systemSettings.autoSave) addHistory('detect', reply.substring(0, 200));
     } catch (e) {
-        resDiv.textContent = `判定失败：${e.message}`;
-        console.error('DeepDetect error:', e);
+        resDiv.textContent = `判定失败：${e.message}`;        console.error('DeepDetect error:', e);
     }
 }
 
 // ===== 填充到报案表 =====
 function fillToReport() {
     let res = document.getElementById('detectResult').textContent;
-    if (res && !res.includes('判定失败')) {
+    // 只要不是判定失败或空结果，就允许填充
+    if (res && !res.includes('判定失败') && res.trim()) {
         document.getElementById('fraudDetail').value = res;
     }
     let fraudTextarea = document.getElementById('fraudText');
@@ -272,11 +574,13 @@ function clearIdentify() {
     // 重置全局变量
     globalOcrText = '';
     globalUserInputText = '';
+    updateEvidenceTextBox();
 }
 
 // ===== 账单解析 =====
 function parseBill() {
-    if (!billData) { alert('请先上传账单文件'); return; }
+    if (typeof XLSX === 'undefined') { showToast('XLSX 库尚未加载，请检查网络后重试。', 'error'); return; }
+    if (!billData) { showToast('请先上传账单文件', 'warning'); return; }
     let billRes = document.getElementById('billResult');
     billRes.innerHTML = '<div class="loading-tip"><span class="loading-spin"></span>解析中...</div>';
     billRes.classList.add('show');
@@ -284,23 +588,49 @@ function parseBill() {
         try {
             let total = 0, records = [];
             if (billData.type === 'csv') {
-                let lines = billData.raw.split(/\r?\n/); // 支持Windows换行
+                let lines = billData.raw.split(/\r?\n/);
+                let delim = billData.delimiter || ',';
+                // 解析表头，找到金额列的索引
+                let headerParts = lines[0].split(delim);
+                let amountIdx = -1;
+                for (let h = 0; h < headerParts.length; h++) {
+                    let col = headerParts[h].trim().toLowerCase();
+                    if (col.includes('金额') || col.includes('amount') || col.includes('支出') || col.includes('借方') || col.includes('消费')) {
+                        amountIdx = h;
+                        break;
+                    }
+                }
                 lines.forEach((l, idx) => {
-                    if (idx === 0) return;
-                    let amount = 0;
-                    let parts = l.split(',');
-                    parts.forEach(c => {
-                        let num = parseFloat(c.replace(/[^0-9.-]/g, ''));
-                        if (!isNaN(num) && num !== 0 && (c.includes('支出') || c.includes('付款'))) amount = Math.abs(num);
-                    });
-                    if (amount > 0) { total += amount; records.push(amount); }
+                    if (idx === 0) return; // 跳过表头
+                    let parts = l.split(delim);
+                    if (amountIdx >= 0 && parts[amountIdx]) {
+                        let num = parseFloat(parts[amountIdx].trim().replace(/[^0-9.-]/g, ''));
+                        if (!isNaN(num) && num !== 0) {
+                            // 判断是否为支出：负数金额，或包含"支出"/"付款"标记
+                            let isExpense = num < 0 || l.includes('支出') || l.includes('付款');
+                            if (isExpense) {
+                                total += Math.abs(num);
+                                records.push(Math.abs(num));
+                            }
+                        }
+                    }
                 });
             } else {
                 let wb = billData.raw,
                     ws = wb.Sheets[wb.SheetNames[0]],
                     data = XLSX.utils.sheet_to_json(ws);
                 data.forEach(row => {
-                    let amt = parseFloat(row['金额'] || row['Amount'] || 0);
+                    // 模糊匹配金额列：遍历所有键，找包含"金额"/"amount"的列
+                    let amt = 0;
+                    let amtCol = Object.keys(row).find(k =>
+                        k.toLowerCase().includes('金额') ||
+                        k.toLowerCase().includes('amount') ||
+                        k.toLowerCase().includes('发生额') ||
+                        k.toLowerCase().includes('交易金额')
+                    );
+                    if (amtCol !== undefined) {
+                        amt = parseFloat(row[amtCol]);
+                    }
                     if (amt < 0 || (row['收支类型'] && row['收支类型'].includes('支出'))) {
                         total += Math.abs(amt);
                         records.push(Math.abs(amt));
@@ -320,7 +650,7 @@ function billToReport() {
         document.getElementById('fraudMoney').value = billData.parsed.totalOut;
         switchPage('reportPage');
     } else {
-        alert('请先解析账单');
+        showToast('请先解析账单', 'warning');
     }
 }
 
@@ -328,9 +658,12 @@ function billToReport() {
 function copyReport() {
     let div = document.getElementById('reportResult');
     if (div.classList.contains('show')) {
-        navigator.clipboard.writeText(div.textContent).then(() => alert('复制成功'));
+        navigator.clipboard.writeText(div.textContent).then(
+            () => showToast('已复制到剪贴板', 'success'),
+            () => showToast('复制失败，请手动复制', 'error')
+        );
     } else {
-        alert('请先生成刑事控告书');
+        showToast('请先生成刑事控告书', 'warning');
     }
 }
 
@@ -342,23 +675,25 @@ function exportTxt() {
         a.href = URL.createObjectURL(blob);
         a.download = `刑事控告书_${new Date().toISOString().slice(0,10)}.txt`;
         a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        showToast('TXT 文件已下载', 'success');
     } else {
-        alert('请先生成刑事控告书');
+        showToast('请先生成刑事控告书', 'warning');
     }
 }
 
 async function exportPdf() {
     let div = document.getElementById('reportResult');
     if (!div.classList.contains('show') || !div.textContent.trim()) {
-        alert('请先生成刑事控告书');
+        showToast('请先生成刑事控告书', 'warning');
         return;
     }
     try {
-        if (typeof html2canvas === 'undefined') { alert('html2canvas未加载，请检查网络后重试。'); return; }
-        if (typeof window.jspdf === 'undefined') { alert('jsPDF未加载，请检查网络后重试。'); return; }
+        if (typeof html2canvas === 'undefined') { showToast('html2canvas 未加载，请检查网络后重试。', 'error'); return; }
+        if (typeof window.jspdf === 'undefined') { showToast('jsPDF 未加载，请检查网络后重试。', 'error'); return; }
         const canvas = await html2canvas(div, {
-            scale: 1.5, // 降低scale减少内存占用
-            backgroundColor: '#ffffff',
+            scale: 1.5,
+            backgroundColor: '#1A2740',
             logging: false
         });
         const imgData = canvas.toDataURL('image/png');
@@ -366,21 +701,55 @@ async function exportPdf() {
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pdfWidth - 20;
+        const imgWidth = pdfWidth - 20; // 左右各留 10mm 边距
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 10;
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= (pdfHeight - 20);
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight + 10;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-            heightLeft -= (pdfHeight - 20);
+
+        // 计算报告内容需要的页数
+        const usableHeight = pdfHeight - 20; // 上下各留 10mm
+        const totalPages = Math.ceil(imgHeight / usableHeight);
+
+        if (totalPages <= 1) {
+            // 单页：直接添加
+            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+        } else {
+            // 多页：按内容高度裁剪图片分段添加到每页
+            const pxPerMm = canvas.height / pdfHeight;
+            const sliceHeightPx = Math.floor(usableHeight * pxPerMm);
+
+            for (let page = 0; page < totalPages; page++) {
+                if (page === 0) {
+                    // 第一页：完整图片，从顶部开始
+                    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(imgHeight, usableHeight));
+                } else {
+                    // 后续页：裁剪图片的对应段
+                    const srcY = page * sliceHeightPx;
+                    const srcH = Math.min(sliceHeightPx, imgHeight - srcY);
+                    if (srcH <= 0) break;
+
+                    // 创建临时 canvas 裁剪图片段
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = srcH;
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+                    const tempImgData = tempCanvas.toDataURL('image/png');
+                    const displayedHeight = (tempCanvas.height * imgWidth) / tempCanvas.width;
+                    pdf.addPage();
+                    pdf.addImage(tempImgData, 'PNG', 10, 10, imgWidth, displayedHeight);
+                }
+            }
         }
         pdf.save(`刑事控告书_${Date.now()}.pdf`);
+        showToast('PDF 文件已生成', 'success');
     } catch (error) {
-        alert('PDF生成失败，请重试或使用导出TXT功能。');
+        let msg = 'PDF 生成失败';
+        if (error.name === 'AbortError' || error.message?.includes('memory')) {
+            msg = 'PDF 生成失败：内存不足，请尝试使用导出 TXT 功能。';
+        } else if (error.message?.includes('network')) {
+            msg = 'PDF 生成失败：网络连接异常，请检查网络后重试。';
+        }
+        showToast(msg, 'error');
         console.error(error);
     }
 }
@@ -422,30 +791,50 @@ function initSettings() {
     if (autoSaveEl) autoSaveEl.checked = systemSettings.autoSave;
     if (defaultDescEl) defaultDescEl.checked = systemSettings.defaultDesensitize;
     if (descEl) descEl.checked = systemSettings.defaultDesensitize;
+    // 监听识别页脱敏开关变化
+    if (descEl) {
+        descEl.addEventListener('change', () => {
+            systemSettings.defaultDesensitize = descEl.checked;
+            safeLocalStorageSet('systemSettings', systemSettings);
+        });
+    }
 }
 
 function saveSettings() {
     systemSettings.autoSave = document.getElementById('autoSaveSwitch').checked;
     systemSettings.defaultDesensitize = document.getElementById('defaultDesensitizeSwitch').checked;
     safeLocalStorageSet('systemSettings', systemSettings);
-    alert('设置已保存');
+    showToast('设置已保存', 'success');
 }
 
 function resetSettings() {
     systemSettings = { autoSave: true, defaultDesensitize: true };
     initSettings();
     safeLocalStorageSet('systemSettings', systemSettings);
-    alert('已恢复默认');
+    showToast('已恢复默认设置', 'success');
 }
 
 // ===== 导航 =====
 function switchPage(pageId) {
+    // 清除所有页面的残留状态
+    document.querySelectorAll('.page .form-group.error').forEach(g => g.classList.remove('error'));
+
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     let el = document.getElementById(pageId);
     if (el) el.classList.add('active');
     updateNavActive(pageId);
-    if (pageId === 'reportPage') updateEvidenceTextBox();
-    // 切换到诈骗识别页时预加载Tesseract
+
+    // 切换到报案填报页时，如果是首次访问（currentStep === 1 且无已填数据），重置到第1步
+    // 如果用户已经在第2/3步填写了数据，保持当前步骤不变
+    if (pageId === 'reportPage') {
+        updateEvidenceTextBox();
+        // 检查是否已有填写的数据，避免无意义重置
+        const nameVal = document.getElementById('name')?.value.trim();
+        if (!nameVal && currentStep !== 1) {
+            showStep(1);
+        }
+    }
+    // 切换到诈骗识别页时预加载Tesseract（静默加载，不阻塞）
     if (pageId === 'identifyPage') {
         loadTesseract();
     }
@@ -470,6 +859,47 @@ function updateUnderline() {
     underline.style.left = `${rect.left - parentRect.left + active.parentElement.scrollLeft}px`;
 }
 
+// ===== 字体后台加载（非阻塞） =====
+let fontLoaded = false;
+
+function initFontLoad() {
+    if (fontLoaded) return;
+    fontLoaded = true;
+
+    // 立即注入字体 CSS（font-display: optional 让浏览器决定策略）
+    const style = document.createElement('style');
+    style.textContent = `
+        @font-face {
+            font-family: 'PingFang SC';
+            font-style: normal;
+            font-weight: 600;
+            font-display: optional;
+            src: url('fonts/PingFangSC-Semibold.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'Kumbh Sans';
+            font-style: normal;
+            font-weight: 400;
+            font-display: optional;
+            src: url('fonts/KumbhSans-Regular.ttf') format('truetype');
+        }
+    `;
+    document.head.appendChild(style);
+
+    // 后台静默预加载字体，不阻塞页面
+    preloadFontAsync('fonts/PingFangSC-Semibold.ttf', 'PingFang SC', '600');
+    preloadFontAsync('fonts/KumbhSans-Regular.ttf', 'Kumbh Sans', '400');
+}
+
+function preloadFontAsync(url, name, weight) {
+    const fontFace = new FontFace(name, `url(${url})`, { weight, style: 'normal' });
+    fontFace.load().then((font) => {
+        document.fonts.add(font);
+    }).catch(() => {
+        // 字体加载失败不影响页面使用
+    });
+}
+
 // ===== 初始化 =====
 window.onload = function() {
     // 从localStorage安全读取
@@ -491,9 +921,12 @@ window.onload = function() {
         initBillUpload();
         updateEvidenceTextBox();
 
+        // 字体后台加载（非阻塞，不弹窗）
+        initFontLoad();
+
         // 事件绑定
         document.getElementById('startDetectBtn')?.addEventListener('click', detectFraud);
-        document.getElementById('doubaoBtn')?.addEventListener('click', doubaoDeepDetect);
+        document.getElementById('doubaoBtn')?.addEventListener('click', deepDetect);
         document.getElementById('clearIdentifyBtn')?.addEventListener('click', clearIdentify);
         document.getElementById('fillToReportBtn')?.addEventListener('click', fillToReport);
         document.getElementById('parseBillBtn')?.addEventListener('click', parseBill);
@@ -508,9 +941,35 @@ window.onload = function() {
         document.getElementById('importEvidenceBtn')?.addEventListener('click', importEvidenceFromIdentify);
         document.getElementById('clearEvidenceBtn')?.addEventListener('click', clearEvidenceText);
 
+        // 步骤导航
+        document.getElementById('nextStep1')?.addEventListener('click', () => {
+            if (validateStep(1)) showStep(2);
+            else showToast('请完成当前步骤的必填项', 'error');
+        });
+        document.getElementById('nextStep2')?.addEventListener('click', () => {
+            if (validateStep(2)) showStep(3);
+            else showToast('请完成当前步骤的必填项', 'error');
+        });
+        document.getElementById('prevStep2')?.addEventListener('click', () => showStep(1));
+        document.getElementById('prevStep3')?.addEventListener('click', () => showStep(2));
+
         document.querySelectorAll('.corpus-btn').forEach(btn => btn.addEventListener('click', function() {
-            document.querySelectorAll('.corpus-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
+            // 点击按钮清除所有高亮状态（重置检测结果）
+            document.querySelectorAll('.corpus-btn').forEach(b => {
+                b.classList.remove('active', 'highlighted', 'multi-highlighted');
+            });
+            // 重置标签
+            let labelEl = document.getElementById('corpusLabel');
+            if (labelEl) {
+                labelEl.textContent = '全类型诈骗';
+                labelEl.style.color = '';
+                labelEl.style.borderColor = '';
+                labelEl.style.background = '';
+            }
+            // 清空检测结果
+            let resDiv = document.getElementById('detectResult');
+            if (resDiv) resDiv.textContent = '';
+            resDiv.classList.remove('show');
         }));
 
         document.querySelectorAll('[data-goto]').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-goto'))));
@@ -523,6 +982,9 @@ window.onload = function() {
         });
 
         window.addEventListener('resize', updateUnderline);
+
+        // ===== 图片灯箱：点击缩略图放大查看 =====
+        initImageLightbox();
     }, 300);
 };
 
@@ -537,7 +999,8 @@ window.validateReportForm = validateReportForm;
 window.markError = markError;
 window.generateReport = generateReport;
 window.detectFraud = detectFraud;
-window.doubaoDeepDetect = doubaoDeepDetect;
+window.deepDetect = deepDetect;
+window.doubaoDeepDetect = deepDetect; // 保留别名以兼容外部调用
 window.fillToReport = fillToReport;
 window.clearIdentify = clearIdentify;
 window.parseBill = parseBill;
@@ -554,3 +1017,6 @@ window.resetSettings = resetSettings;
 window.switchPage = switchPage;
 window.updateNavActive = updateNavActive;
 window.updateUnderline = updateUnderline;
+window.showStep = showStep;
+window.validateStep = validateStep;
+window.initImageLightbox = initImageLightbox;

@@ -6,11 +6,15 @@
 let identifyImages = [];
 let reportImages = [];
 let billData = null;
+let isOcrRunning = false; // 防止并发OCR
 
 // ===== 文件处理（Promise.all等待所有FileReader完成） =====
 function handleFiles(files, container, cb) {
     let valid = Array.from(files).filter(f => f.type.includes('image/'));
-    if (!valid.length) return;
+    if (!valid.length) {
+        if (files.length > 0) showToast('请选择图片文件（JPG/PNG）', 'warning');
+        return;
+    }
     let imageFiles = [];
     container.innerHTML = '';
 
@@ -33,14 +37,33 @@ function handleFiles(files, container, cb) {
             del.className = 'preview-del';
             del.textContent = '×';
             let rid = r.id;
-            del.onclick = () => {
+            del.onclick = (e) => {
+                e.stopPropagation();
                 imageFiles = imageFiles.filter(i => i.id !== rid);
                 div.remove();
+                // 更新计数文字
+                let countEl = container.parentElement.querySelector('.upload-count');
+                if (countEl) {
+                    if (imageFiles.length === 0) {
+                        countEl.remove();
+                    } else {
+                        countEl.textContent = `已上传 ${imageFiles.length} 张图片`;
+                    }
+                }
             };
             div.appendChild(img);
             div.appendChild(del);
             container.appendChild(div);
         });
+        // 显示上传数量提示
+        let countEl = container.parentElement.querySelector('.upload-count');
+        if (!countEl) {
+            countEl = document.createElement('div');
+            countEl.className = 'upload-count';
+            countEl.style.cssText = 'font-size:12px;color:var(--text-muted);margin:4px 0;';
+            container.parentElement.insertBefore(countEl, container.nextSibling);
+        }
+        countEl.textContent = `已上传 ${results.filter(Boolean).length} 张图片`;
         cb(imageFiles);
     });
 }
@@ -72,10 +95,10 @@ function showOcrProgress(totalImages) {
     container.classList.add('active');
     fill.style.width = '0%';
     percent.textContent = '0%';
-    status.textContent = `准备识别 0/${totalImages}`;
+    status.textContent = '准备识别 0/' + totalImages;
 }
 
-function updateOcrProgress(currentIndex, total, progressFraction, statusText = '') {
+function updateOcrProgress(currentIndex, total, progressFraction, statusText) {
     const fill = document.getElementById('ocrProgressFill');
     const status = document.getElementById('ocrProgressStatus');
     const percent = document.getElementById('ocrProgressPercent');
@@ -83,15 +106,29 @@ function updateOcrProgress(currentIndex, total, progressFraction, statusText = '
     const perImageWeight = 1 / total;
     const done = currentIndex * perImageWeight;
     const currentPart = progressFraction * perImageWeight;
-    const overall = Math.min((done + currentPart) * 100, 100).toFixed(0);
+    const overall = Math.min(Math.round((done + currentPart) * 100), 100);
     fill.style.width = overall + '%';
     percent.textContent = overall + '%';
-    status.textContent = statusText || `识别中 ${currentIndex+1}/${total}`;
+    status.textContent = statusText || ('识别中 ' + (currentIndex + 1) + '/' + total);
 }
 
 function hideOcrProgress() {
     const container = document.getElementById('ocrProgressContainer');
     if (container) container.classList.remove('active');
+}
+
+// ===== OCR 模型下载进度（页面内显示） =====
+function showModelDownloadProgress(downloaded, total, message) {
+    const container = document.getElementById('ocrProgressContainer');
+    const fill = document.getElementById('ocrProgressFill');
+    const status = document.getElementById('ocrProgressStatus');
+    const percent = document.getElementById('ocrProgressPercent');
+    if (!container || !fill || !status) return;
+    container.classList.add('active');
+    const pct = Math.round((downloaded / total) * 100);
+    fill.style.width = pct + '%';
+    percent.textContent = pct + '%';
+    status.textContent = message || '正在下载 OCR 模型...';
 }
 
 // ===== OCR识别 =====
@@ -112,32 +149,54 @@ async function ocrWithTesseract(file, index, total) {
 
 async function ocrImagesWithTesseract(images) {
     if (!images.length) return;
-    // 确保Tesseract已加载
-    await loadTesseract();
-    if (typeof Tesseract === 'undefined') {
-        alert('Tesseract.js 尚未加载完成，请稍后再试。');
+    if (isOcrRunning) {
+        showToast('OCR 正在运行中，请勿重复点击', 'warning');
+        isOcrRunning = false; // 重置锁，防止并发调用后永久卡死
         return;
     }
+    isOcrRunning = true;
+    try {
+    // 先显示进度条容器
     let ocrDiv = document.getElementById('ocrResult');
     let fraudTextarea = document.getElementById('fraudText');
     let allText = [];
     showOcrProgress(images.length);
+
+    // 确保Tesseract已加载（含模型下载进度，显示在页面进度条上）
+    await loadTesseract((downloaded, total, message) => {
+        showModelDownloadProgress(downloaded, total, message);
+    });
+    if (typeof Tesseract === 'undefined') {
+        showToast('Tesseract.js 尚未加载完成，请稍后再试。', 'error');
+        isOcrRunning = false;
+        return;
+    }
+
+    // 模型已就绪，开始逐图识别（剩余 90% 进度）
     for (let i = 0; i < images.length; i++) {
-        updateOcrProgress(i, images.length, 0, `正在识别图片 ${i+1}/${images.length}`);
+        updateOcrProgress(i, images.length, 0, '正在识别图片 ' + (i+1) + '/' + images.length);
         try {
             const recognized = await ocrWithTesseract(images[i].file, i, images.length);
-            if (recognized) allText.push(`【图片${i+1}】\n${recognized}`);
+            if (recognized) allText.push('【图片' + (i+1) + '】\n' + recognized);
         } catch (err) {
-            allText.push(`【图片${i+1}】识别失败`);
+            allText.push('【图片' + (i+1) + '】识别失败');
         }
-        updateOcrProgress(i, images.length, 1, `图片 ${i+1}/${images.length} 完成`);
+        updateOcrProgress(i, images.length, 1, '图片 ' + (i+1) + '/' + images.length + ' 完成');
     }
     hideOcrProgress();
     let combined = allText.join('\n\n');
+    if (!combined.trim()) {
+        isOcrRunning = false;
+        ocrDiv.innerHTML = '⚠️ 未识别到任何文字';
+        return;
+    }
     if (document.getElementById('desensitizeSwitch').checked) combined = desensitizeText(combined);
     fraudTextarea.value = fraudTextarea.value ? fraudTextarea.value + "\n\n" + combined : combined;
     globalOcrText = combined;
-    ocrDiv.innerHTML = `✅ Tesseract OCR 完成，已填入文本框。证据文本已暂存，可在报案填报中引用。`;
+    ocrDiv.innerHTML = '✅ Tesseract OCR 完成，已填入文本框。证据文本已暂存，可在报案填报中引用。';
+    } finally {
+        isOcrRunning = false;
+    }
 }
 
 // ===== 初始化上传组件 =====
@@ -164,17 +223,23 @@ function initBillUpload() {
         reader.onload = ev => {
             let ext = file.name.split('.').pop().toLowerCase();
             if (ext === 'csv') {
-                billData = { raw: ev.target.result, type: 'csv' };
+                // 去除 UTF-8 BOM（Windows 导出的 CSV 常带有 BOM）
+                let raw = ev.target.result.replace(/^﻿/, '');
+                // 自动检测分隔符：微信/支付宝 CSV 常用分号，标准 CSV 用逗号
+                let semiColonCount = (raw.match(/;/g) || []).length;
+                let commaCount = (raw.match(/,/g) || []).length;
+                let delimiter = semiColonCount > commaCount ? ';' : ',';
+                billData = { raw, type: 'csv', delimiter };
             } else {
                 try {
                     let wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
                     billData = { raw: wb, type: 'xlsx' };
                 } catch (e) {
-                    alert('文件格式错误，无法解析Excel文件。');
+                    showToast('文件格式错误，无法解析Excel文件。', 'error');
                     return;
                 }
             }
-            alert('账单已上传');
+            showToast('账单已上传', 'success');
         };
         ext === 'csv' ? reader.readAsText(file) : reader.readAsArrayBuffer(file);
     });
