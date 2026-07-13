@@ -44,6 +44,11 @@ async function sendUserMessage() {
     let inp = document.getElementById('chatInput');
     let msg = inp.value.trim();
     if (!msg || isWaitingReply) return;
+
+    // 防止重复发送：禁用发送按钮
+    let btn = document.getElementById('sendChatBtn');
+    if (btn) btn.disabled = true;
+
     addMessageToUI('user', msg);
     isWaitingReply = true;
     showTypingIndicator();
@@ -72,7 +77,6 @@ async function sendUserMessage() {
         console.error('Chat error:', e);
     } finally {
         isWaitingReply = false;
-        let btn = document.getElementById('sendChatBtn');
         if (btn) btn.disabled = false;
     }
 }

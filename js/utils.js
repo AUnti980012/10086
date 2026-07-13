@@ -15,8 +15,8 @@ function renderMarkdown(text) {
     let html = escapeHtml(text);
     // 加粗 **text**
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // 斜体 *text*
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // 斜体 *text*（兼容半角 * 和全角 ＊）
+    html = html.replace(/[＊*](.+?)[＊*]/g, '<em>$1</em>');
     // 行内代码 `text`
     html = html.replace(/`(.+?)`/g, '<code>$1</code>');
     // 引用 > text
@@ -32,8 +32,8 @@ function desensitizeText(text) {
     text = text.replace(/\b\d{17}[\dXx]\b|\b\d{15}\b/g, (m) => m.slice(0, 6) + '********' + m.slice(-4));
     // 2. 再处理手机号(11位，带边界)
     text = text.replace(/\b1[3-9]\d{9}\b/g, (m) => m.slice(0, 3) + '****' + m.slice(7));
-    // 3. 最后处理银行卡号(16-19位，带边界)
-    text = text.replace(/\b\d{6}(\d{8,10})\d{4}\b/g, (m) => m.slice(0, 6) + '***********' + m.slice(-4));
+    // 3. 最后处理银行卡号(16-19位，以常见银行卡前缀开头：62/4/5)
+    text = text.replace(/\b(62|4[0-9]|5[1-5])\d{4}(\d{8,10})\d{4}\b/g, (m) => m.slice(0, 6) + '***********' + m.slice(-4));
     return text;
 }
 

@@ -16,30 +16,25 @@ function initImageLightbox() {
     let currentIndex = 0;
     let thumbnails = [];
 
-    // 监听预览区的图片点击
-    document.getElementById('identifyPreview')?.addEventListener('click', (e) => {
+    // 事件委托：监听容器级 click，避免重复绑定
+    const identifyPreview = document.getElementById('identifyPreview');
+    const reportPreview = document.getElementById('reportPreview');
+
+    function handleClick(e) {
         const item = e.target.closest('.preview-item');
         if (!item) return;
         const img = item.querySelector('img');
         if (!img) return;
 
         // 收集所有缩略图的 src
-        thumbnails = Array.from(document.querySelectorAll('#identifyPreview .preview-item img')).map(i => i.src);
+        const container = item.parentElement;
+        thumbnails = Array.from(container.querySelectorAll('.preview-item img')).map(i => i.src);
         currentIndex = thumbnails.indexOf(img.src);
         openLightbox();
-    });
+    }
 
-    // 报案页的图片也支持放大
-    document.getElementById('reportPreview')?.addEventListener('click', (e) => {
-        const item = e.target.closest('.preview-item');
-        if (!item) return;
-        const img = item.querySelector('img');
-        if (!img) return;
-
-        thumbnails = Array.from(document.querySelectorAll('#reportPreview .preview-item img')).map(i => i.src);
-        currentIndex = thumbnails.indexOf(img.src);
-        openLightbox();
-    });
+    identifyPreview?.addEventListener('click', handleClick);
+    reportPreview?.addEventListener('click', handleClick);
 
     function openLightbox() {
         if (!lightbox || !thumbnails[currentIndex]) return;
@@ -405,7 +400,7 @@ async function detectFraud() {
 }
 
 // ===== DeepSeek深度判定 =====
-async function doubaoDeepDetect() {
+async function deepDetect() {
     let txt = document.getElementById('fraudText').value.trim();
     let hasImages = identifyImages && identifyImages.length > 0;
 
@@ -450,7 +445,8 @@ async function doubaoDeepDetect() {
 // ===== 填充到报案表 =====
 function fillToReport() {
     let res = document.getElementById('detectResult').textContent;
-    if (res && !res.includes('判定失败') && !res.includes('疑似诈骗') && !res.includes('未发现') && !res.includes('DeepSeek')) {
+    // 只要不是判定失败或空结果，就允许填充
+    if (res && !res.includes('判定失败') && res.trim()) {
         document.getElementById('fraudDetail').value = res;
     }
     let fraudTextarea = document.getElementById('fraudText');
@@ -486,23 +482,49 @@ function parseBill() {
         try {
             let total = 0, records = [];
             if (billData.type === 'csv') {
-                let lines = billData.raw.split(/\r?\n/); // 支持Windows换行
+                let lines = billData.raw.split(/\r?\n/);
+                let delim = billData.delimiter || ',';
+                // 解析表头，找到金额列的索引
+                let headerParts = lines[0].split(delim);
+                let amountIdx = -1;
+                for (let h = 0; h < headerParts.length; h++) {
+                    let col = headerParts[h].trim().toLowerCase();
+                    if (col.includes('金额') || col.includes('amount') || col.includes('支出') || col.includes('借方') || col.includes('消费')) {
+                        amountIdx = h;
+                        break;
+                    }
+                }
                 lines.forEach((l, idx) => {
-                    if (idx === 0) return;
-                    let amount = 0;
-                    let parts = l.split(',');
-                    parts.forEach(c => {
-                        let num = parseFloat(c.replace(/[^0-9.-]/g, ''));
-                        if (!isNaN(num) && num !== 0 && (c.includes('支出') || c.includes('付款'))) amount = Math.abs(num);
-                    });
-                    if (amount > 0) { total += amount; records.push(amount); }
+                    if (idx === 0) return; // 跳过表头
+                    let parts = l.split(delim);
+                    if (amountIdx >= 0 && parts[amountIdx]) {
+                        let num = parseFloat(parts[amountIdx].trim().replace(/[^0-9.-]/g, ''));
+                        if (!isNaN(num) && num !== 0) {
+                            // 判断是否为支出：负数金额，或包含"支出"/"付款"标记
+                            let isExpense = num < 0 || l.includes('支出') || l.includes('付款');
+                            if (isExpense) {
+                                total += Math.abs(num);
+                                records.push(Math.abs(num));
+                            }
+                        }
+                    }
                 });
             } else {
                 let wb = billData.raw,
                     ws = wb.Sheets[wb.SheetNames[0]],
                     data = XLSX.utils.sheet_to_json(ws);
                 data.forEach(row => {
-                    let amt = parseFloat(row['金额'] || row['Amount'] || 0);
+                    // 模糊匹配金额列：遍历所有键，找包含"金额"/"amount"的列
+                    let amt = 0;
+                    let amtCol = Object.keys(row).find(k =>
+                        k.toLowerCase().includes('金额') ||
+                        k.toLowerCase().includes('amount') ||
+                        k.toLowerCase().includes('发生额') ||
+                        k.toLowerCase().includes('交易金额')
+                    );
+                    if (amtCol !== undefined) {
+                        amt = parseFloat(row[amtCol]);
+                    }
                     if (amt < 0 || (row['收支类型'] && row['收支类型'].includes('支出'))) {
                         total += Math.abs(amt);
                         records.push(Math.abs(amt));
@@ -573,17 +595,44 @@ async function exportPdf() {
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pdfWidth - 20;
+        const imgWidth = pdfWidth - 20; // 左右各留 10mm 边距
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 10;
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= (pdfHeight - 20);
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight + 10;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-            heightLeft -= (pdfHeight - 20);
+
+        // 计算报告内容需要的页数
+        const usableHeight = pdfHeight - 20; // 上下各留 10mm
+        const totalPages = Math.ceil(imgHeight / usableHeight);
+
+        if (totalPages <= 1) {
+            // 单页：直接添加
+            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+        } else {
+            // 多页：按内容高度裁剪图片分段添加到每页
+            const pxPerMm = canvas.height / pdfHeight;
+            const sliceHeightPx = Math.floor(usableHeight * pxPerMm);
+
+            for (let page = 0; page < totalPages; page++) {
+                if (page === 0) {
+                    // 第一页：完整图片，从顶部开始
+                    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(imgHeight, usableHeight));
+                } else {
+                    // 后续页：裁剪图片的对应段
+                    const srcY = page * sliceHeightPx;
+                    const srcH = Math.min(sliceHeightPx, imgHeight - srcY);
+                    if (srcH <= 0) break;
+
+                    // 创建临时 canvas 裁剪图片段
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = srcH;
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+                    const tempImgData = tempCanvas.toDataURL('image/png');
+                    const displayedHeight = (tempCanvas.height * imgWidth) / tempCanvas.width;
+                    pdf.addPage();
+                    pdf.addImage(tempImgData, 'PNG', 10, 10, imgWidth, displayedHeight);
+                }
+            }
         }
         pdf.save(`刑事控告书_${Date.now()}.pdf`);
         showToast('PDF 文件已生成', 'success');
@@ -669,10 +718,15 @@ function switchPage(pageId) {
     if (el) el.classList.add('active');
     updateNavActive(pageId);
 
-    // 根据目标页面重置对应状态
+    // 切换到报案填报页时，如果是首次访问（currentStep === 1 且无已填数据），重置到第1步
+    // 如果用户已经在第2/3步填写了数据，保持当前步骤不变
     if (pageId === 'reportPage') {
         updateEvidenceTextBox();
-        showStep(1);
+        // 检查是否已有填写的数据，避免无意义重置
+        const nameVal = document.getElementById('name')?.value.trim();
+        if (!nameVal && currentStep !== 1) {
+            showStep(1);
+        }
     }
     // 切换到诈骗识别页时预加载Tesseract（静默加载，不阻塞）
     if (pageId === 'identifyPage') {
@@ -766,7 +820,7 @@ window.onload = function() {
 
         // 事件绑定
         document.getElementById('startDetectBtn')?.addEventListener('click', detectFraud);
-        document.getElementById('doubaoBtn')?.addEventListener('click', doubaoDeepDetect);
+        document.getElementById('doubaoBtn')?.addEventListener('click', deepDetect);
         document.getElementById('clearIdentifyBtn')?.addEventListener('click', clearIdentify);
         document.getElementById('fillToReportBtn')?.addEventListener('click', fillToReport);
         document.getElementById('parseBillBtn')?.addEventListener('click', parseBill);
@@ -825,7 +879,8 @@ window.validateReportForm = validateReportForm;
 window.markError = markError;
 window.generateReport = generateReport;
 window.detectFraud = detectFraud;
-window.doubaoDeepDetect = doubaoDeepDetect;
+window.deepDetect = deepDetect;
+window.doubaoDeepDetect = deepDetect; // 保留别名以兼容外部调用
 window.fillToReport = fillToReport;
 window.clearIdentify = clearIdentify;
 window.parseBill = parseBill;

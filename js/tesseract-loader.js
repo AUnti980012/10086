@@ -83,7 +83,7 @@ function loadTesseract(onLangProgress) {
 
         // 使用 bootcdn（国内访问更快）
         const script = document.createElement('script');
-        script.src = 'https://cdn.bootcdn.net/ajax/libs/tesseract.js/5.0.5/tesseract.min.js';
+        script.src = 'https://lib.baomitu.com/tesseract.js/5.0.5/tesseract.min.js';
         script.crossOrigin = 'anonymous';
         script.onload = async () => {
             tesseractReady = true;
