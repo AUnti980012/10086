@@ -541,11 +541,10 @@ async function deepDetect() {
         }
         let data = await resp.json();
         let reply = data.choices?.[0]?.message?.content || '分析完成';
-        resDiv.textContent = `【DeepSeek深度判定】\n${reply}`;
+        resDiv.innerHTML = `【DeepSeek深度判定】\n${renderMarkdown(reply)}`;
         if (systemSettings.autoSave) addHistory('detect', reply.substring(0, 200));
     } catch (e) {
-        resDiv.textContent = `判定失败：${e.message}`;
-        console.error('DeepDetect error:', e);
+        resDiv.textContent = `判定失败：${e.message}`;        console.error('DeepDetect error:', e);
     }
 }
 
