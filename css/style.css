@@ -431,7 +431,7 @@ body {
     background: var(--bg-elevated);
     padding: 0;
     border-radius: var(--radius-md);
-    white-space: pre-line;
+    white-space: normal;
     line-height: 1.7;
     margin: 16px 0;
     border: 1px solid var(--border-subtle);
@@ -443,26 +443,11 @@ body {
     grid-template-rows: 1fr;
 }
 .result-box > * {
-    overflow: hidden;
+    overflow: visible;
 }
 .result-box.show > * {
     padding: 14px 16px;
     overflow-y: auto;
-}
-
-/* ===== result-box 内的 Markdown 元素样式 ===== */
-/* 关键：覆盖 white-space: pre-line，让 HTML 子元素正常渲染为块级元素 */
-.result-box strong,
-.result-box em,
-.result-box code,
-.result-box pre,
-.result-box blockquote,
-.result-box h1, .result-box h2, .result-box h3,
-.result-box h4, .result-box h5, .result-box h6,
-.result-box ol, .result-box ul, .result-box li,
-.result-box hr,
-.result-box br {
-    white-space: normal !important;
 }
 
 /* ===== result-box 内的 Markdown 元素样式 ===== */
@@ -495,11 +480,7 @@ body {
     margin-top: 12px;
     margin-bottom: 6px;
 }
-.result-box ol {
-    margin: 4px 0 8px 0;
-    padding-left: 24px;
-}
-.result-box ul {
+.result-box ol, .result-box ul {
     margin: 4px 0 8px 0;
     padding-left: 24px;
 }
