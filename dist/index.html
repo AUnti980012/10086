@@ -24,6 +24,22 @@
 
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- 字体加载确认弹窗 -->
+    <div class="font-confirm-overlay" id="fontConfirmOverlay">
+        <div class="font-confirm-dialog">
+            <div class="font-confirm-title">字体加载提示</div>
+            <div class="font-confirm-body">是否下载字体文件？可获得更好的显示效果。</div>
+            <div class="font-confirm-remember">
+                <input type="checkbox" id="fontRememberCheck">
+                <label for="fontRememberCheck">记住我的选择</label>
+            </div>
+            <div class="font-confirm-actions">
+                <button class="font-confirm-btn" id="fontAllowBtn">允许</button>
+                <button class="font-confirm-btn font-confirm-btn-primary" id="fontDenyBtn">不允许</button>
+            </div>
+        </div>
+    </div>
+
     <div class="global-header">
         <div class="header-content">
             <div class="header-top">

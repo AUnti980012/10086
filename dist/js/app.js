@@ -674,7 +674,7 @@ function switchPage(pageId) {
         updateEvidenceTextBox();
         showStep(1);
     }
-    // 切换到诈骗识别页时预加载Tesseract
+    // 切换到诈骗识别页时预加载Tesseract（静默加载，不阻塞）
     if (pageId === 'identifyPage') {
         loadTesseract();
     }
@@ -699,6 +699,214 @@ function updateUnderline() {
     underline.style.left = `${rect.left - parentRect.left + active.parentElement.scrollLeft}px`;
 }
 
+// ===== 字体加载确认 =====
+function initFontConfirm() {
+    const overlay = document.getElementById('fontConfirmOverlay');
+    if (!overlay) return;
+
+    const FONT_PREF_KEY = 'fontLoadPref';
+
+    // 读取用户偏好
+    const pref = safeLocalStorageGet(FONT_PREF_KEY, null);
+
+    if (pref === 'allow') {
+        applyCustomFonts();
+        overlay.classList.add('hidden');
+        overlay.classList.remove('visible');
+        return;
+    } else if (pref === 'deny') {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('visible');
+        return;
+    }
+    // pref === null：显示弹窗让用户选择
+    overlay.classList.remove('hidden');
+    overlay.classList.add('visible');
+
+    const rememberCheck = document.getElementById('fontRememberCheck');
+
+    document.getElementById('fontAllowBtn').addEventListener('click', () => {
+        if (rememberCheck && rememberCheck.checked) {
+            safeLocalStorageSet(FONT_PREF_KEY, 'allow');
+        }
+        applyCustomFontsWithProgress();
+        overlay.classList.add('hidden');
+        overlay.classList.remove('visible');
+    });
+
+    document.getElementById('fontDenyBtn').addEventListener('click', () => {
+        if (rememberCheck && rememberCheck.checked) {
+            safeLocalStorageSet(FONT_PREF_KEY, 'deny');
+        }
+        overlay.classList.add('hidden');
+        overlay.classList.remove('visible');
+    });
+}
+
+// ===== 字体加载进度 Toast =====
+let fontDownloadToast = null;
+
+function createFontDownloadToast() {
+    const container = document.getElementById('toastContainer');
+    if (!container) return null;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-success font-download-toast';
+    toast.innerHTML = `
+        <span>🔤</span>
+        <span>字体下载中...</span>
+        <button class="toast-close font-toast-close" aria-label="关闭">×</button>
+        <div class="font-download-progress">
+            <div class="font-download-bar-bg">
+                <div class="font-download-bar-fill" style="width: 0%;"></div>
+            </div>
+            <div class="font-download-status">
+                <span class="font-download-text">正在下载 PingFang SC...</span>
+                <span class="font-download-percent">0%</span>
+            </div>
+        </div>
+    `;
+    container.appendChild(toast);
+    toast.querySelector('.font-toast-close').addEventListener('click', () => {
+        toast.classList.add('toast-out');
+        toast.addEventListener('animationend', () => toast.remove(), { once: true });
+    });
+    return toast;
+}
+
+function updateFontToastProgress(currentFile, downloaded, total) {
+    if (!fontDownloadToast) return;
+    const fill = fontDownloadToast.querySelector('.font-download-bar-fill');
+    const text = fontDownloadToast.querySelector('.font-download-text');
+    const percent = fontDownloadToast.querySelector('.font-download-percent');
+    if (fill) fill.style.width = `${(downloaded / total) * 100}%`;
+    if (text) text.textContent = `正在下载 ${currentFile}...`;
+    if (percent) percent.textContent = `${Math.round((downloaded / total) * 100)}%`;
+}
+
+function completeFontToast() {
+    if (!fontDownloadToast) return;
+    const fill = fontDownloadToast.querySelector('.font-download-bar-fill');
+    const text = fontDownloadToast.querySelector('.font-download-text');
+    const percent = fontDownloadToast.querySelector('.font-download-percent');
+    if (fill) fill.style.width = '100%';
+    if (text) text.textContent = '字体下载完成 ✓';
+    if (percent) percent.textContent = '100%';
+    setTimeout(() => {
+        fontDownloadToast.classList.add('toast-out');
+        fontDownloadToast.addEventListener('animationend', () => fontDownloadToast.remove(), { once: true });
+        fontDownloadToast = null;
+    }, 2000);
+}
+
+/**
+ * 带进度反馈的字体加载
+ */
+async function applyCustomFontsWithProgress() {
+    fontDownloadToast = createFontDownloadToast();
+    if (!fontDownloadToast) {
+        applyCustomFonts();
+        return;
+    }
+
+    const fonts = [
+        { name: 'PingFang SC', url: 'fonts/PingFangSC-Semibold.ttf' },
+        { name: 'Kumbh Sans', url: 'fonts/KumbhSans-Regular.ttf' },
+    ];
+
+    try {
+        for (let i = 0; i < fonts.length; i++) {
+            await preloadFont(fonts[i].url, fonts[i].name, i + 1, fonts.length);
+        }
+        applyCustomFonts();
+        completeFontToast();
+    } catch (e) {
+        const text = fontDownloadToast.querySelector('.font-download-text');
+        if (text) text.textContent = '字体加载失败，将使用系统字体';
+        setTimeout(() => {
+            fontDownloadToast.classList.add('toast-out');
+            fontDownloadToast.addEventListener('animationend', () => fontDownloadToast.remove(), { once: true });
+            fontDownloadToast = null;
+        }, 2000);
+    }
+}
+
+/**
+ * 预加载单个字体文件，返回 ProgressEvent 以便追踪
+ */
+function preloadFont(url, name, index, total) {
+    return new Promise((resolve, reject) => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'font';
+        link.type = `font/${url.split('.').pop()}`;
+        link.href = url;
+        link.crossOrigin = 'anonymous';
+
+        // 同时创建一个 FontFace 对象来精确追踪加载进度
+        const fontFace = new FontFace(name, `url(${url})`, {
+            weight: '600',
+            style: 'normal',
+        });
+
+        // 通过 fetch + stream 模拟进度反馈
+        let loadedBytes = 0;
+        let totalBytes = 0;
+        const progressInterval = setInterval(() => {
+            updateFontToastProgress(name, loadedBytes, totalBytes || 1);
+        }, 200);
+
+        fontFace.load().then((font) => {
+            clearInterval(progressInterval);
+            loadedBytes = totalBytes || 1;
+            updateFontToastProgress(name, index, total);
+            document.fonts.add(font);
+            resolve();
+        }).catch(() => {
+            clearInterval(progressInterval);
+            // 降级：回退到 CSS 注入方式
+            updateFontToastProgress(name, index, total);
+            resolve();
+        });
+
+        // 备用方案：通过 fetch 获取实际进度
+        fetch(url, { method: 'HEAD' })
+            .then(response => {
+                totalBytes = parseInt(response.headers.get('content-length')) || 0;
+                clearInterval(progressInterval);
+                updateFontToastProgress(name, totalBytes, totalBytes);
+            })
+            .catch(() => {
+                // 跨域可能无法获取 HEAD，不影响
+            });
+    });
+}
+
+/**
+ * 动态注入自定义字体样式（替换全局 font-family）
+ */
+function applyCustomFonts() {
+    // 将 font-display: optional 改为 block，强制立即下载
+    const style = document.createElement('style');
+    style.textContent = `
+        @font-face {
+            font-family: 'PingFang SC';
+            font-style: normal;
+            font-weight: 600;
+            font-display: block;
+            src: url('fonts/PingFangSC-Semibold.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'Kumbh Sans';
+            font-style: normal;
+            font-weight: 400;
+            font-display: block;
+            src: url('fonts/KumbhSans-Regular.ttf') format('truetype');
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 // ===== 初始化 =====
 window.onload = function() {
     // 从localStorage安全读取
@@ -719,6 +927,9 @@ window.onload = function() {
         initImageUpload();
         initBillUpload();
         updateEvidenceTextBox();
+
+        // 字体加载确认（页面内容已就绪，异步弹出）
+        initFontConfirm();
 
         // 事件绑定
         document.getElementById('startDetectBtn')?.addEventListener('click', detectFraud);

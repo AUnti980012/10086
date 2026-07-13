@@ -95,10 +95,10 @@ function showOcrProgress(totalImages) {
     container.classList.add('active');
     fill.style.width = '0%';
     percent.textContent = '0%';
-    status.textContent = `准备识别 0/${totalImages}`;
+    status.textContent = '准备识别 0/' + totalImages;
 }
 
-function updateOcrProgress(currentIndex, total, progressFraction, statusText = '') {
+function updateOcrProgress(currentIndex, total, progressFraction, statusText) {
     const fill = document.getElementById('ocrProgressFill');
     const status = document.getElementById('ocrProgressStatus');
     const percent = document.getElementById('ocrProgressPercent');
@@ -106,10 +106,10 @@ function updateOcrProgress(currentIndex, total, progressFraction, statusText = '
     const perImageWeight = 1 / total;
     const done = currentIndex * perImageWeight;
     const currentPart = progressFraction * perImageWeight;
-    const overall = Math.min((done + currentPart) * 100, 100).toFixed(0);
+    const overall = Math.min(Math.round((done + currentPart) * 100), 100);
     fill.style.width = overall + '%';
     percent.textContent = overall + '%';
-    status.textContent = statusText || `识别中 ${currentIndex+1}/${total}`;
+    status.textContent = statusText || ('识别中 ' + (currentIndex + 1) + '/' + total);
 }
 
 function hideOcrProgress() {
@@ -141,37 +141,52 @@ async function ocrImagesWithTesseract(images) {
     }
     isOcrRunning = true;
     try {
-    // 确保Tesseract已加载
-    await loadTesseract();
-    if (typeof Tesseract === 'undefined') {
-        showToast('Tesseract.js 尚未加载完成，请稍后再试。', 'error');
-        return;
-    }
+    // 先显示进度条容器
     let ocrDiv = document.getElementById('ocrResult');
     let fraudTextarea = document.getElementById('fraudText');
     let allText = [];
     showOcrProgress(images.length);
+
+    // 确保Tesseract已加载（含模型下载进度）
+    await loadTesseract((downloaded, total, message) => {
+        // 模型下载占 10% 进度
+        const modelProgress = Math.round((downloaded / total) * 10);
+        const fill = document.getElementById('ocrProgressFill');
+        const status = document.getElementById('ocrProgressStatus');
+        const percent = document.getElementById('ocrProgressPercent');
+        if (fill && status) {
+            fill.style.width = modelProgress + '%';
+            percent.textContent = modelProgress + '%';
+            status.textContent = message || '正在加载 OCR 模型...';
+        }
+    });
+    if (typeof Tesseract === 'undefined') {
+        showToast('Tesseract.js 尚未加载完成，请稍后再试。', 'error');
+        return;
+    }
+
+    // 模型已就绪，开始逐图识别（剩余 90% 进度）
     for (let i = 0; i < images.length; i++) {
-        updateOcrProgress(i, images.length, 0, `正在识别图片 ${i+1}/${images.length}`);
+        updateOcrProgress(i, images.length, 0, '正在识别图片 ' + (i+1) + '/' + images.length);
         try {
             const recognized = await ocrWithTesseract(images[i].file, i, images.length);
-            if (recognized) allText.push(`【图片${i+1}】\n${recognized}`);
+            if (recognized) allText.push('【图片' + (i+1) + '】\n' + recognized);
         } catch (err) {
-            allText.push(`【图片${i+1}】识别失败`);
+            allText.push('【图片' + (i+1) + '】识别失败');
         }
-        updateOcrProgress(i, images.length, 1, `图片 ${i+1}/${images.length} 完成`);
+        updateOcrProgress(i, images.length, 1, '图片 ' + (i+1) + '/' + images.length + ' 完成');
     }
     hideOcrProgress();
     let combined = allText.join('\n\n');
     if (!combined.trim()) {
         isOcrRunning = false;
-        ocrDiv.innerHTML = `⚠️ 未识别到任何文字`;
+        ocrDiv.innerHTML = '⚠️ 未识别到任何文字';
         return;
     }
     if (document.getElementById('desensitizeSwitch').checked) combined = desensitizeText(combined);
     fraudTextarea.value = fraudTextarea.value ? fraudTextarea.value + "\n\n" + combined : combined;
     globalOcrText = combined;
-    ocrDiv.innerHTML = `✅ Tesseract OCR 完成，已填入文本框。证据文本已暂存，可在报案填报中引用。`;
+    ocrDiv.innerHTML = '✅ Tesseract OCR 完成，已填入文本框。证据文本已暂存，可在报案填报中引用。';
     } finally {
         isOcrRunning = false;
     }
