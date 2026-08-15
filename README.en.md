@@ -1,6 +1,6 @@
 # Anti-Fraud Recognition & Reporting Assistant · Firefly-IV
 
-> Smart Anti-Fraud Assistant · Ver.3.8.1
+> Smart Anti-Fraud Assistant · Ver.3.8.2
 > Concept by NEEPU Easy-Ban Workstation - Firefly TYPE IV
 
 An AI-powered anti-fraud assistant for students: combining keyword detection, OCR recognition, AI deep analysis, and one-click criminal complaint drafting to help users identify scam tactics and prepare reporting materials.
@@ -117,4 +117,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ---
 
-© 2026 Xin Firefly-IV. All Rights Reserved. · Ver.3.8.1
+© 2026 Xin Firefly-IV. All Rights Reserved. · Ver.3.8.2

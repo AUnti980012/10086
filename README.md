@@ -1,6 +1,6 @@
 # 反诈智能识别与报案辅助系统 · Firefly-IV
 
-> 智能反诈辅助系统 · Ver.3.8.1
+> 智能反诈辅助系统 · Ver.3.8.2
 > 创意来自东北电力大学易班工作站-Firefly TYPE IV
 
 一款面向大学生的智能反诈辅助系统：集关键词检测、OCR 识别、AI 深度判定、刑事控告书自动生成于一体，帮助用户识别诈骗套路、整理报案材料。
@@ -117,4 +117,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ---
 
-© 2026 Xin Firefly-IV. All Rights Reserved. · Ver.3.8.1
+© 2026 Xin Firefly-IV. All Rights Reserved. · Ver.3.8.2
