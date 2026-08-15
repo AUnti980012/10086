@@ -60,7 +60,7 @@ function handleFiles(files, container, cb) {
         if (!countEl) {
             countEl = document.createElement('div');
             countEl.className = 'upload-count';
-            countEl.style.cssText = 'font-size:12px;color:var(--text-muted);margin:4px 0;';
+            countEl.style.cssText = 'font-size:12px;color:var(--text-tertiary);margin:4px 0;';
             container.parentElement.insertBefore(countEl, container.nextSibling);
         }
         countEl.textContent = `已上传 ${results.filter(Boolean).length} 张图片`;
@@ -219,9 +219,9 @@ function initBillUpload() {
     input.addEventListener('change', e => {
         let file = e.target.files[0];
         if (!file) return;
+        let ext = file.name.split('.').pop().toLowerCase();
         let reader = new FileReader();
         reader.onload = ev => {
-            let ext = file.name.split('.').pop().toLowerCase();
             if (ext === 'csv') {
                 // 去除 UTF-8 BOM（Windows 导出的 CSV 常带有 BOM）
                 let raw = ev.target.result.replace(/^﻿/, '');

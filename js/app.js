@@ -41,7 +41,7 @@ function initImageLightbox() {
         lightboxImg.src = thumbnails[currentIndex];
         lightboxCounter.textContent = `${currentIndex + 1} / ${thumbnails.length}`;
         lightbox.classList.add('active');
-        document.body.style.overflow = 'hidden'; // 禁止背景滚动
+        document.body.style.overflow = 'hidden';
     }
 
     function closeLightbox() {
@@ -110,7 +110,12 @@ function safeLocalStorageGet(key, defaultVal) {
 function safeLocalStorageSet(key, val) {
     try {
         localStorage.setItem(key, JSON.stringify(val));
-    } catch (e) { /* 静默忽略配额溢出 */ }
+    } catch (e) {
+        // 配额溢出时提示用户
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+            showToast('存储空间已满，部分记录可能无法保存', 'warning');
+        }
+    }
 }
 
 function safeLocalStorageRemove(key) {
@@ -133,6 +138,7 @@ function updateEvidenceTextBox() {
 // ===== 从识别页导入证据文本 =====
 function importEvidenceFromIdentify() {
     let fraudTextarea = document.getElementById('fraudText');
+    if (!fraudTextarea) return;
     let userText = fraudTextarea.value.trim();
     if (userText) {
         globalUserInputText = userText;
@@ -270,88 +276,102 @@ function markError(formId, isError) {
 }
 
 // ===== 生成报案报告 =====
+let reportSnapshot = null; // 保存报案快照
+
 function generateReport() {
-    let name = document.getElementById('name').value.trim();
-    let idNo = document.getElementById('idNo').value.trim();
-    let phone = document.getElementById('phone').value.trim();
-    let address = document.getElementById('address').value.trim() || '未填写';
-    let accusedName = document.getElementById('accusedName').value.trim() || '未知';
-    let accusedPhone = document.getElementById('accusedPhone').value.trim() || '未知';
-    let accusedWechat = document.getElementById('accusedWechat').value.trim() || '未知';
-    let accusedAlipay = document.getElementById('accusedAlipay').value.trim() || '未知';
-    let accusedBankCard = document.getElementById('accusedBankCard').value.trim() || '未知';
-    let accusedAddress = document.getElementById('accusedAddress').value.trim() || '未知';
-    let time = document.getElementById('fraudTime').value.trim();
-    let location = document.getElementById('fraudLocation').value.trim();
-    let contactMethod = document.getElementById('contactMethod').value.trim() || '未填写';
-    let platform = document.getElementById('fraudPlatform').value.trim();
-    let fType = document.getElementById('fraudType').value.trim();
-    let moneyVal = parseFloat(document.getElementById('fraudMoney').value.trim());
+    // 收集当前表单所有字段
+    let formData = {
+        name: document.getElementById('name').value.trim(),
+        idNo: document.getElementById('idNo').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        address: document.getElementById('address').value.trim() || '未填写',
+        accusedName: document.getElementById('accusedName').value.trim() || '未知',
+        accusedPhone: document.getElementById('accusedPhone').value.trim() || '未知',
+        accusedWechat: document.getElementById('accusedWechat').value.trim() || '未知',
+        accusedAlipay: document.getElementById('accusedAlipay').value.trim() || '未知',
+        accusedBankCard: document.getElementById('accusedBankCard').value.trim() || '未知',
+        accusedAddress: document.getElementById('accusedAddress').value.trim() || '未知',
+        fraudTime: document.getElementById('fraudTime').value.trim(),
+        fraudLocation: document.getElementById('fraudLocation').value.trim(),
+        contactMethod: document.getElementById('contactMethod').value.trim() || '未填写',
+        fraudPlatform: document.getElementById('fraudPlatform').value.trim(),
+        fraudType: document.getElementById('fraudType').value.trim(),
+        fraudMoney: document.getElementById('fraudMoney').value.trim(),
+        fraudDetail: document.getElementById('fraudDetail').value.trim(),
+        evidenceCount: reportImages?.length || 0,
+        hasOcr: globalOcrText.trim() ? true : false,
+        hasUserInput: globalUserInputText.trim() ? true : false,
+        ocrText: globalOcrText.trim(),
+        userInputText: globalUserInputText.trim(),
+        generatedAt: new Date().toISOString()
+    };
+
+    // 保存快照
+    reportSnapshot = formData;
+
+    // 生成报告文本
+    let moneyVal = parseFloat(formData.fraudMoney);
     if (isNaN(moneyVal)) moneyVal = 0;
     let money = moneyVal.toFixed(2);
-    let detail = document.getElementById('fraudDetail').value.trim();
-    let evidenceCount = reportImages.length;
-    let hasOcr = globalOcrText.trim() ? true : false;
-    let hasUserInput = globalUserInputText.trim() ? true : false;
 
     let report = `==================== 刑事控告书 ====================
 
-关于${accusedName}涉嫌诈骗罪的刑事控告书
+关于${formData.accusedName}涉嫌诈骗罪的刑事控告书
 
 致：有管辖权之公安机关
 
 【控告人信息】
-姓名：${name}
-身份证号：${idNo}
-联系电话：${phone}
-住址：${address}
+姓名：${formData.name}
+身份证号：${formData.idNo}
+联系电话：${formData.phone}
+住址：${formData.address}
 
 【被控告人信息】
-网名/姓名：${accusedName}
-电话：${accusedPhone}
-微信号/QQ号：${accusedWechat}
-支付宝账号：${accusedAlipay}
-银行卡号：${accusedBankCard}
-大概住址或活动范围：${accusedAddress}
+网名/姓名：${formData.accusedName}
+电话：${formData.accusedPhone}
+微信号/QQ号：${formData.accusedWechat}
+支付宝账号：${formData.accusedAlipay}
+银行卡号：${formData.accusedBankCard}
+大概住址或活动范围：${formData.accusedAddress}
 
 【请求事项】
-请求公安机关对被控告人${accusedName}涉嫌诈骗罪一案立案侦查，依法追究其刑事责任。
+请求公安机关对被控告人${formData.accusedName}涉嫌诈骗罪一案立案侦查，依法追究其刑事责任。
 
 【事实与理由】
 一、被骗基本情况
-被骗时间：${time}
-被骗地点/操作地：${location}
-认识方式：${contactMethod}
-被骗平台/渠道：${platform}
-诈骗类型：${fType}
+被骗时间：${formData.fraudTime}
+被骗地点/操作地：${formData.fraudLocation}
+认识方式：${formData.contactMethod}
+被骗平台/渠道：${formData.fraudPlatform}
+诈骗类型：${formData.fraudType}
 被骗总金额：人民币 ¥${money} 元
 
 二、详细经过
-${detail}
+${formData.fraudDetail}
 
 三、法律分析
 被控告人虚构事实/隐瞒真相，致使控告人产生错误认识，控告人基于错误认识处分财产，被控告人获得财产，控告人遭受经济损失。被控告人的行为符合《中华人民共和国刑法》第二百六十六条诈骗罪的构成要件。
 
 【证据清单】
 证据1：控告人身份证复印件
-证据2：控告人与被控告人之间的聊天记录截图（${evidenceCount}张图片）
+证据2：控告人与被控告人之间的聊天记录截图（${formData.evidenceCount}张图片）
 证据3：转账记录/支付凭证
-${hasOcr ? '证据4：OCR识别提取的文本内容（附后）\n' : ''}${hasUserInput ? '证据5：控告人原始输入文本内容（附后）\n' : ''}
-【证据附件】${hasOcr ? '\n\n--- OCR识别文本 ---\n' + globalOcrText.trim() : ''}${hasUserInput ? '\n\n--- 用户原始输入文本 ---\n' + globalUserInputText.trim() : ''}
+${formData.hasOcr ? '证据4：OCR识别提取的文本内容（附后）\n' : ''}${formData.hasUserInput ? '证据5：控告人原始输入文本内容（附后）\n' : ''}
+【证据附件】${formData.hasOcr ? '\n\n--- OCR识别文本 ---\n' + formData.ocrText : ''}${formData.hasUserInput ? '\n\n--- 用户原始输入文本 ---\n' + formData.userInputText : ''}
 
-综上所述，被控告人${accusedName}的行为已涉嫌构成诈骗罪，恳请贵局依法立案侦查，维护控告人的合法权益。
+综上所述，被控告人${formData.accusedName}的行为已涉嫌构成诈骗罪，恳请贵局依法立案侦查，维护控告人的合法权益。
 
 此致
 敬礼
 
-控告人：${name}
+控告人：${formData.name}
 日期：${new Date().toLocaleDateString('zh-CN')}
 =====================================================`;
 
     let resultDiv = document.getElementById('reportResult');
     resultDiv.textContent = report;
     resultDiv.classList.add('show');
-    if (systemSettings.autoSave) addHistory('report', report.substring(0, 200));
+    if (systemSettings.autoSave) addHistory('report', formData);
 }
 
 // ===== 关键词字典懒加载 =====
@@ -419,8 +439,10 @@ async function detectFraud() {
         let kwMap = window.fraudKeywordsMap || {};
         if (!Object.keys(kwMap).length) {
             let resDiv = document.getElementById('detectResult');
-            resDiv.textContent = '⚠️ 关键词字典尚未加载，请稍后再试';
-            resDiv.classList.add('show');
+            if (resDiv) {
+                resDiv.textContent = '⚠️ 关键词字典尚未加载，请稍后再试';
+                resDiv.classList.add('show');
+            }
             return;
         }
 
@@ -502,7 +524,7 @@ async function detectFraud() {
         let resDiv = document.getElementById('detectResult');
         resDiv.textContent = result;
         resDiv.classList.add('show');
-        if (systemSettings.autoSave) addHistory('detect', result);
+        if (systemSettings.autoSave) addHistory('detect', { result, matchedCategories, allHits, timestamp: Date.now() });
     }
 }
 
@@ -542,9 +564,10 @@ async function deepDetect() {
         let data = await resp.json();
         let reply = data.choices?.[0]?.message?.content || '分析完成';
         resDiv.innerHTML = `【DeepSeek深度判定】\n${renderMarkdown(reply)}`;
-        if (systemSettings.autoSave) addHistory('detect', reply.substring(0, 200));
+        if (systemSettings.autoSave) addHistory('deepDetect', { reply, timestamp: Date.now() });
     } catch (e) {
-        resDiv.textContent = `判定失败：${e.message}`;        console.error('DeepDetect error:', e);
+        resDiv.textContent = `判定失败：${e.message}`;
+        console.error('DeepDetect error:', e);
     }
 }
 
@@ -691,11 +714,21 @@ async function exportPdf() {
     try {
         if (typeof html2canvas === 'undefined') { showToast('html2canvas 未加载，请检查网络后重试。', 'error'); return; }
         if (typeof window.jspdf === 'undefined') { showToast('jsPDF 未加载，请检查网络后重试。', 'error'); return; }
+
+        // 临时隐藏按钮，只渲染纯文本
+        let btns = div.querySelectorAll('.btn, button');
+        btns.forEach(b => b.style.display = 'none');
+
         const canvas = await html2canvas(div, {
-            scale: 1.5,
-            backgroundColor: '#1A2740',
-            logging: false
+            scale: 2,
+            backgroundColor: currentTheme === 'dark' ? '#111B2E' : '#FFFFFF',
+            logging: false,
+            useCORS: true
         });
+
+        // 恢复按钮显示
+        btns.forEach(b => b.style.display = '');
+
         const imgData = canvas.toDataURL('image/png');
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -709,24 +742,20 @@ async function exportPdf() {
         const totalPages = Math.ceil(imgHeight / usableHeight);
 
         if (totalPages <= 1) {
-            // 单页：直接添加
             pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
         } else {
-            // 多页：按内容高度裁剪图片分段添加到每页
+            // 按每页可用高度裁剪图片分段添加
             const pxPerMm = canvas.height / pdfHeight;
             const sliceHeightPx = Math.floor(usableHeight * pxPerMm);
 
             for (let page = 0; page < totalPages; page++) {
                 if (page === 0) {
-                    // 第一页：完整图片，从顶部开始
                     pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(imgHeight, usableHeight));
                 } else {
-                    // 后续页：裁剪图片的对应段
                     const srcY = page * sliceHeightPx;
                     const srcH = Math.min(sliceHeightPx, imgHeight - srcY);
                     if (srcH <= 0) break;
 
-                    // 创建临时 canvas 裁剪图片段
                     const tempCanvas = document.createElement('canvas');
                     tempCanvas.width = canvas.width;
                     tempCanvas.height = srcH;
@@ -743,6 +772,11 @@ async function exportPdf() {
         pdf.save(`刑事控告书_${Date.now()}.pdf`);
         showToast('PDF 文件已生成', 'success');
     } catch (error) {
+        // 恢复按钮显示状态（如果正常路径中已被隐藏）
+        let resultDiv = document.getElementById('reportResult');
+        if (resultDiv) {
+            resultDiv.querySelectorAll('.btn, button').forEach(b => b.style.display = '');
+        }
         let msg = 'PDF 生成失败';
         if (error.name === 'AbortError' || error.message?.includes('memory')) {
             msg = 'PDF 生成失败：内存不足，请尝试使用导出 TXT 功能。';
@@ -754,32 +788,217 @@ async function exportPdf() {
     }
 }
 
-// ===== 历史记录 =====
-function addHistory(type, content) {
-    historyRecords.unshift({ id: Date.now(), time: new Date().toLocaleString(), type, content });
-    safeLocalStorageSet('fraudHistory', historyRecords.slice(0, 50));
+// ===== 历史记录（结构化存储 + 可点击恢复） =====
+async function addHistory(type, data) {
+    // data 现在可以是结构化对象（报案数据、检测结果等）
+    let preview = '';
+    let displayType = '';
+    let icon = '';
+
+    if (type === 'report') {
+        // 报案：保存完整表单数据
+        preview = `报案人: ${data.name || '未知'} | 金额: ¥${data.fraudMoney || '0'} | ${data.fraudType || ''}`;
+        displayType = '报案';
+        icon = '📄';
+    } else if (type === 'detect') {
+        // 识别：保存检测结果
+        preview = data.result || '';
+        displayType = '识别';
+        icon = '🔍';
+    } else if (type === 'deepDetect') {
+        // DeepSeek深度判定
+        preview = (data.reply || '').substring(0, 80) + '...';
+        displayType = 'AI判定';
+        icon = '🤖';
+    } else {
+        // 其他类型
+        preview = typeof data === 'string' ? data.substring(0, 100) : String(data);
+        displayType = type;
+        icon = '📝';
+    }
+
+    let record = {
+        id: Date.now(),
+        time: new Date().toLocaleString(),
+        type,
+        data, // 完整结构化数据
+        preview,
+        displayType,
+        icon
+    };
+
+    historyRecords.unshift(record);
+    // 限制最多 30 条（每条包含完整数据，体积较大）
+    historyRecords = historyRecords.slice(0, 30);
+    safeLocalStorageSet('fraudHistory', historyRecords);
     renderHistory();
 }
 
-function renderHistory() {
+async function renderHistory() {
     let listDiv = document.getElementById('historyList');
     if (!listDiv) return;
     if (!historyRecords.length) {
         listDiv.innerHTML = '<div class="history-empty">暂无记录</div>';
         return;
     }
+
     let html = '';
-    historyRecords.forEach(r => {
-        html += `<div class="history-item"><div class="history-header"><span>${r.type==='detect'?'🔍识别':'📄报案'}</span><span>${r.time}</span></div><div>${escapeHtml(r.content).substring(0,100)}...</div></div>`;
-    });
+    for (let r of historyRecords) {
+        html += `<div class="history-item" data-id="${r.id}" style="cursor:pointer;" title="点击查看并恢复数据">
+            <div class="history-header">
+                <span>${r.icon || '📝'} ${r.displayType || r.type}</span>
+                <span>${r.time}</span>
+            </div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">${escapeHtml(r.preview || '').substring(0, 80)}</div>
+            <div style="display:flex;gap:6px;">
+                <button class="btn btn-default restore-btn" data-id="${r.id}" style="padding:4px 10px;font-size:11px;min-height:auto;border-radius:4px;">恢复</button>
+                <button class="btn btn-default detail-btn" data-id="${r.id}" style="padding:4px 10px;font-size:11px;min-height:auto;border-radius:4px;">详情</button>
+                <button class="btn btn-default delete-btn" data-id="${r.id}" style="padding:4px 10px;font-size:11px;min-height:auto;border-radius:4px;color:var(--danger);">删除</button>
+            </div>
+        </div>`;
+    }
     listDiv.innerHTML = html;
+
+    // 事件委托绑定
+    listDiv.querySelectorAll('.history-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            // 如果点击的是按钮则不触发卡片点击
+            if (e.target.tagName === 'BUTTON') return;
+            let id = item.dataset.id;
+            restoreHistoryRecord(id);
+        });
+    });
+    listDiv.querySelectorAll('.restore-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            restoreHistoryRecord(btn.dataset.id);
+        });
+    });
+    listDiv.querySelectorAll('.detail-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            viewHistoryDetail(btn.dataset.id);
+        });
+    });
+    listDiv.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteHistoryRecord(btn.dataset.id);
+        });
+    });
 }
+
+// 恢复历史记录到表单
+window.restoreHistoryRecord = async function(id) {
+    let record = historyRecords.find(r => String(r.id) === String(id));
+    if (!record) {
+        showToast('记录不存在', 'error');
+        return;
+    }
+
+    let data = record.data;
+    if (typeof data === 'string') {
+        try {
+            data = JSON.parse(data);
+        } catch (e) {
+            data = { content: data };
+        }
+    }
+
+    if (record.type === 'report' && data.name) {
+        // 恢复报案表单
+        document.getElementById('name').value = data.name || '';
+        document.getElementById('idNo').value = data.idNo || '';
+        document.getElementById('phone').value = data.phone || '';
+        document.getElementById('address').value = data.address || '';
+        document.getElementById('accusedName').value = data.accusedName || '';
+        document.getElementById('accusedPhone').value = data.accusedPhone || '';
+        document.getElementById('accusedWechat').value = data.accusedWechat || '';
+        document.getElementById('accusedAlipay').value = data.accusedAlipay || '';
+        document.getElementById('accusedBankCard').value = data.accusedBankCard || '';
+        document.getElementById('accusedAddress').value = data.accusedAddress || '';
+        document.getElementById('fraudTime').value = data.fraudTime || '';
+        document.getElementById('fraudLocation').value = data.fraudLocation || '';
+        document.getElementById('contactMethod').value = data.contactMethod || '';
+        document.getElementById('fraudPlatform').value = data.fraudPlatform || '';
+        document.getElementById('fraudType').value = data.fraudType || '';
+        document.getElementById('fraudMoney').value = data.fraudMoney || '';
+        document.getElementById('fraudDetail').value = data.fraudDetail || '';
+
+        // 恢复证据文本
+        globalOcrText = data.ocrText || '';
+        globalUserInputText = data.userInputText || '';
+        updateEvidenceTextBox();
+
+        // 切换到报案页第3步
+        showStep(3);
+        switchPage('reportPage');
+        showToast('报案数据已恢复', 'success');
+    } else if (record.type === 'detect') {
+        // 恢复检测结果
+        let resDiv = document.getElementById('detectResult');
+        resDiv.textContent = data.result || '无结果';
+        resDiv.classList.add('show');
+        showToast('识别结果已恢复', 'success');
+    } else if (record.type === 'deepDetect') {
+        // 恢复DeepSeek结果
+        let resDiv = document.getElementById('detectResult');
+        resDiv.innerHTML = `【DeepSeek深度判定】\n${renderMarkdown(data.reply || '无结果')}`;
+        resDiv.classList.add('show');
+        showToast('AI判定结果已恢复', 'success');
+    } else {
+        showToast('该记录类型暂不支持恢复', 'warning');
+    }
+};
+
+// 查看历史记录详情
+window.viewHistoryDetail = async function(id) {
+    let record = historyRecords.find(r => String(r.id) === String(id));
+    if (!record) {
+        showToast('记录不存在', 'error');
+        return;
+    }
+
+    let data = record.data;
+    let detail = '';
+    if (typeof data === 'object') {
+        detail = JSON.stringify(data, null, 2);
+    } else {
+        detail = String(data);
+    }
+
+    // 创建详情弹窗
+    let overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:20000;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+        <div style="background:var(--bg-surface);border-radius:16px;padding:24px;max-width:600px;max-height:70vh;overflow-y:auto;width:90%;">
+            <h3 style="font-size:17px;font-weight:600;margin-bottom:12px;color:var(--text-primary);">📋 记录详情</h3>
+            <p style="font-size:13px;color:var(--text-tertiary);margin-bottom:12px;">${record.time} | ${record.displayType || record.type}</p>
+            <pre style="font-size:13px;color:var(--text-primary);white-space:pre-wrap;word-break:break-all;font-family:-apple-system,sans-serif;">${escapeHtml(detail).substring(0, 2000)}</pre>
+            <button style="margin-top:16px;padding:8px 20px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;" onclick="this.closest('div[style*=fixed]').remove()">关闭</button>
+        </div>
+    `;
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
+};
+
+// 删除历史记录
+window.deleteHistoryRecord = function(id) {
+    if (!confirm('确定删除这条记录？')) return;
+    historyRecords = historyRecords.filter(r => String(r.id) !== String(id));
+    safeLocalStorageSet('fraudHistory', historyRecords);
+    renderHistory();
+    showToast('记录已删除', 'success');
+};
 
 function clearHistory() {
     if (confirm('清空所有历史记录？')) {
         historyRecords = [];
         safeLocalStorageRemove('fraudHistory');
         renderHistory();
+        showToast('所有记录已清空', 'success');
     }
 }
 
@@ -814,7 +1033,105 @@ function resetSettings() {
     showToast('已恢复默认设置', 'success');
 }
 
-// ===== 导航 =====
+// ===== 表单自动保存与恢复 =====
+const FORM_STORAGE_KEY = 'formDraft';
+
+function saveFormDraft() {
+    let draft = {
+        name: document.getElementById('name')?.value || '',
+        idNo: document.getElementById('idNo')?.value || '',
+        phone: document.getElementById('phone')?.value || '',
+        address: document.getElementById('address')?.value || '',
+        accusedName: document.getElementById('accusedName')?.value || '',
+        accusedPhone: document.getElementById('accusedPhone')?.value || '',
+        accusedWechat: document.getElementById('accusedWechat')?.value || '',
+        accusedAlipay: document.getElementById('accusedAlipay')?.value || '',
+        accusedBankCard: document.getElementById('accusedBankCard')?.value || '',
+        accusedAddress: document.getElementById('accusedAddress')?.value || '',
+        fraudTime: document.getElementById('fraudTime')?.value || '',
+        fraudLocation: document.getElementById('fraudLocation')?.value || '',
+        contactMethod: document.getElementById('contactMethod')?.value || '',
+        fraudPlatform: document.getElementById('fraudPlatform')?.value || '',
+        fraudType: document.getElementById('fraudType')?.value || '',
+        fraudMoney: document.getElementById('fraudMoney')?.value || '',
+        fraudDetail: document.getElementById('fraudDetail')?.value || '',
+        fraudText: document.getElementById('fraudText')?.value || '',
+        globalOcrText: globalOcrText,
+        globalUserInputText: globalUserInputText,
+        savedAt: Date.now()
+    };
+    try { localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(draft)); } catch(e) {}
+}
+
+function restoreFormDraft() {
+    try {
+        let raw = localStorage.getItem(FORM_STORAGE_KEY);
+        if (!raw) return;
+        let draft = JSON.parse(raw);
+        if (!draft || !draft.savedAt) return;
+
+        // 如果草稿超过 24 小时，自动清除
+        if (Date.now() - draft.savedAt > 24 * 60 * 60 * 1000) {
+            localStorage.removeItem(FORM_STORAGE_KEY);
+            return;
+        }
+
+        const nameEl = document.getElementById('name');
+        if (nameEl) nameEl.value = draft.name || '';
+        const idNoEl = document.getElementById('idNo');
+        if (idNoEl) idNoEl.value = draft.idNo || '';
+        const phoneEl = document.getElementById('phone');
+        if (phoneEl) phoneEl.value = draft.phone || '';
+        const addressEl = document.getElementById('address');
+        if (addressEl) addressEl.value = draft.address || '';
+        const accusedNameEl = document.getElementById('accusedName');
+        if (accusedNameEl) accusedNameEl.value = draft.accusedName || '';
+        const accusedPhoneEl = document.getElementById('accusedPhone');
+        if (accusedPhoneEl) accusedPhoneEl.value = draft.accusedPhone || '';
+        const accusedWechatEl = document.getElementById('accusedWechat');
+        if (accusedWechatEl) accusedWechatEl.value = draft.accusedWechat || '';
+        const accusedAlipayEl = document.getElementById('accusedAlipay');
+        if (accusedAlipayEl) accusedAlipayEl.value = draft.accusedAlipay || '';
+        const accusedBankCardEl = document.getElementById('accusedBankCard');
+        if (accusedBankCardEl) accusedBankCardEl.value = draft.accusedBankCard || '';
+        const accusedAddressEl = document.getElementById('accusedAddress');
+        if (accusedAddressEl) accusedAddressEl.value = draft.accusedAddress || '';
+        const fraudTimeEl = document.getElementById('fraudTime');
+        if (fraudTimeEl) fraudTimeEl.value = draft.fraudTime || '';
+        const fraudLocationEl = document.getElementById('fraudLocation');
+        if (fraudLocationEl) fraudLocationEl.value = draft.fraudLocation || '';
+        const contactMethodEl = document.getElementById('contactMethod');
+        if (contactMethodEl) contactMethodEl.value = draft.contactMethod || '';
+        const fraudPlatformEl = document.getElementById('fraudPlatform');
+        if (fraudPlatformEl) fraudPlatformEl.value = draft.fraudPlatform || '';
+        const fraudTypeEl = document.getElementById('fraudType');
+        if (fraudTypeEl) fraudTypeEl.value = draft.fraudType || '';
+        const fraudMoneyEl = document.getElementById('fraudMoney');
+        if (fraudMoneyEl) fraudMoneyEl.value = draft.fraudMoney || '';
+        const fraudDetailEl = document.getElementById('fraudDetail');
+        if (fraudDetailEl) fraudDetailEl.value = draft.fraudDetail || '';
+        const fraudTextEl = document.getElementById('fraudText');
+        if (fraudTextEl) fraudTextEl.value = draft.fraudText || '';
+
+        if (draft.globalOcrText) globalOcrText = draft.globalOcrText;
+        if (draft.globalUserInputText) globalUserInputText = draft.globalUserInputText;
+        updateEvidenceTextBox();
+    } catch (e) {
+        // 恢复失败不影响使用
+    }
+}
+
+// 表单输入时自动保存
+function bindFormAutoSave() {
+    let formIds = ['name','idNo','phone','address','accusedName','accusedPhone','accusedWechat','accusedAlipay','accusedBankCard','accusedAddress','fraudTime','fraudLocation','contactMethod','fraudPlatform','fraudType','fraudMoney','fraudDetail','fraudText'];
+    formIds.forEach(id => {
+        let el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', saveFormDraft);
+            el.addEventListener('change', saveFormDraft);
+        }
+    });
+}
 function switchPage(pageId) {
     // 清除所有页面的残留状态
     document.querySelectorAll('.page .form-group.error').forEach(g => g.classList.remove('error'));
@@ -824,15 +1141,16 @@ function switchPage(pageId) {
     if (el) el.classList.add('active');
     updateNavActive(pageId);
 
-    // 切换到报案填报页时，如果是首次访问（currentStep === 1 且无已填数据），重置到第1步
-    // 如果用户已经在第2/3步填写了数据，保持当前步骤不变
+    // 回到首页时复位聊天聚焦态
+    if (pageId === 'homePage') {
+        document.getElementById('homePage')?.classList.remove('chat-focused');
+        document.getElementById('homeChatPanel')?.classList.remove('open');
+        document.getElementById('homeChatCard')?.classList.remove('expanded');
+    }
+
+    // 切换到报案填报页时，保留当前步骤（不重置）
     if (pageId === 'reportPage') {
         updateEvidenceTextBox();
-        // 检查是否已有填写的数据，避免无意义重置
-        const nameVal = document.getElementById('name')?.value.trim();
-        if (!nameVal && currentStep !== 1) {
-            showStep(1);
-        }
     }
     // 切换到诈骗识别页时预加载Tesseract（静默加载，不阻塞）
     if (pageId === 'identifyPage') {
@@ -845,21 +1163,9 @@ function updateNavActive(id) {
         if (btn.getAttribute('data-target') === id) btn.classList.add('active');
         else btn.classList.remove('active');
     });
-    updateUnderline();
 }
 
-function updateUnderline() {
-    let active = document.querySelector('#globalNav .nav-btn.active');
-    if (!active) return;
-    let underline = document.getElementById('globalNavUnderline');
-    if (!underline) return;
-    let rect = active.getBoundingClientRect();
-    let parentRect = active.parentElement.getBoundingClientRect();
-    underline.style.width = `${rect.width}px`;
-    underline.style.left = `${rect.left - parentRect.left + active.parentElement.scrollLeft}px`;
-}
-
-// ===== 字体后台加载（非阻塞） =====
+// ===== 字体加载与全局替换 =====
 let fontLoaded = false;
 
 function initFontLoad() {
@@ -870,11 +1176,11 @@ function initFontLoad() {
     const style = document.createElement('style');
     style.textContent = `
         @font-face {
-            font-family: 'PingFang SC';
+            font-family: 'HYRunYuan';
             font-style: normal;
-            font-weight: 600;
+            font-weight: 700;
             font-display: optional;
-            src: url('fonts/PingFangSC-Semibold.ttf') format('truetype');
+            src: url('fonts/汉仪润圆-75W.ttf') format('truetype');
         }
         @font-face {
             font-family: 'Kumbh Sans';
@@ -886,107 +1192,257 @@ function initFontLoad() {
     `;
     document.head.appendChild(style);
 
-    // 后台静默预加载字体，不阻塞页面
-    preloadFontAsync('fonts/PingFangSC-Semibold.ttf', 'PingFang SC', '600');
-    preloadFontAsync('fonts/KumbhSans-Regular.ttf', 'Kumbh Sans', '400');
+    // 后台静默预加载字体，加载完成后全局替换
+    preloadFontAsync('fonts/汉仪润圆-75W.ttf', 'HYRunYuan', '700', () => {
+        // HYRunYuan 加载完成，应用到所有元素
+        applyGlobalFontSwap();
+    });
+    preloadFontAsync('fonts/KumbhSans-Regular.ttf', 'Kumbh Sans', '400', () => {
+        // Kumbh Sans 加载完成，应用到所有元素
+        applyGlobalFontSwap();
+    });
 }
 
-function preloadFontAsync(url, name, weight) {
+function applyGlobalFontSwap() {
+    // 全局替换字体：body 设置新字体，浏览器会自动应用到所有子元素
+    document.body.style.fontFamily = '"Kumbh Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "HYRunYuan", "PingFang SC", "Microsoft YaHei", sans-serif';
+}
+
+function preloadFontAsync(url, name, weight, onReady) {
     const fontFace = new FontFace(name, `url(${url})`, { weight, style: 'normal' });
     fontFace.load().then((font) => {
         document.fonts.add(font);
+        if (onReady) onReady();
     }).catch(() => {
         // 字体加载失败不影响页面使用
     });
 }
 
+// ===== 明暗主题切换 =====
+let currentTheme = 'light'; // 'light' | 'dark'
+
+function applyTheme(theme) {
+    // 对角线帷幕主题过渡动画
+    const overlay = document.getElementById('themeTransitionOverlay');
+    if (overlay) {
+        overlay.classList.remove('to-dark', 'to-light', 'active');
+        void overlay.offsetWidth;
+        // 重置 animation 让 clip-path 动画重新触发
+        overlay.style.animation = 'none';
+        void overlay.offsetWidth;
+        overlay.style.animation = '';
+        overlay.classList.add(theme === 'dark' ? 'to-dark' : 'to-light');
+        overlay.classList.add('active');
+        setTimeout(() => {
+            overlay.classList.remove('active', 'to-dark', 'to-light');
+        }, 1050);
+    }
+
+    document.documentElement.setAttribute('data-theme', theme);
+    currentTheme = theme;
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    // 持久化用户选择
+    try { localStorage.setItem('themePref', theme); } catch(e) {}
+}
+
+function initTheme() {
+    let theme;
+    // 优先使用 localStorage 中持久化的偏好
+    try { theme = localStorage.getItem('themePref'); } catch(e) { theme = null; }
+
+    if (!theme) {
+        // 无存储偏好 — 回退到 HTML data-theme 属性
+        const htmlTheme = document.documentElement.getAttribute('data-theme');
+        if (htmlTheme === 'auto') {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } else {
+            theme = htmlTheme || 'light';
+        }
+    }
+
+    applyTheme(theme);
+
+    // 监听系统主题变化 — 仅在用户未设置手动偏好时生效
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        let stored;
+        try { stored = localStorage.getItem('themePref'); } catch(err) { stored = null; }
+        if (!stored) {
+            // 没有手动覆盖 — 跟随系统
+            applyTheme(e.matches ? 'dark' : 'light');
+        }
+    });
+
+    // 按钮点击切换
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+        btn.addEventListener('click', () => {
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+    }
+}
+
 // ===== 初始化 =====
 window.onload = function() {
-    // 从localStorage安全读取
+    // 主题初始化（同步，最快执行）
+    initTheme();
+
+    // 从localStorage安全读取（同步）
     historyRecords = safeLocalStorageGet('fraudHistory', []);
     systemSettings = safeLocalStorageGet('systemSettings', { autoSave: true, defaultDesensitize: true });
 
-    // 首页内容完全就绪后，延迟300ms淡出loader
-    setTimeout(() => {
-        const loader = document.getElementById('loader');
-        if (loader) {
-            loader.classList.add('fade-out');
-            setTimeout(() => { loader.style.display = 'none'; }, 500);
+    // 立即显示首页，不等待任何异步操作
+    const loader = document.getElementById('loader');
+    if (loader) {
+        loader.classList.add('fade-out');
+        setTimeout(() => { loader.style.display = 'none'; }, 500);
+    }
+    document.getElementById('homePage').classList.add('active');
+    initSettings();
+    renderHistory();
+    initImageUpload();
+    initBillUpload();
+    updateEvidenceTextBox();
+
+    // 首页聊天面板展开（点击 → 下滚 + 只隐藏四个功能卡片）
+    const homeChatCard = document.getElementById('homeChatCard');
+    const homeChatPanel = document.getElementById('homeChatPanel');
+    const homePage = document.getElementById('homePage');
+    const collapseChatBtn = document.getElementById('collapseChatBtn');
+
+    function openHomeChat() {
+        homePage.classList.add('chat-focused');
+        homeChatPanel.classList.add('open');
+        homeChatCard.classList.add('expanded');
+        setTimeout(() => {
+            homeChatPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('chatInput')?.focus();
+        }, 60);
+    }
+    function closeHomeChat() {
+        homePage.classList.remove('chat-focused');
+        homeChatPanel.classList.remove('open');
+        homeChatCard.classList.remove('expanded');
+    }
+
+    if (homeChatCard && homeChatPanel) {
+        homeChatCard.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            if (homePage.classList.contains('chat-focused')) closeHomeChat();
+            else openHomeChat();
+        });
+    }
+    collapseChatBtn?.addEventListener('click', closeHomeChat);
+
+    // 恢复表单草稿
+    restoreFormDraft();
+    bindFormAutoSave();
+
+    // 字体后台加载（非阻塞，不弹窗）
+    initFontLoad();
+
+    // 事件绑定
+    document.getElementById('startDetectBtn')?.addEventListener('click', detectFraud);
+    document.getElementById('doubaoBtn')?.addEventListener('click', deepDetect);
+    document.getElementById('clearIdentifyBtn')?.addEventListener('click', clearIdentify);
+    document.getElementById('fillToReportBtn')?.addEventListener('click', fillToReport);
+    document.getElementById('parseBillBtn')?.addEventListener('click', parseBill);
+    document.getElementById('billToReportBtn')?.addEventListener('click', billToReport);
+    document.getElementById('generateReportBtn')?.addEventListener('click', generateReport);
+    document.getElementById('copyReportBtn')?.addEventListener('click', copyReport);
+    document.getElementById('exportTxtBtn')?.addEventListener('click', exportTxt);
+    document.getElementById('exportPdfBtn')?.addEventListener('click', exportPdf);
+    document.getElementById('clearHistoryBtn')?.addEventListener('click', clearHistory);
+    document.getElementById('saveSettingBtn')?.addEventListener('click', saveSettings);
+    document.getElementById('resetSettingBtn')?.addEventListener('click', resetSettings);
+    document.getElementById('importEvidenceBtn')?.addEventListener('click', importEvidenceFromIdentify);
+    document.getElementById('clearEvidenceBtn')?.addEventListener('click', clearEvidenceText);
+
+    // 步骤导航
+    document.getElementById('nextStep1')?.addEventListener('click', () => {
+        if (validateStep(1)) showStep(2);
+        else showToast('请完成当前步骤的必填项', 'error');
+    });
+    document.getElementById('nextStep2')?.addEventListener('click', () => {
+        if (validateStep(2)) showStep(3);
+        else showToast('请完成当前步骤的必填项', 'error');
+    });
+    document.getElementById('prevStep2')?.addEventListener('click', () => showStep(1));
+    document.getElementById('prevStep3')?.addEventListener('click', () => showStep(2));
+
+    document.querySelectorAll('.corpus-btn').forEach(btn => btn.addEventListener('click', function() {
+        // 点击按钮清除所有高亮状态（重置检测结果）
+        document.querySelectorAll('.corpus-btn').forEach(b => {
+            b.classList.remove('active', 'highlighted', 'multi-highlighted');
+        });
+        // 重置标签
+        let labelEl = document.getElementById('corpusLabel');
+        if (labelEl) {
+            labelEl.textContent = '全类型诈骗';
+            labelEl.style.color = '';
+            labelEl.style.borderColor = '';
+            labelEl.style.background = '';
         }
-        document.getElementById('homePage').classList.add('active');
-        updateUnderline();
-        initSettings();
-        renderHistory();
-        initImageUpload();
-        initBillUpload();
-        updateEvidenceTextBox();
-
-        // 字体后台加载（非阻塞，不弹窗）
-        initFontLoad();
-
-        // 事件绑定
-        document.getElementById('startDetectBtn')?.addEventListener('click', detectFraud);
-        document.getElementById('doubaoBtn')?.addEventListener('click', deepDetect);
-        document.getElementById('clearIdentifyBtn')?.addEventListener('click', clearIdentify);
-        document.getElementById('fillToReportBtn')?.addEventListener('click', fillToReport);
-        document.getElementById('parseBillBtn')?.addEventListener('click', parseBill);
-        document.getElementById('billToReportBtn')?.addEventListener('click', billToReport);
-        document.getElementById('generateReportBtn')?.addEventListener('click', generateReport);
-        document.getElementById('copyReportBtn')?.addEventListener('click', copyReport);
-        document.getElementById('exportTxtBtn')?.addEventListener('click', exportTxt);
-        document.getElementById('exportPdfBtn')?.addEventListener('click', exportPdf);
-        document.getElementById('clearHistoryBtn')?.addEventListener('click', clearHistory);
-        document.getElementById('saveSettingBtn')?.addEventListener('click', saveSettings);
-        document.getElementById('resetSettingBtn')?.addEventListener('click', resetSettings);
-        document.getElementById('importEvidenceBtn')?.addEventListener('click', importEvidenceFromIdentify);
-        document.getElementById('clearEvidenceBtn')?.addEventListener('click', clearEvidenceText);
-
-        // 步骤导航
-        document.getElementById('nextStep1')?.addEventListener('click', () => {
-            if (validateStep(1)) showStep(2);
-            else showToast('请完成当前步骤的必填项', 'error');
-        });
-        document.getElementById('nextStep2')?.addEventListener('click', () => {
-            if (validateStep(2)) showStep(3);
-            else showToast('请完成当前步骤的必填项', 'error');
-        });
-        document.getElementById('prevStep2')?.addEventListener('click', () => showStep(1));
-        document.getElementById('prevStep3')?.addEventListener('click', () => showStep(2));
-
-        document.querySelectorAll('.corpus-btn').forEach(btn => btn.addEventListener('click', function() {
-            // 点击按钮清除所有高亮状态（重置检测结果）
-            document.querySelectorAll('.corpus-btn').forEach(b => {
-                b.classList.remove('active', 'highlighted', 'multi-highlighted');
-            });
-            // 重置标签
-            let labelEl = document.getElementById('corpusLabel');
-            if (labelEl) {
-                labelEl.textContent = '全类型诈骗';
-                labelEl.style.color = '';
-                labelEl.style.borderColor = '';
-                labelEl.style.background = '';
-            }
-            // 清空检测结果
-            let resDiv = document.getElementById('detectResult');
-            if (resDiv) resDiv.textContent = '';
+        // 清空检测结果
+        let resDiv = document.getElementById('detectResult');
+        if (resDiv) {
+            resDiv.textContent = '';
             resDiv.classList.remove('show');
-        }));
+        }
+    }));
 
-        document.querySelectorAll('[data-goto]').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-goto'))));
-        document.querySelectorAll('#globalNav .nav-btn').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-target'))));
+    document.querySelectorAll('[data-goto]').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-goto'))));
+    document.querySelectorAll('#globalNav .nav-btn').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-target'))));
+    // 底部标签栏事件
+    document.querySelectorAll('#bottomTabBar .tab-item').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-target'))));
 
-        document.getElementById('clearChatBtn')?.addEventListener('click', clearChat);
-        document.getElementById('sendChatBtn')?.addEventListener('click', sendUserMessage);
-        document.getElementById('chatInput')?.addEventListener('keypress', e => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendUserMessage(); }
-        });
+    // 快捷卡片 3D tilt 效果 + 按钮磁吸
+    initMagneticEffects();
 
-        window.addEventListener('resize', updateUnderline);
+    // 全局鼠标跟踪（按钮磁吸光照）
+    document.addEventListener('mousemove', (e) => {
+        const x = (e.clientX / window.innerWidth * 100).toFixed(1);
+        const y = (e.clientY / window.innerHeight * 100).toFixed(1);
+        document.documentElement.style.setProperty('--mx', x + '%');
+        document.documentElement.style.setProperty('--my', y + '%');
+    });
 
-        // ===== 图片灯箱：点击缩略图放大查看 =====
-        initImageLightbox();
-    }, 300);
+    document.getElementById('clearChatBtn')?.addEventListener('click', clearChat);
+    document.getElementById('sendChatBtn')?.addEventListener('click', sendUserMessage);
+    document.getElementById('chatInput')?.addEventListener('keypress', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendUserMessage(); }
+    });
+
+    // ===== 图片灯箱：点击缩略图放大查看 =====
+    initImageLightbox();
 };
+
+// ===== 磁吸+3D卡片+按钮光照效果 =====
+function initMagneticEffects() {
+    document.querySelectorAll('.home-card, .quick-card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = (e.clientY - rect.top) / rect.height;
+            card.style.setProperty('--mouse-x', x);
+            card.style.setProperty('--mouse-y', y);
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.setProperty('--mouse-x', 0.5);
+            card.style.setProperty('--mouse-y', 0.5);
+        });
+    });
+    // 按钮相对位置光斑
+    document.querySelectorAll('.btn-primary, .btn-deep, .chat-send-btn').forEach(btn => {
+        btn.addEventListener('mousemove', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const mx = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+            const my = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+            btn.style.setProperty('--mx', mx + '%');
+            btn.style.setProperty('--my', my + '%');
+        });
+    });
+}
 
 // 暴露给全局
 window.safeLocalStorageGet = safeLocalStorageGet;
@@ -1016,7 +1472,9 @@ window.saveSettings = saveSettings;
 window.resetSettings = resetSettings;
 window.switchPage = switchPage;
 window.updateNavActive = updateNavActive;
-window.updateUnderline = updateUnderline;
 window.showStep = showStep;
 window.validateStep = validateStep;
 window.initImageLightbox = initImageLightbox;
+window.restoreHistoryRecord = window.restoreHistoryRecord || function() {};
+window.viewHistoryDetail = window.viewHistoryDetail || function() {};
+window.deleteHistoryRecord = window.deleteHistoryRecord || function() {};

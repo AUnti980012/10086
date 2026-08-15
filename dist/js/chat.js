@@ -16,25 +16,53 @@ function addMessageToUI(sender, text) {
     let div = document.createElement('div');
     div.className = `message ${sender}`;
     let bubbleContent = sender === 'user' ? escapeHtml(text) : renderMarkdown(text);
-    div.innerHTML = `<div class="message-avatar">${sender==='user'?'我':'🤖'}</div><div class="message-bubble">${bubbleContent}</div>`;
+    let avatarHTML = sender === 'user'
+        ? '<div class="message-avatar user-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>'
+        : '<div class="message-avatar bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>';
+    div.innerHTML = `${avatarHTML}<div class="message-bubble">${bubbleContent}</div>`;
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
 }
 
-// ===== 显示/隐藏打字指示器 =====
+// ===== 显示/隐藏打字指示器（动态状态文字 + 计时） =====
+let typingInterval = null;
+let typingStartTime = 0;
+
+const typingStates = [
+    { text: '思考中', icon: '💭', minSec: 0 },
+    { text: '寻找中', icon: '🔎', minSec: 1.5 },
+    { text: '组织语言中', icon: '📝', minSec: 3 },
+];
+
 function showTypingIndicator() {
     removeTypingIndicator();
     let container = document.getElementById('chatMessages');
     if (!container) return;
+    typingStartTime = Date.now();
     let div = document.createElement('div');
     div.id = 'typingIndicator';
     div.className = 'message bot';
-    div.innerHTML = '<div class="message-avatar">🤖</div><div class="typing-indicator"><span></span><span></span><span></span></div>';
+    div.innerHTML = '<div class="message-avatar bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="typing-status" id="typingStatus"><span class="typing-icon">💭</span> <span class="typing-text">思考中</span> <span class="typing-time">(0.0s)</span><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>';
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
+
+    // 动态更新计时和状态文字
+    typingInterval = setInterval(() => {
+        let elapsed = (Date.now() - typingStartTime) / 1000;
+        let timeEl = document.getElementById('typingStatus');
+        if (!timeEl) { clearInterval(typingInterval); return; }
+        let state = typingStates[0];
+        for (let i = typingStates.length - 1; i >= 0; i--) {
+            if (elapsed >= typingStates[i].minSec) { state = typingStates[i]; break; }
+        }
+        timeEl.querySelector('.typing-icon').textContent = state.icon;
+        timeEl.querySelector('.typing-text').textContent = state.text;
+        timeEl.querySelector('.typing-time').textContent = `(${elapsed.toFixed(1)}s)`;
+    }, 200);
 }
 
 function removeTypingIndicator() {
+    if (typingInterval) { clearInterval(typingInterval); typingInterval = null; }
     let ind = document.getElementById('typingIndicator');
     if (ind) ind.remove();
 }
@@ -44,6 +72,11 @@ async function sendUserMessage() {
     let inp = document.getElementById('chatInput');
     let msg = inp.value.trim();
     if (!msg || isWaitingReply) return;
+
+    // 防止重复发送：禁用发送按钮
+    let btn = document.getElementById('sendChatBtn');
+    if (btn) btn.disabled = true;
+
     addMessageToUI('user', msg);
     isWaitingReply = true;
     showTypingIndicator();
@@ -64,15 +97,14 @@ async function sendUserMessage() {
         conversationHistory.push({ role: "assistant", content: reply });
         removeTypingIndicator();
         addMessageToUI('bot', reply);
-        inp.value = ''; // 成功后才清空输入
     } catch (e) {
         removeTypingIndicator();
         addMessageToUI('bot', `请求失败：${e.message}`);
-        inp.value = msg; // 失败时恢复用户输入
         console.error('Chat error:', e);
     } finally {
+        // 无论成功失败都清空输入框
+        inp.value = '';
         isWaitingReply = false;
-        let btn = document.getElementById('sendChatBtn');
         if (btn) btn.disabled = false;
     }
 }
@@ -86,7 +118,7 @@ function clearChat() {
     isWaitingReply = false;
     let container = document.getElementById('chatMessages');
     if (container) {
-        container.innerHTML = '<div class="message bot"><div class="message-avatar">🤖</div><div class="message-bubble">对话已清空，请问有什么可以帮助你的？</div></div>';
+        container.innerHTML = '<div class="message bot"><div class="message-avatar bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="message-bubble">对话已清空，请问有什么可以帮助你的？</div></div>';
     }
     let btn = document.getElementById('sendChatBtn');
     if (btn) btn.disabled = false;

@@ -16,7 +16,7 @@ function renderMarkdown(text) {
 
     // 1. 代码块（ fenced code block，必须在行内代码之前处理）
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_match, lang, code) => {
-        return `<pre style="background:rgba(0,0,0,0.25);padding:12px 14px;border-radius:8px;overflow-x:auto;font-size:13px;font-family:'SF Mono','Fira Code','Courier New',monospace;line-height:1.5;"><code>${code.trim()}</code></pre>`;
+        return `<pre style="background:var(--bg-elevated);padding:12px 14px;border-radius:8px;overflow-x:auto;font-size:13px;font-family:'SF Mono','Fira Code','Menlo',monospace;line-height:1.5;"><code>${code.trim()}</code></pre>`;
     });
 
     // 2. 水平线 ---
@@ -43,10 +43,10 @@ function renderMarkdown(text) {
     html = html.replace(/^- \s?(.+)$/gm, '<div style="padding-left:20px;position:relative;"><span style="position:absolute;left:4px;">•</span>$1</div>');
 
     // 6. 引用（> text）
-    html = html.replace(/^&gt;\s?(.+)$/gm, '<blockquote style="border-left:3px solid var(--border-mid);padding-left:10px;color:var(--text-secondary);margin:6px 0;">$1</blockquote>');
+    html = html.replace(/^&gt;\s?(.+)$/gm, '<blockquote style="border-left:3px solid var(--border-medium);padding-left:10px;color:var(--text-secondary);margin:6px 0;">$1</blockquote>');
 
     // 7. 行内代码 `text`
-    html = html.replace(/`(.+?)`/g, '<code style="background:rgba(0,0,0,0.2);padding:1px 5px;border-radius:3px;font-size:13px;font-family:\'SF Mono\',\'Fira Code\',\'Courier New\',monospace;">$1</code>');
+    html = html.replace(/`(.+?)`/g, '<code style="background:var(--bg-elevated);padding:1px 5px;border-radius:4px;font-size:13px;font-family:\'SF Mono\',\'Fira Code\',\'Menlo\',monospace;">$1</code>');
 
     // 8. 加粗 **text**
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -69,8 +69,8 @@ function desensitizeText(text) {
     text = text.replace(/\b\d{17}[\dXx]\b|\b\d{15}\b/g, (m) => m.slice(0, 6) + '********' + m.slice(-4));
     // 2. 再处理手机号(11位，带边界)
     text = text.replace(/\b1[3-9]\d{9}\b/g, (m) => m.slice(0, 3) + '****' + m.slice(7));
-    // 3. 最后处理银行卡号(16-19位，带边界)
-    text = text.replace(/\b\d{6}(\d{8,10})\d{4}\b/g, (m) => m.slice(0, 6) + '***********' + m.slice(-4));
+    // 3. 最后处理银行卡号(16-19位，以常见银行卡前缀开头：62/4/5)
+    text = text.replace(/\b(62|4[0-9]|5[1-5])\d{4}(\d{8,10})\d{4}\b/g, (m) => m.slice(0, 6) + '***********' + m.slice(-4));
     return text;
 }
 

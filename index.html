@@ -1,22 +1,21 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="auto">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>反诈智能识别与报案辅助系统 · 东北电力大学</title>
-    <!-- 预连接CDN -->
     <link rel="preconnect" href="https://lib.baomitu.com" crossorigin>
     <link rel="preconnect" href="https://unpkg.com" crossorigin>
-    <!-- 核心库（defer异步加载） -->
     <script src="https://lib.baomitu.com/html2canvas/1.4.1/html2canvas.min.js" defer></script>
     <script src="https://lib.baomitu.com/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://lib.baomitu.com/xlsx/0.18.5/xlsx.full.min.js" defer></script>
-    <!-- Tesseract.js 延迟加载（见 js/tesseract-loader.js） -->
-    <!-- 样式 -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- 加载遮罩 -->
+
+    <!-- ===== 主题切换遮罩 ===== -->
+    <div class="theme-transition-overlay" id="themeTransitionOverlay"></div>
+
     <div class="loader-container" id="loader">
         <div class="loader-title">反诈智能识别与报案辅助系统</div>
         <div class="loading-spin" style="width:32px;height:32px;border:3px solid var(--primary);border-top-color:transparent;"></div>
@@ -24,49 +23,79 @@
 
     <div class="toast-container" id="toastContainer"></div>
 
-    <div class="global-header">
+    <!-- ===== 悬浮胶囊导航（桌面端）===== -->
+    <div class="global-header" id="globalHeader">
         <div class="header-content">
             <div class="header-top">
                 <div class="title-group">
                     <div class="header-title">反诈智能识别与报案辅助系统</div>
                     <div class="header-sub">创意来自东北电力大学易班工作站-Firefly TYPE IV</div>
                 </div>
-                <a class="univ-brand" href="https://www.neepu.edu.cn/" target="_blank" rel="noopener">东北电力大学</a>
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <button class="theme-toggle-btn" id="themeToggleBtn" title="切换明暗主题">🌙</button>
+                    <a class="univ-brand" href="https://www.neepu.edu.cn/" target="_blank" rel="noopener">东北电力大学</a>
+                </div>
             </div>
             <div class="nav-wrapper">
                 <div class="nav" id="globalNav">
-                    <button class="nav-btn active" data-target="homePage">首页</button>
-                    <button class="nav-btn" data-target="identifyPage">诈骗识别</button>
-                    <button class="nav-btn" data-target="billPage">账单导入</button>
-                    <button class="nav-btn" data-target="reportPage">报案填报</button>
-                    <button class="nav-btn" data-target="historyPage">历史记录</button>
-                    <button class="nav-btn" data-target="settingPage">系统设置</button>
+                    <button class="nav-btn active" data-target="homePage"><span class="nav-icon">🏠</span><span class="nav-text">首页</span></button>
+                    <button class="nav-btn" data-target="identifyPage"><span class="nav-icon">🔍</span><span class="nav-text">诈骗识别</span></button>
+                    <button class="nav-btn" data-target="billPage"><span class="nav-icon">📊</span><span class="nav-text">账单导入</span></button>
+                    <button class="nav-btn" data-target="reportPage"><span class="nav-icon">📝</span><span class="nav-text">报案填报</span></button>
+                    <button class="nav-btn" data-target="historyPage"><span class="nav-icon">📋</span><span class="nav-text">历史记录</span></button>
+                    <button class="nav-btn" data-target="settingPage"><span class="nav-icon">⚙️</span><span class="nav-text">系统设置</span></button>
                 </div>
-                <div class="nav-underline" id="globalNavUnderline"></div>
             </div>
         </div>
     </div>
 
-    <!-- 首页 -->
+    <!-- ===== 底部标签栏（移动端）===== -->
+    <nav class="bottom-tab-bar" id="bottomTabBar">
+        <button class="tab-item active" data-target="homePage"><span class="tab-icon">🏠</span><span class="tab-label">首页</span></button>
+        <button class="tab-item" data-target="identifyPage"><span class="tab-icon">🔍</span><span class="tab-label">识别</span></button>
+        <button class="tab-item" data-target="billPage"><span class="tab-icon">📊</span><span class="tab-label">账单</span></button>
+        <button class="tab-item" data-target="reportPage"><span class="tab-icon">📝</span><span class="tab-label">报案</span></button>
+        <button class="tab-item" data-target="historyPage"><span class="tab-icon">📋</span><span class="tab-label">历史</span></button>
+        <button class="tab-item" data-target="settingPage"><span class="tab-icon">⚙️</span><span class="tab-label">设置</span></button>
+    </nav>
+
     <div class="page" id="homePage">
-        <div class="container">
-            <div class="page-content">
-                <div class="page-title">首页 · 反诈第一线</div>
-                <div class="chat-card">
-                    <div class="chat-header"><span>💬 反诈智能助手 · 思政融合版 (DeepSeek驱动)</span><button class="chat-clear-btn" id="clearChatBtn">清空对话</button></div>
-                    <div class="chat-messages" id="chatMessages"><div class="message bot"><div class="message-avatar">🤖</div><div class="message-bubble">你好！我是反诈科普与思政教育智能助手。我可以帮你识别诈骗套路、解析真实案例、提供防骗建议，并且融合法治诚信意识。请问有什么可以帮你？</div></div></div>
-                    <div class="chat-input-area"><textarea class="chat-input" id="chatInput" rows="1" placeholder="输入你的问题，例如：遇到刷单诈骗怎么办？"></textarea><button class="chat-send-btn" id="sendChatBtn">发送</button></div>
-                </div>
-                <div class="home-btns">
-                    <button class="btn btn-primary" data-goto="identifyPage">开始诈骗识别</button>
-                    <button class="btn btn-primary" data-goto="reportPage">直接填写报案材料</button>
-                    <button class="btn btn-primary" data-goto="billPage">导入微信/支付宝账单</button>
-                </div>
+        <div class="home-hero">
+            <div class="home-hero-glow"></div>
+            <h1 class="home-hero-title">反诈智能识别与报案辅助系统</h1>
+            <p class="home-hero-sub">识别 · 判定 · 报案，一站式反诈辅助</p>
+        </div>
+        <div class="home-grid">
+            <div class="home-card" data-goto="identifyPage">
+                <div class="home-card-icon">🔍</div>
+                <div class="home-card-info"><div class="home-card-title">诈骗识别</div><div class="home-card-desc">关键词匹配 + OCR 提取 + DeepSeek 深度判定</div></div>
+                <div class="home-card-arrow">→</div>
+            </div>
+            <div class="home-card" data-goto="reportPage">
+                <div class="home-card-icon">📝</div>
+                <div class="home-card-info"><div class="home-card-title">报案填报</div><div class="home-card-desc">三步表单向导，自动生成刑事控告书，支持 PDF 导出</div></div>
+                <div class="home-card-arrow">→</div>
+            </div>
+            <div class="home-card" data-goto="billPage">
+                <div class="home-card-icon">📊</div>
+                <div class="home-card-info"><div class="home-card-title">账单导入</div><div class="home-card-desc">微信/支付宝 CSV 账单自动解析，智能计算总支出</div></div>
+                <div class="home-card-arrow">→</div>
+            </div>
+            <div class="home-card home-card-chat" id="homeChatCard">
+                <div class="home-card-icon">💬</div>
+                <div class="home-card-info"><div class="home-card-title">AI 智能助手</div><div class="home-card-desc">DeepSeek 驱动的反诈科普与思政教育对话助手</div></div>
+                <div class="home-card-arrow">↓</div>
+            </div>
+        </div>
+        <div class="home-chat-panel" id="homeChatPanel">
+            <div class="chat-card">
+                <div class="chat-header"><span>💬 反诈智能助手 · 思政融合版</span><div class="chat-header-actions"><button class="chat-collapse-btn" id="collapseChatBtn" title="收起">✕</button><button class="chat-clear-btn" id="clearChatBtn">清空对话</button></div></div>
+                <div class="chat-messages" id="chatMessages"><div class="message bot"><div class="message-avatar bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="message-bubble">你好！我是反诈科普与思政教育智能助手。我可以帮你识别诈骗套路、解析真实案例、提供防骗建议，并且融合法治诚信意识。请问有什么可以帮你？</div></div></div>
+                <div class="chat-input-area"><textarea class="chat-input" id="chatInput" rows="1" placeholder="输入你的问题，例如：遇到刷单诈骗怎么办？"></textarea><button class="chat-send-btn" id="sendChatBtn">发送</button></div>
             </div>
         </div>
     </div>
 
-    <!-- 诈骗识别 -->
     <div class="page" id="identifyPage">
         <div class="container">
             <div class="page-content">
@@ -98,7 +127,6 @@
         </div>
     </div>
 
-    <!-- 图片放大查看器 -->
     <div class="image-lightbox" id="imageLightbox">
         <div class="lightbox-backdrop"></div>
         <div class="lightbox-content">
@@ -110,7 +138,6 @@
         </div>
     </div>
 
-    <!-- 账单导入 -->
     <div class="page" id="billPage">
         <div class="container">
             <div class="page-content">
@@ -123,7 +150,6 @@
         </div>
     </div>
 
-    <!-- 报案填报（刑事控告书格式） -->
     <div class="page" id="reportPage">
         <div class="container">
             <div class="page-content">
@@ -132,7 +158,6 @@
                     带 <span style="color:var(--danger);font-weight:bold;">*</span> 为必填项。请客观填写，配合警方初查，材料越齐全立案可能性越高。
                 </div>
 
-                <!-- 步骤指示器 -->
                 <div class="step-indicator" id="stepIndicator">
                     <div class="step-item step-active" data-step="1">
                         <div class="step-circle"><span class="step-num">1</span><span class="step-check">✓</span></div>
@@ -150,7 +175,6 @@
                     </div>
                 </div>
 
-                <!-- 步骤 1：控告人信息 -->
                 <div class="step-content" id="step1">
                     <div class="section-title">一、控告人信息（您本人）</div>
                     <div class="form-group" id="formName">
@@ -177,7 +201,6 @@
                     </div>
                 </div>
 
-                <!-- 步骤 2：被控告人信息 -->
                 <div class="step-content" id="step2" style="display:none;">
                     <div class="section-title">二、被控告人信息（对方/骗子）</div>
                     <div class="notice" style="background:var(--danger-bg);border-color:var(--danger-border);border-left-color:var(--danger);">请尽量挖掘被控告人信息，越详细越有助于破案！仅<strong>网名/姓名</strong>为必填，其余选填。</div>
@@ -212,7 +235,6 @@
                     </div>
                 </div>
 
-                <!-- 步骤 3：被骗事实与证据 -->
                 <div class="step-content" id="step3" style="display:none;">
                     <div class="section-title">三、被骗事实与经过</div>
                     <div class="form-group" id="formTime">
@@ -277,15 +299,26 @@
         </div>
     </div>
 
-    <!-- 历史记录/设置 -->
     <div class="page" id="historyPage"><div class="container"><div class="page-content"><div class="page-title">历史记录</div><div id="historyList"></div><button class="btn btn-default" id="clearHistoryBtn">清空所有记录</button></div></div></div>
     <div class="page" id="settingPage"><div class="container"><div class="page-content"><div class="page-title">系统设置</div><div class="setting-item"><div class="setting-label">自动保存历史记录</div><div class="switch"><input type="checkbox" id="autoSaveSwitch" checked></div></div><div class="setting-item"><div class="setting-label">默认开启自动脱敏</div><div class="switch"><input type="checkbox" id="defaultDesensitizeSwitch" checked></div></div><div class="btn-group"><button class="btn btn-primary" id="saveSettingBtn">保存设置</button><button class="btn btn-default" id="resetSettingBtn">恢复默认</button></div></div></div></div>
     <div class="global-footer">© 2026 反诈智能识别与报案辅助系统 | 创意来自东北电力大学易班工作站 | AI引擎: DeepSeek + Tesseract OCR 作者Xin PR,Liu A Green,Wang A Black 保留著作权</div>
 
-    <!-- 脚本（按顺序加载，defer 不阻塞 DOM） -->
+    <a class="mit-badge" href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener" title="MIT License" aria-label="MIT License">
+        <svg xmlns="http://www.w3.org/2000/svg" height="166" width="321" shape-rendering="crispEdges" viewBox="0 0 321 166">
+            <g stroke-width="35" stroke="#A31F34">
+                <path d="m17.5,0v166m57-166v113m57-113v166m57-166v33m58,20v113"/>
+                <path d="m188.5,53v113" stroke="#8A8B8C"/>
+                <path d="m229,16.5h92" stroke-width="33"/>
+            </g>
+        </svg>
+        <span class="mit-badge-text">程序根据 MIT 协议开源</span>
+    </a>
+
+
     <script src="js/utils.js" defer></script>
     <script src="js/tesseract-loader.js" defer></script>
     <script src="js/upload.js" defer></script>
+    <script src="js/anti-fraud-knowledge.js" defer></script>
     <script src="js/chat.js" defer></script>
     <script src="js/app.js" defer></script>
 </body>

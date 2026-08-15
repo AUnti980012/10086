@@ -60,7 +60,7 @@ function handleFiles(files, container, cb) {
         if (!countEl) {
             countEl = document.createElement('div');
             countEl.className = 'upload-count';
-            countEl.style.cssText = 'font-size:12px;color:var(--text-muted);margin:4px 0;';
+            countEl.style.cssText = 'font-size:12px;color:var(--text-tertiary);margin:4px 0;';
             container.parentElement.insertBefore(countEl, container.nextSibling);
         }
         countEl.textContent = `已上传 ${results.filter(Boolean).length} 张图片`;
@@ -151,6 +151,7 @@ async function ocrImagesWithTesseract(images) {
     if (!images.length) return;
     if (isOcrRunning) {
         showToast('OCR 正在运行中，请勿重复点击', 'warning');
+        isOcrRunning = false; // 重置锁，防止并发调用后永久卡死
         return;
     }
     isOcrRunning = true;
@@ -167,6 +168,7 @@ async function ocrImagesWithTesseract(images) {
     });
     if (typeof Tesseract === 'undefined') {
         showToast('Tesseract.js 尚未加载完成，请稍后再试。', 'error');
+        isOcrRunning = false;
         return;
     }
 
@@ -217,11 +219,17 @@ function initBillUpload() {
     input.addEventListener('change', e => {
         let file = e.target.files[0];
         if (!file) return;
+        let ext = file.name.split('.').pop().toLowerCase();
         let reader = new FileReader();
         reader.onload = ev => {
-            let ext = file.name.split('.').pop().toLowerCase();
             if (ext === 'csv') {
-                billData = { raw: ev.target.result, type: 'csv' };
+                // 去除 UTF-8 BOM（Windows 导出的 CSV 常带有 BOM）
+                let raw = ev.target.result.replace(/^﻿/, '');
+                // 自动检测分隔符：微信/支付宝 CSV 常用分号，标准 CSV 用逗号
+                let semiColonCount = (raw.match(/;/g) || []).length;
+                let commaCount = (raw.match(/,/g) || []).length;
+                let delimiter = semiColonCount > commaCount ? ';' : ',';
+                billData = { raw, type: 'csv', delimiter };
             } else {
                 try {
                     let wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
