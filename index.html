@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>反诈智能识别与报案辅助系统 · 东北电力大学</title>
+    <link rel="preconnect" href="https://lib.baomitu.com" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <script src="https://lib.baomitu.com/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://lib.baomitu.com/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://lib.baomitu.com/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ===== 主题切换遮罩 ===== -->
+    <div class="theme-transition-overlay" id="themeTransitionOverlay"></div>
+
+    <div class="loader-container" id="loader">
+        <div class="loader-title" data-i18n="app.name">反诈智能识别与报案辅助系统</div>
+        <div class="loading-spin" style="width:32px;height:32px;border:3px solid var(--primary);border-top-color:transparent;"></div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== 悬浮胶囊导航（桌面端）===== -->
+    <div class="global-header" id="globalHeader">
+        <div class="header-content">
+            <div class="header-top">
+                <div class="title-group">
+                    <div class="header-title" data-i18n="app.name">反诈智能识别与报案辅助系统</div>
+                    <div class="header-sub" data-i18n="app.subtitle">创意来自东北电力大学易班工作站-Firefly TYPE IV</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <button class="theme-toggle-btn" id="themeToggleBtn" title="切换明暗主题" data-i18n-title="app.themeToggle">🌙</button>
+                    <button class="theme-toggle-btn" id="langToggleBtn" title="切换语言 / Switch language">EN</button>
+                    <a class="univ-brand" href="https://www.neepu.edu.cn/" target="_blank" rel="noopener" data-i18n="app.univ">东北电力大学</a>
+                </div>
+            </div>
+            <div class="nav-wrapper">
+                <div class="nav" id="globalNav">
+                    <button class="nav-btn active" data-target="homePage"><span class="nav-icon">🏠</span><span class="nav-text" data-i18n="nav.home">首页</span></button>
+                    <button class="nav-btn" data-target="identifyPage"><span class="nav-icon">🔍</span><span class="nav-text" data-i18n="nav.identify">诈骗识别</span></button>
+                    <button class="nav-btn" data-target="billPage"><span class="nav-icon">📊</span><span class="nav-text" data-i18n="nav.bill">账单导入</span></button>
+                    <button class="nav-btn" data-target="reportPage"><span class="nav-icon">📝</span><span class="nav-text" data-i18n="nav.report">报案填报</span></button>
+                    <button class="nav-btn" data-target="historyPage"><span class="nav-icon">📋</span><span class="nav-text" data-i18n="nav.history">历史记录</span></button>
+                    <button class="nav-btn" data-target="settingPage"><span class="nav-icon">⚙️</span><span class="nav-text" data-i18n="nav.setting">系统设置</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 底部标签栏（移动端）===== -->
+    <nav class="bottom-tab-bar" id="bottomTabBar">
+        <button class="tab-item active" data-target="homePage"><span class="tab-icon">🏠</span><span class="tab-label" data-i18n="tab.home">首页</span></button>
+        <button class="tab-item" data-target="identifyPage"><span class="tab-icon">🔍</span><span class="tab-label" data-i18n="tab.identify">识别</span></button>
+        <button class="tab-item" data-target="billPage"><span class="tab-icon">📊</span><span class="tab-label" data-i18n="tab.bill">账单</span></button>
+        <button class="tab-item" data-target="reportPage"><span class="tab-icon">📝</span><span class="tab-label" data-i18n="tab.report">报案</span></button>
+        <button class="tab-item" data-target="historyPage"><span class="tab-icon">📋</span><span class="tab-label" data-i18n="tab.history">历史</span></button>
+        <button class="tab-item" data-target="settingPage"><span class="tab-icon">⚙️</span><span class="tab-label" data-i18n="tab.setting">设置</span></button>
+    </nav>
+
+    <div class="page" id="homePage">
+        <div class="home-hero">
+            <div class="home-hero-glow"></div>
+            <h1 class="home-hero-title" data-i18n="app.name">反诈智能识别与报案辅助系统</h1>
+            <p class="home-hero-sub" data-i18n="home.heroSub">识别 · 判定 · 报案，一站式反诈辅助</p>
+        </div>
+        <div class="home-grid">
+            <div class="home-card" data-goto="identifyPage">
+                <div class="home-card-icon">🔍</div>
+                <div class="home-card-info"><div class="home-card-title" data-i18n="home.card1.title">诈骗识别</div><div class="home-card-desc" data-i18n="home.card1.desc">关键词匹配 + OCR 提取 + DeepSeek 深度判定</div></div>
+                <div class="home-card-arrow">→</div>
+            </div>
+            <div class="home-card" data-goto="reportPage">
+                <div class="home-card-icon">📝</div>
+                <div class="home-card-info"><div class="home-card-title" data-i18n="home.card2.title">报案填报</div><div class="home-card-desc" data-i18n="home.card2.desc">三步表单向导，自动生成刑事控告书，支持 PDF 导出</div></div>
+                <div class="home-card-arrow">→</div>
+            </div>
+            <div class="home-card" data-goto="billPage">
+                <div class="home-card-icon">📊</div>
+                <div class="home-card-info"><div class="home-card-title" data-i18n="home.card3.title">账单导入</div><div class="home-card-desc" data-i18n="home.card3.desc">微信/支付宝 CSV 账单自动解析，智能计算总支出</div></div>
+                <div class="home-card-arrow">→</div>
+            </div>
+            <div class="home-card home-card-chat" id="homeChatCard">
+                <div class="home-card-icon">💬</div>
+                <div class="home-card-info"><div class="home-card-title" data-i18n="home.card4.title">AI 智能助手</div><div class="home-card-desc" data-i18n="home.card4.desc">DeepSeek 驱动的反诈科普与思政教育对话助手</div></div>
+                <div class="home-card-arrow">↓</div>
+            </div>
+        </div>
+        <div class="home-chat-panel" id="homeChatPanel">
+            <div class="chat-card">
+                <div class="chat-header"><span data-i18n="chat.header">💬 反诈智能助手 · 思政融合版</span><div class="chat-header-actions"><button class="chat-collapse-btn" id="collapseChatBtn" title="收起" data-i18n-title="chat.collapse">✕</button><button class="chat-clear-btn" id="clearChatBtn" data-i18n="chat.clear">清空对话</button></div></div>
+                <div class="chat-messages" id="chatMessages"><div class="message bot"><div class="message-avatar bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="message-bubble" data-i18n="chat.welcome">你好！我是反诈科普与思政教育智能助手。我可以帮你识别诈骗套路、解析真实案例、提供防骗建议，并且融合法治诚信意识。请问有什么可以帮你？</div></div></div>
+                <div class="chat-input-area"><textarea class="chat-input" id="chatInput" rows="1" placeholder="输入你的问题，例如：遇到刷单诈骗怎么办？" data-i18n-placeholder="chat.placeholder"></textarea><button class="chat-send-btn" id="sendChatBtn" data-i18n="chat.send">发送</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="identifyPage">
+        <div class="container">
+            <div class="page-content">
+                <div class="page-title" data-i18n="identify.title">诈骗识别</div>
+                <div class="corpus-btns"><span class="corpus-label" id="corpusLabel">全类型诈骗</span><button class="corpus-btn" data-type="police" data-i18n="identify.cat.police">公安诈骗</button><button class="corpus-btn" data-type="loan" data-i18n="identify.cat.loan">贷款诈骗</button><button class="corpus-btn" data-type="service" data-i18n="identify.cat.service">冒充客服</button><button class="corpus-btn" data-type="leader" data-i18n="identify.cat.leader">冒充领导熟人</button></div>
+                <textarea id="fraudText" placeholder="可直接粘贴短信、聊天记录等文本内容（也可只上传图片）" data-i18n-placeholder="identify.textPlaceholder" rows="4"></textarea>
+                <div class="tip" data-i18n="identify.tip">📸 上传图片后点击"开始识别"使用 Tesseract OCR (本地引擎) 提取文字，支持中英文。</div>
+                <div class="upload-area" id="identifyUpload"><span data-i18n="identify.upload">📂 点击或拖拽上传图片（JPG/PNG）</span><input type="file" id="identifyFile" accept="image/jpg,image/jpeg,image/png" multiple></div>
+                <div id="identifyPreview" class="preview"></div>
+                <div class="ocr-progress" id="ocrProgressContainer">
+                    <div class="ocr-progress-info">
+                        <span id="ocrProgressStatus" data-i18n="ocr.preparing">准备识别...</span>
+                        <span id="ocrProgressPercent">0%</span>
+                    </div>
+                    <div class="ocr-progress-bar-bg">
+                        <div class="ocr-progress-bar-fill" id="ocrProgressFill"></div>
+                    </div>
+                </div>
+                <div id="ocrResult" class="tip"></div>
+                <div class="switch"><input type="checkbox" id="desensitizeSwitch" checked><label data-i18n="identify.desensitize">自动脱敏（手机号/身份证/银行卡）</label></div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="startDetectBtn" data-i18n="identify.start">开始识别</button>
+                    <button class="btn btn-deep" id="doubaoBtn" data-i18n="identify.deep">DeepSeek深度判定</button>
+                    <button class="btn btn-default" id="clearIdentifyBtn" data-i18n="identify.clear">清空</button>
+                    <button class="btn btn-success" id="fillToReportBtn" data-i18n="identify.fillToReport">一键填到报案表</button>
+                </div>
+                <div id="detectResult" class="result-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="image-lightbox" id="imageLightbox">
+        <div class="lightbox-backdrop"></div>
+        <div class="lightbox-content">
+            <button class="lightbox-close" id="lightboxClose">&times;</button>
+            <button class="lightbox-prev" id="lightboxPrev">&#10094;</button>
+            <img id="lightboxImg" src="" alt="预览大图" data-i18n-alt="lightbox.alt">
+            <button class="lightbox-next" id="lightboxNext">&#10095;</button>
+            <div class="lightbox-counter" id="lightboxCounter"></div>
+        </div>
+    </div>
+
+    <div class="page" id="billPage">
+        <div class="container">
+            <div class="page-content">
+                <div class="page-title" data-i18n="bill.title">账单导入</div>
+                <div class="notice" data-i18n="bill.notice">支持微信/支付宝官方导出的CSV/Excel格式账单，自动识别支出记录，计算总支出金额</div>
+                <div class="upload-area" id="billUpload"><span data-i18n="bill.upload">📎 点击或拖拽上传账单文件</span><input type="file" id="billFile" accept=".csv,.xlsx,.xls"></div>
+                <div id="billResult" class="result-box"></div>
+                <div class="btn-group"><button class="btn btn-primary" id="parseBillBtn" data-i18n="bill.parse">解析账单</button><button class="btn btn-success" id="billToReportBtn" data-i18n="bill.importToReport">导入报案表</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="reportPage">
+        <div class="container">
+            <div class="page-content">
+                <div class="page-title" data-i18n="report.title">报案填报 · 刑事控告书</div>
+                <div class="notice" data-i18n-html="report.noticeHtml">
+                    带 <span style="color:var(--danger);font-weight:bold;">*</span> 为必填项。请客观填写，配合警方初查，材料越齐全立案可能性越高。
+                </div>
+
+                <div class="step-indicator" id="stepIndicator">
+                    <div class="step-item step-active" data-step="1">
+                        <div class="step-circle"><span class="step-num">1</span><span class="step-check">✓</span></div>
+                        <div class="step-label" data-i18n="report.step1">控告人信息</div>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="step-item" data-step="2">
+                        <div class="step-circle"><span class="step-num">2</span><span class="step-check">✓</span></div>
+                        <div class="step-label" data-i18n="report.step2">被控告人信息</div>
+                    </div>
+                    <div class="step-connector"></div>
+                    <div class="step-item" data-step="3">
+                        <div class="step-circle"><span class="step-num">3</span><span class="step-check">✓</span></div>
+                        <div class="step-label" data-i18n="report.step3">事实与证据</div>
+                    </div>
+                </div>
+
+                <div class="step-content" id="step1">
+                    <div class="section-title" data-i18n="report.section1">一、控告人信息（您本人）</div>
+                    <div class="form-group" id="formName">
+                        <label><span data-i18n="report.name">姓名</span> <span class="required-star">*</span></label>
+                        <input type="text" id="name" placeholder="请填写真实姓名" data-i18n-placeholder="report.namePlaceholder">
+                        <div class="error-message" data-i18n="report.nameError">请填写控告人姓名</div>
+                    </div>
+                    <div class="form-group" id="formIdNo">
+                        <label><span data-i18n="report.idNo">身份证号</span> <span class="required-star">*</span></label>
+                        <input type="text" id="idNo" placeholder="18位，最后一位可为X" data-i18n-placeholder="report.idNoPlaceholder">
+                        <div class="error-message" data-i18n="report.idNoError">请填写正确的身份证号码（18位数字或最后一位X）</div>
+                    </div>
+                    <div class="form-group" id="formPhone">
+                        <label><span data-i18n="report.phone">联系电话</span> <span class="required-star">*</span></label>
+                        <input type="tel" id="phone" placeholder="请填写11位手机号" data-i18n-placeholder="report.phonePlaceholder">
+                        <div class="error-message" data-i18n="report.phoneError">请填写正确的11位手机号码</div>
+                    </div>
+                    <div class="form-group">
+                        <label><span data-i18n="report.address">住址</span> <span class="optional-tag" data-i18n="report.optional">(选填)</span></label>
+                        <input type="text" id="address" placeholder="请填写现住址，便于警方联系" data-i18n-placeholder="report.addressPlaceholder">
+                    </div>
+                    <div class="step-nav">
+                        <button class="btn btn-primary" id="nextStep1" data-i18n="report.next">下一步 →</button>
+                    </div>
+                </div>
+
+                <div class="step-content" id="step2" style="display:none;">
+                    <div class="section-title" data-i18n="report.section2">二、被控告人信息（对方/骗子）</div>
+                    <div class="notice" style="background:var(--danger-bg);border-color:var(--danger-border);border-left-color:var(--danger);"><span data-i18n="report.section2Notice1">请尽量挖掘被控告人信息，越详细越有助于破案！仅</span><strong data-i18n="report.accusedName">网名/姓名</strong><span data-i18n="report.section2Notice2">为必填，其余选填。</span></div>
+                    <div class="form-group" id="formAccusedName">
+                        <label><span data-i18n="report.accusedName">网名/姓名</span> <span class="required-star">*</span></label>
+                        <input type="text" id="accusedName" placeholder="已知的网名或真实姓名，不确定可填XXX" data-i18n-placeholder="report.accusedNamePlaceholder">
+                        <div class="error-message" data-i18n="report.accusedNameError">请填写被控告人网名或姓名（不确定填XXX）</div>
+                    </div>
+                    <div class="form-group">
+                        <label><span data-i18n="report.accusedPhone">电话</span> <span class="optional-tag" data-i18n="report.optional">(选填)</span></label>
+                        <input type="text" id="accusedPhone" placeholder="如已知对方手机号" data-i18n-placeholder="report.accusedPhonePlaceholder">
+                    </div>
+                    <div class="form-group">
+                        <label><span data-i18n="report.accusedWechat">微信号/QQ号</span> <span class="optional-tag" data-i18n="report.optional">(选填)</span></label>
+                        <input type="text" id="accusedWechat" placeholder="如已知对方微信ID或QQ号" data-i18n-placeholder="report.accusedWechatPlaceholder">
+                    </div>
+                    <div class="form-group">
+                        <label><span data-i18n="report.accusedAlipay">支付宝账号</span> <span class="optional-tag" data-i18n="report.optional">(选填)</span></label>
+                        <input type="text" id="accusedAlipay" placeholder="如已知对方支付宝账号" data-i18n-placeholder="report.accusedAlipayPlaceholder">
+                    </div>
+                    <div class="form-group">
+                        <label><span data-i18n="report.accusedBankCard">银行卡号</span> <span class="optional-tag" data-i18n="report.optional">(选填)</span></label>
+                        <input type="text" id="accusedBankCard" placeholder="如已知对方收款银行卡号" data-i18n-placeholder="report.accusedBankCardPlaceholder">
+                    </div>
+                    <div class="form-group">
+                        <label><span data-i18n="report.accusedAddress">大概住址或活动范围</span> <span class="optional-tag" data-i18n="report.optional">(选填)</span></label>
+                        <input type="text" id="accusedAddress" placeholder="如已知对方所在城市或活动区域" data-i18n-placeholder="report.accusedAddressPlaceholder">
+                    </div>
+                    <div class="step-nav">
+                        <button class="btn btn-default" id="prevStep2" data-i18n="report.prev">← 上一步</button>
+                        <button class="btn btn-primary" id="nextStep2" data-i18n="report.next">下一步 →</button>
+                    </div>
+                </div>
+
+                <div class="step-content" id="step3" style="display:none;">
+                    <div class="section-title" data-i18n="report.section3">三、被骗事实与经过</div>
+                    <div class="form-group" id="formTime">
+                        <label><span data-i18n="report.fraudTime">被骗时间</span> <span class="required-star">*</span></label>
+                        <input type="text" id="fraudTime" placeholder="例：2026-03-14 15:30" data-i18n-placeholder="report.fraudTimePlaceholder">
+                        <div class="error-message" data-i18n="report.fraudTimeError">请填写被骗时间</div>
+                    </div>
+                    <div class="form-group" id="formLocation">
+                        <label><span data-i18n="report.fraudLocation">被骗地点/操作地</span> <span class="required-star">*</span></label>
+                        <input type="text" id="fraudLocation" placeholder="例：XX省XX市XX区（线上/线下具体地点）" data-i18n-placeholder="report.fraudLocationPlaceholder">
+                        <div class="error-message" data-i18n="report.fraudLocationError">请填写被骗地点</div>
+                    </div>
+                    <div class="form-group">
+                        <label><span data-i18n="report.contactMethod">认识方式</span> <span class="optional-tag" data-i18n="report.optional">(选填)</span></label>
+                        <input type="text" id="contactMethod" placeholder="例：微信陌生好友添加、抖音私信等" data-i18n-placeholder="report.contactMethodPlaceholder">
+                    </div>
+                    <div class="form-group" id="formPlatform">
+                        <label><span data-i18n="report.fraudPlatform">被骗平台/渠道</span> <span class="required-star">*</span></label>
+                        <input type="text" id="fraudPlatform" placeholder="例：微信、抖音、陌生APP名称" data-i18n-placeholder="report.fraudPlatformPlaceholder">
+                        <div class="error-message" data-i18n="report.fraudPlatformError">请填写被骗平台/渠道</div>
+                    </div>
+                    <div class="form-group" id="formType">
+                        <label><span data-i18n="report.fraudType">诈骗类型</span> <span class="required-star">*</span></label>
+                        <input type="text" id="fraudType" placeholder="例：刷单返利、冒充客服、贷款诈骗等" data-i18n-placeholder="report.fraudTypePlaceholder">
+                        <div class="error-message" data-i18n="report.fraudTypeError">请填写诈骗类型</div>
+                    </div>
+                    <div class="form-group" id="formMoney">
+                        <label><span data-i18n="report.fraudMoney">被骗总金额（元）</span> <span class="required-star">*</span></label>
+                        <input type="text" id="fraudMoney" placeholder="阿拉伯数字，如 3500" data-i18n-placeholder="report.fraudMoneyPlaceholder">
+                        <div class="error-message" data-i18n="report.fraudMoneyError">请填写有效的金额数字</div>
+                    </div>
+                    <div class="form-group" id="formDetail">
+                        <label><span data-i18n="report.fraudDetail">被骗详细经过</span> <span class="required-star">*</span></label>
+                        <textarea id="fraudDetail" rows="5" placeholder="请客观陈述：时间线、对方如何联系您、对方虚构/隐瞒了何种事实、您如何产生错误认识、如何处分财产、对方如何获利、何时发现被骗。全程用陈述句。" data-i18n-placeholder="report.fraudDetailPlaceholder"></textarea>
+                        <div class="error-message" data-i18n="report.fraudDetailError">请填写被骗详细经过</div>
+                    </div>
+
+                    <div class="section-title" data-i18n="report.section4">四、证据材料</div>
+                    <div class="form-group">
+                        <label data-i18n="report.evidenceUpload">证据图片上传</label>
+                        <div class="upload-area" id="reportUpload"><span data-i18n="report.evidenceUploadArea">📷 点击或拖拽上传证据图片（聊天截图、转账凭证等）</span><input type="file" id="reportFile" accept="image/jpg,image/jpeg,image/png" multiple></div>
+                        <div id="reportPreview" class="preview"></div>
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="report.evidenceText">关联证据文本（OCR识别文本 + 用户原始输入）</label>
+                        <div class="evidence-readonly" id="evidenceTextBox"></div>
+                        <div class="tip" data-i18n="report.evidenceTip">💡 证据文本将随报案PDF一并导出。可在"诈骗识别"页面进行OCR识别后，点击下方按钮导入。</div>
+                        <button class="btn btn-default" id="importEvidenceBtn" style="margin-top:6px;" data-i18n="report.importEvidence">📥 从识别页导入证据文本</button>
+                        <button class="btn btn-default" id="clearEvidenceBtn" style="margin-top:6px;margin-left:8px;" data-i18n="report.clearEvidence">清空证据文本</button>
+                    </div>
+
+                    <div class="step-nav step-nav-actions">
+                        <button class="btn btn-default" id="prevStep3" data-i18n="report.prev">← 上一步</button>
+                        <button class="btn btn-primary" id="generateReportBtn" data-i18n="report.generate">生成刑事控告书</button>
+                        <button class="btn btn-default" id="copyReportBtn" data-i18n="report.copy">复制全文</button>
+                        <button class="btn btn-default" id="exportTxtBtn" data-i18n="report.exportTxt">导出TXT</button>
+                        <button class="btn btn-pdf" id="exportPdfBtn" data-i18n="report.exportPdf">生成PDF文件</button>
+                    </div>
+                    <div id="reportResult" class="result-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="historyPage"><div class="container"><div class="page-content"><div class="page-title" data-i18n="history.title">历史记录</div><div id="historyList"></div><button class="btn btn-default" id="clearHistoryBtn" data-i18n="history.clearAll">清空所有记录</button></div></div></div>
+    <div class="page" id="settingPage"><div class="container"><div class="page-content"><div class="page-title" data-i18n="setting.title">系统设置</div><div class="setting-item"><div class="setting-label" data-i18n="setting.autoSave">自动保存历史记录</div><div class="switch"><input type="checkbox" id="autoSaveSwitch" checked></div></div><div class="setting-item"><div class="setting-label" data-i18n="setting.defaultDesensitize">默认开启自动脱敏</div><div class="switch"><input type="checkbox" id="defaultDesensitizeSwitch" checked></div></div><div class="btn-group"><button class="btn btn-primary" id="saveSettingBtn" data-i18n="setting.save">保存设置</button><button class="btn btn-default" id="resetSettingBtn" data-i18n="setting.reset">恢复默认</button></div></div></div></div>
+    <div class="global-footer" data-i18n="app.footer">© 2026 反诈智能识别与报案辅助系统 | 创意来自东北电力大学易班工作站 | AI引擎: DeepSeek + Tesseract OCR 作者Xin PR,Liu A Green,Wang A Black 保留著作权</div>
+
+    <a class="mit-badge" href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener" title="MIT License" aria-label="MIT License">
+        <svg xmlns="http://www.w3.org/2000/svg" height="166" width="321" shape-rendering="crispEdges" viewBox="0 0 321 166">
+            <g stroke-width="35" stroke="#A31F34">
+                <path d="m17.5,0v166m57-166v113m57-113v166m57-166v33m58,20v113"/>
+                <path d="m188.5,53v113" stroke="#8A8B8C"/>
+                <path d="m229,16.5h92" stroke-width="33"/>
+            </g>
+        </svg>
+        <span class="mit-badge-text" data-i18n="app.mit">程序根据 MIT 协议开源</span>
+    </a>
+
+
+    <script src="js/i18n.js" defer></script>
+    <script src="js/utils.js" defer></script>
+    <script src="js/tesseract-loader.js" defer></script>
+    <script src="js/upload.js" defer></script>
+    <script src="js/anti-fraud-knowledge.js" defer></script>
+    <script src="js/chat.js" defer></script>
+    <script src="js/app.js" defer></script>
+</body>
+</html>
