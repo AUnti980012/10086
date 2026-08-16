@@ -1,7 +1,7 @@
 # 反诈智能识别与报案辅助系统 · Firefly-IV
 # Anti-Fraud Recognition & Reporting Assistant · Firefly-IV
 
-> 反诈智能识别与报案辅助系统 · Ver.3.11.0 ｜ Smart Anti-Fraud Assistant · Ver.3.11.0
+> 反诈智能识别与报案辅助系统 · Ver.4.0.0-beta ｜ Smart Anti-Fraud Assistant · Ver.4.0.0-beta
 > 创意来自东北电力大学易班工作站-Firefly TYPE IV ｜ Concept by NEEPU YiBan Workstation - Firefly TYPE IV
 
 一款面向大学生的智能反诈辅助系统：集关键词检测、OCR 识别、AI 深度判定、刑事控告书自动生成于一体，帮助用户识别诈骗套路、整理报案材料。
@@ -117,7 +117,7 @@ npx serve .
 
 ### 更新日志
 
-- **Ver.3.11.0**（2026-08-16）
+- **Ver.4.0.0-beta**（2026-08-16）
   - 📜 开源协议更换：由 MIT 改为 Apache-2.0，新增 LICENSE 文件；README 双语改为可折叠下拉框。
   - 🖼️ 开源徽标：网页徽标更换为 ASF（Apache Software Foundation）logo，系统设置页新增 SPDX logo（链接至 SPDX Apache-2.0 页）。
   - 📱 移动端重构：隐藏顶部标题栏，主题/语言切换改为设置页分段控件，东北电力大学链接移入设置页，主页新增英文切换提示。
@@ -242,7 +242,7 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 ### Changelog
 
-- **Ver.3.11.0** (2026-08-16)
+- **Ver.4.0.0-beta** (2026-08-16)
   - 📜 License change: switched from MIT to Apache-2.0, added a LICENSE file; the bilingual README sections are now collapsible dropdowns.
   - 🖼️ Open-source badges: replaced with the ASF (Apache Software Foundation) logo, and added an SPDX logo on the Settings page (linking to the SPDX Apache-2.0 page).
   - 📱 Mobile rework: hidden the top header bar, moved theme/language toggles into Settings as segmented controls, moved the NEEPU link into Settings, and added an English hint on the home page.
@@ -264,4 +264,4 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 ---
 
-© 2026 Xin Firefly-IV. All Rights Reserved. · Ver.3.11.0
+© 2026 Xin Firefly-IV. All Rights Reserved. · Ver.4.0.0-beta
