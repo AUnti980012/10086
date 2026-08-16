@@ -96,7 +96,6 @@ let systemSettings = { autoSave: true, defaultDesensitize: true };
 let globalOcrText = '';
 let globalUserInputText = '';
 let currentStep = 1;
-const totalSteps = 3;
 
 // ===== 语料标签（随语言切换重渲染） =====
 let corpusLabelKey = 'identify.allTypes';
@@ -224,7 +223,7 @@ function validateStep(step) {
             { id: 'formLocation', getValue: () => document.getElementById('fraudLocation').value.trim(), test: v => !!v },
             { id: 'formPlatform', getValue: () => document.getElementById('fraudPlatform').value.trim(), test: v => !!v },
             { id: 'formType', getValue: () => document.getElementById('fraudType').value.trim(), test: v => !!v },
-            { id: 'formMoney', getValue: () => document.getElementById('fraudMoney').value.trim(), test: v => v && !isNaN(parseFloat(v)) && parseFloat(v) > 0 },
+            { id: 'formMoney', getValue: () => document.getElementById('fraudMoney').value.trim(), test: v => /^(\d+)(\.\d{1,2})?$/.test(v) && parseFloat(v) > 0 },
             { id: 'formDetail', getValue: () => document.getElementById('fraudDetail').value.trim(), test: v => !!v },
         ];
     }
@@ -261,7 +260,7 @@ function validateReportForm() {
         { id: 'formLocation', getValue: () => document.getElementById('fraudLocation').value.trim(), test: v => !!v },
         { id: 'formPlatform', getValue: () => document.getElementById('fraudPlatform').value.trim(), test: v => !!v },
         { id: 'formType', getValue: () => document.getElementById('fraudType').value.trim(), test: v => !!v },
-        { id: 'formMoney', getValue: () => document.getElementById('fraudMoney').value.trim(), test: v => v && !isNaN(parseFloat(v)) && parseFloat(v) > 0 },
+        { id: 'formMoney', getValue: () => document.getElementById('fraudMoney').value.trim(), test: v => /^(\d+)(\.\d{1,2})?$/.test(v) && parseFloat(v) > 0 },
         { id: 'formDetail', getValue: () => document.getElementById('fraudDetail').value.trim(), test: v => !!v }
     ];
     let firstError = null;
@@ -297,6 +296,8 @@ let reportSnapshot = null; // 保存报案快照
 let reportText = ''; // 保存报告纯文本，供 TXT 导出 / 复制全文使用
 
 function generateReport() {
+    // 生成前先校验全部必填项（含第三步）
+    if (!validateReportForm()) return;
     // 收集当前表单所有字段
     let formData = {
         name: document.getElementById('name').value.trim(),
@@ -743,7 +744,8 @@ function parseBill() {
                     if (amtCol !== undefined) {
                         amt = parseFloat(row[amtCol]);
                     }
-                    if (amt < 0 || (row['收支类型'] && row['收支类型'].includes('支出'))) {
+                    const isExpense = amt < 0 || ['收/支', '收支类型', '交易类型', '资金流向'].some(c => row[c] != null && String(row[c]).includes('支出'));
+                    if (isExpense) {
                         total += Math.abs(amt);
                         records.push(Math.abs(amt));
                     }
@@ -1506,6 +1508,8 @@ function applyTheme(theme) {
     currentTheme = theme;
     const btn = document.getElementById('themeToggleBtn');
     if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    // 同步移动端设置页「主题」分段控件激活态
+    document.querySelectorAll('#themeSegmented .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.value === theme));
     // 持久化用户选择
     try { localStorage.setItem('themePref', theme); } catch(e) {}
 }
@@ -1544,6 +1548,8 @@ function initTheme() {
             applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
         });
     }
+    // 移动端设置页「主题」分段控件点击
+    document.querySelectorAll('#themeSegmented .seg-btn').forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.value)));
 }
 
 // ===== 初始化 =====
@@ -1740,6 +1746,3 @@ window.updateNavActive = updateNavActive;
 window.showStep = showStep;
 window.validateStep = validateStep;
 window.initImageLightbox = initImageLightbox;
-window.restoreHistoryRecord = window.restoreHistoryRecord || function() {};
-window.viewHistoryDetail = window.viewHistoryDetail || function() {};
-window.deleteHistoryRecord = window.deleteHistoryRecord || function() {};

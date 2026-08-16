@@ -89,9 +89,6 @@ function hideLoader() {
 }
 
 // ===== Toast 通知组件 =====
-let toastQueue = [];
-let toastActive = false;
-
 function showToast(message, type = 'success') {
     // type: 'success' | 'error' | 'warning'
     const icons = { success: '✓', error: '✕', warning: '⚠' };
@@ -102,7 +99,7 @@ function showToast(message, type = 'success') {
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
         <span>${icons[type] || '●'}</span>
-        <span>${message}</span>
+        <span>${escapeHtml(message)}</span>
         <button class="toast-close" aria-label="${t('common.close')}">×</button>
     `;
     toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));

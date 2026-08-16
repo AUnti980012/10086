@@ -152,7 +152,6 @@ async function ocrImagesWithTesseract(images) {
     if (!images.length) return;
     if (isOcrRunning) {
         showToast(t('ocr.running'), 'warning');
-        isOcrRunning = false; // 重置锁，防止并发调用后永久卡死
         return;
     }
     isOcrRunning = true;

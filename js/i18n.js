@@ -17,8 +17,8 @@
         ['app.themeToggle', '切换明暗主题', 'Toggle light/dark theme'],
         ['app.univ', '东北电力大学', 'NEEPU'],
         ['app.footer', '© 2026 反诈智能识别与报案辅助系统 | 创意来自东北电力大学易班工作站 | AI引擎: DeepSeek + Tesseract OCR 作者Xin PR,Liu A Green,Wang A Black 保留著作权', '© 2026 Anti-Fraud Assistant | Concept by NEEPU YiBan Workstation | AI engine: DeepSeek + Tesseract OCR Authors: Xin PR, Liu A Green, Wang A Black All rights reserved'],
-        ['app.mit', '程序根据 MIT 协议开源', 'Open-sourced under the MIT License'],
-        ['app.mitShort', 'MIT开源', 'MIT Open Source'],
+        ['app.license', '程序根据 Apache-2.0 协议开源', 'Open-sourced under the Apache-2.0 License'],
+        ['app.licenseShort', 'Apache-2.0开源', 'Apache-2.0 Open Source'],
 
         // ---- 导航（桌面） ----
         ['nav.home', '首页', 'Home'],
@@ -194,6 +194,11 @@
         ['setting.reset', '恢复默认', 'Reset to Default'],
         ['setting.saved', '设置已保存', 'Settings saved'],
         ['setting.resetDone', '已恢复默认设置', 'Default settings restored'],
+        ['setting.theme', '主题', 'Theme'],
+        ['setting.light', '浅色', 'Light'],
+        ['setting.dark', '深色', 'Dark'],
+        ['setting.language', '语言', 'Language'],
+        ['setting.yiban', '易班网', 'Yiban'],
 
         // ---- 通用 ----
         ['common.close', '关闭', 'Close'],
@@ -384,6 +389,9 @@
         const btn = document.getElementById('langToggleBtn');
         if (btn) btn.textContent = lang === 'en' ? '中' : 'EN';
 
+        // 同步移动端设置页「语言」分段控件激活态
+        document.querySelectorAll('#langSegmented .seg-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.value === lang); });
+
         // 通知各模块重渲染动态内容
         document.dispatchEvent(new CustomEvent('languagechange'));
     }
@@ -408,6 +416,11 @@
                 window.setLanguage(next);
             });
         }
+
+        // 移动端设置页「语言」分段控件点击
+        document.querySelectorAll('#langSegmented .seg-btn').forEach(function (b) {
+            b.addEventListener('click', function () { window.setLanguage(b.dataset.value); });
+        });
     }
 
     if (document.readyState === 'loading') {

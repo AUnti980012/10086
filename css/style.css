@@ -242,7 +242,8 @@ body {
     transition: all 0.2s var(--spring-bounce);
     min-width: 48px;
 }
-.tab-icon { font-size: 20px; transition: transform 0.2s var(--spring-bounce); }
+.tab-icon { display: flex; align-items: center; justify-content: center; font-size: 20px; transition: transform 0.2s var(--spring-bounce); }
+.tab-icon svg { width: 24px; height: 24px; display: block; }
 .tab-label { font-size: 10px; }
 .tab-item:active { transform: scale(0.9); }
 .tab-item.active {
@@ -723,6 +724,21 @@ body {
 .setting-item:last-of-type { border-bottom: none; }
 .setting-label { font-size: 13px; color: var(--text-primary); font-weight: 500; transition: color 0.4s var(--spring-smooth); }
 
+/* ===== 设置页链接 ===== */
+.setting-link { color: var(--primary); text-decoration: none; font-size: 13px; font-weight: 500; white-space: nowrap; transition: color 0.2s var(--spring-smooth); }
+.setting-link:hover { color: var(--primary-hover); text-decoration: underline; }
+
+/* ===== 分段控件（移动端设置页：主题/语言） ===== */
+.segmented { display: inline-flex; background: var(--bg-elevated); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg-btn { border: none; background: transparent; color: var(--text-tertiary); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; white-space: nowrap; transition: all 0.2s var(--spring-smooth); }
+.seg-btn.active { background: var(--bg-surface); color: var(--primary); box-shadow: var(--shadow-sm); font-weight: 600; }
+
+/* 移动端专用设置控件（桌面端隐藏） */
+.mobile-only-controls { display: none; }
+
+/* 主页英文提示（桌面端隐藏） */
+.home-lang-hint { display: none; }
+
 /* ===== 证据文本 ===== */
 .evidence-readonly {
     background: var(--bg-elevated); border: 1px solid var(--border-subtle);
@@ -807,21 +823,46 @@ body {
 }
 :root[data-theme="dark"] .global-footer { background: rgba(13,21,37,0.78); }
 
-/* ===== MIT 徽标（右下角，全局可见） ===== */
-.mit-badge {
+/* ===== 开源协议徽标（右下角，全局可见） ===== */
+.license-badge {
     position: fixed; right: 16px; bottom: 32px; z-index: 900;
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     opacity: 0.85; text-decoration: none;
     transition: opacity 0.2s var(--spring-smooth), transform 0.2s var(--spring-smooth);
 }
-.mit-badge:hover { opacity: 1; transform: translateY(-2px); }
-.mit-badge svg { width: 84px; height: auto; display: block; }
-.mit-badge-text {
+.license-badge:hover { opacity: 1; transform: translateY(-2px); }
+.license-badge img { width: 100px; height: auto; display: block; }
+.license-badge-text {
     font-size: 10px; color: var(--text-tertiary); white-space: nowrap;
     line-height: 1.3; text-align: center;
     transition: color 0.4s var(--spring-smooth);
 }
-.mit-badge-text-mobile { display: none; }
+.license-badge-text-mobile { display: none; }
+
+/* ===== 系统设置页底部徽标（SPDX 双端 + ASF 仅移动端，并排） ===== */
+.settings-badges {
+    position: absolute; right: 20px; bottom: 14px;
+    display: flex; align-items: flex-start; gap: 12px; z-index: 1;
+}
+.asf-settings-badge {
+    display: none; /* 桌面端隐藏，仅移动端显示 */
+    flex-direction: column; align-items: center; gap: 2px;
+    margin-top: -10px; /* 与 SPDX 视觉中心对齐 */
+    text-decoration: none; opacity: 0.7;
+    transition: opacity 0.2s var(--spring-smooth);
+}
+.asf-settings-badge:hover { opacity: 1; }
+.asf-settings-badge img { width: 100px; height: auto; display: block; }
+.asf-settings-badge-text {
+    font-size: 10px; color: var(--text-tertiary); white-space: nowrap;
+    transition: color 0.4s var(--spring-smooth);
+}
+.spdx-badge {
+    display: inline-block; opacity: 0.7;
+    transition: opacity 0.2s var(--spring-smooth);
+}
+.spdx-badge:hover { opacity: 1; }
+.spdx-badge img { width: 120px; height: auto; display: block; }
 
 /* ===== 聊天卡片 ===== */
 .chat-card {
@@ -1056,7 +1097,7 @@ body { font-size: 15px; }
 
 /* 极小文字 */
 .tab-item, .tab-label, .form-group label .optional-tag, .preview-del,
-.global-footer, .mit-badge-text { font-size: 11px; }
+.global-footer, .license-badge-text { font-size: 11px; }
 
 /* 常规控件文字 */
 .univ-brand, .nav-btn, .btn, .upload-area, .setting-label, .toast,
@@ -1122,19 +1163,11 @@ body { font-size: 15px; }
 
     /* 隐藏全局 footer */
     .global-footer { display: none; }
-    /* MIT 徽标移到标题栏右侧，竖排（图标在上、文字在下） */
-    .mit-badge {
-        top: 12px; right: 12px; bottom: auto;
-        flex-direction: column; align-items: center; gap: 2px;
-        opacity: 1; z-index: 1002;
-    }
-    .mit-badge svg { width: 28px; }
-    .mit-badge-text { display: none; }
-    .mit-badge-text-mobile {
-        display: block; font-size: 10px; color: var(--text-tertiary);
-        white-space: nowrap; transition: color 0.4s var(--spring-smooth);
-    }
-    .header-title { padding-right: 64px; }
+    /* 移动端隐藏全局开源协议徽标（ASF 移入系统设置页与 SPDX 并排） */
+    .license-badge { display: none; }
+
+    /* 移动端显示设置页内的 ASF 徽标 */
+    .asf-settings-badge { display: flex; }
 
     /* 报案步骤左右滑动切换（仅移动端） */
     .step-content.slide-next { animation: stepSlideNext 0.32s var(--ease-out-expo) forwards; }
@@ -1150,6 +1183,15 @@ body { font-size: 15px; }
 
     /* 移动端隐藏顶部导航栏，仅保留底部 Dock */
     .nav-wrapper { display: none; }
+
+    /* 移动端隐藏顶部标题栏（功能入口收敛到系统设置页） */
+    .global-header { display: none; }
+
+    /* 移动端专用控件（主题/语言/学校）显示 */
+    .mobile-only-controls { display: block; }
+
+    /* 主页英文提示显示 */
+    .home-lang-hint { display: block; font-size: 12px; color: var(--text-tertiary); text-align: center; margin-top: 8px; }
 }
 
 /* ===== 无障碍 ===== */

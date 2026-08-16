@@ -1,18 +1,19 @@
 # 反诈智能识别与报案辅助系统 · Firefly-IV
 # Anti-Fraud Recognition & Reporting Assistant · Firefly-IV
 
-> 反诈智能识别与报案辅助系统 · Ver.3.10.0 ｜ Smart Anti-Fraud Assistant · Ver.3.10.0
+> 反诈智能识别与报案辅助系统 · Ver.3.11.0 ｜ Smart Anti-Fraud Assistant · Ver.3.11.0
 > 创意来自东北电力大学易班工作站-Firefly TYPE IV ｜ Concept by NEEPU YiBan Workstation - Firefly TYPE IV
 
 一款面向大学生的智能反诈辅助系统：集关键词检测、OCR 识别、AI 深度判定、刑事控告书自动生成于一体，帮助用户识别诈骗套路、整理报案材料。
 
 An AI-powered anti-fraud assistant for students: combining keyword detection, OCR recognition, AI deep analysis, and one-click criminal complaint drafting to help users identify scam tactics and prepare reporting materials.
 
-> 📖 本 README 提供中英双语版本 ｜ This README is available in both Chinese and English.
+> 📖 本 README 提供中英双语版本，点击下方标题展开对应语言 ｜ This README is bilingual — click a heading below to expand a language.
 
 ---
 
-## 中文 / Chinese
+<details open>
+<summary><b>🇨🇳 中文 / Chinese</b></summary>
 
 ### 功能特性
 
@@ -104,17 +105,7 @@ npx serve .
 
 ### 📜 开源协议
 
-本项目基于 MIT 协议开源，您可以自由使用、修改和分发，但请保留原始版权声明及作者署名。
-
-```text
-Copyright (C) 2026 Xin Firefly-IV
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```
+本项目基于 Apache License 2.0（Apache-2.0）协议开源。完整许可文本见仓库根目录 [LICENSE](./LICENSE)，也可在 [SPDX](https://spdx.org/licenses/Apache-2.0.html) 查看。
 
 ### 致谢
 
@@ -126,6 +117,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### 更新日志
 
+- **Ver.3.11.0**（2026-08-16）
+  - 📜 开源协议更换：由 MIT 改为 Apache-2.0，新增 LICENSE 文件；README 双语改为可折叠下拉框。
+  - 🖼️ 开源徽标：网页徽标更换为 ASF（Apache Software Foundation）logo，系统设置页新增 SPDX logo（链接至 SPDX Apache-2.0 页）。
+  - 📱 移动端重构：隐藏顶部标题栏，主题/语言切换改为设置页分段控件，东北电力大学链接移入设置页，主页新增英文切换提示。
+  - 🎨 底部 Dock：改为单色线性图标（未选中灰色、选中主题色）。
+  - 🔗 新增「易班网」链接（双端设置页）。
+  - 🐛 修复：Excel 账单收支列名错误导致总额恒为 0；「生成刑事控告书」第三步必填项未校验；金额校验过宽；OCR 并发锁提前释放；showToast 未转义（XSS 隐患）。
+
 - **Ver.3.10.0**（2026-08-15）
   - 📄 PDF 导出重构：由 html2canvas 截图改为 jsPDF 纯文本排版，正文可选中/复制，字体为宋体（SimSun 子集嵌入）；主标题 22pt 居中加粗、副标题 14pt、区块标题 12pt 加粗、正文 12pt 两端对齐首行缩进 2em、落款右对齐，A4 上下 1.5cm / 左右 2cm 页边距，段落不跨页。
   - 🖼️ 证据图片：上传的证据图片随 PDF 逐张单独成页追加到文末。
@@ -136,9 +135,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   - 🌐 新增中英双语：完整英文界面 + 「中 / 英」切换按钮，默认中文，选择持久化；覆盖 AI 对话、20 条反诈知识库、《刑事控告书》生成等全部动态内容。
   - 🔍 UI 优化：全局字号放大，按钮 / 输入框内边距微调，布局保持不变。
 
----
+</details>
 
-## English
+<details>
+<summary><b>🇺🇸 English</b></summary>
 
 ### Features
 
@@ -230,17 +230,7 @@ This project is intended solely for educational, research, and legitimate anti-f
 
 ### 📜 License
 
-Released under the MIT License. You are free to use, modify, and distribute it, provided you retain the original copyright notice and attribution.
-
-```text
-Copyright (C) 2026 Xin Firefly-IV
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```
+Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE) file in the repository root, or the [SPDX entry](https://spdx.org/licenses/Apache-2.0.html).
 
 ### Acknowledgements
 
@@ -252,6 +242,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### Changelog
 
+- **Ver.3.11.0** (2026-08-16)
+  - 📜 License change: switched from MIT to Apache-2.0, added a LICENSE file; the bilingual README sections are now collapsible dropdowns.
+  - 🖼️ Open-source badges: replaced with the ASF (Apache Software Foundation) logo, and added an SPDX logo on the Settings page (linking to the SPDX Apache-2.0 page).
+  - 📱 Mobile rework: hidden the top header bar, moved theme/language toggles into Settings as segmented controls, moved the NEEPU link into Settings, and added an English hint on the home page.
+  - 🎨 Bottom dock: switched to monochrome line icons (gray when unselected, theme color when selected).
+  - 🔗 Added a "Yiban" link (both desktop and mobile Settings).
+  - 🐛 Fixes: Excel statement direction-column mismatch (total was always 0); missing step-3 validation on report generation; overly-lenient amount validation; premature OCR concurrency-lock release; unescaped showToast message (XSS risk).
+
 - **Ver.3.10.0** (2026-08-15)
   - 📄 PDF export rewritten: switched from an html2canvas screenshot to native jsPDF text layout (selectable/copyable text) with an embedded SimSun subset; title 22pt centered bold, subtitle 14pt, section headings 12pt bold, body 12pt justified with a 2em first-line indent, and a right-aligned signature block; A4 with 1.5cm top/bottom and 2cm left/right margins, paragraphs kept intact across pages.
   - 🖼️ Evidence images appended as one page per image at the end of the PDF.
@@ -262,6 +260,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   - 🌐 Added Chinese/English bilingual support: full English UI with a zh/en toggle (default Chinese, persisted), covering AI chat, the 20-entry knowledge base, the generated criminal complaint, and all other dynamic content.
   - 🔍 UI polish: larger global font sizes and slightly increased button/input padding (layout unchanged).
 
+</details>
+
 ---
 
-© 2026 Xin Firefly-IV. All Rights Reserved. · Ver.3.10.0
+© 2026 Xin Firefly-IV. All Rights Reserved. · Ver.3.11.0
