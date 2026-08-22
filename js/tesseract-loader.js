@@ -8,9 +8,8 @@
  *   4. 细粒度进度通知（区分下载/识别阶段）
  */
 
-let tesseractLoaded = false;
 let tesseractReady = false;
-let tesseractResolve = null;
+let tesseractPromise = null; // 全局复用的加载 Promise，避免并发调用 resolve 被覆盖
 let tesseractWorker = null; // 全局复用 Worker
 let langDataDownloading = false; // 防止重复下载语言数据
 let langDataDownloaded = false; // 语言数据是否已缓存
@@ -66,21 +65,13 @@ async function preloadLangData(lang, onProgress) {
 
 function loadTesseract(onLangProgress) {
     if (tesseractReady) return Promise.resolve();
-    if (tesseractLoaded) {
-        return new Promise((resolve) => {
-            tesseractResolve = resolve;
-        });
-    }
-    tesseractLoaded = true;
-
-    // 保存进度回调
     if (onLangProgress) {
         window.onTesseractLangProgress = onLangProgress;
     }
+    if (tesseractPromise) return tesseractPromise;
 
-    return new Promise(async (resolve) => {
-        tesseractResolve = resolve;
-
+    // 单个共享 Promise：并发调用复用同一个加载过程，避免 resolve 被覆盖导致早期 Promise 永不 resolve
+    tesseractPromise = new Promise((resolve) => {
         // 使用 bootcdn（国内访问更快）
         const script = document.createElement('script');
         script.src = 'https://lib.baomitu.com/tesseract.js/5.0.5/tesseract.min.js';
@@ -93,8 +84,9 @@ function loadTesseract(onLangProgress) {
                 window.onTesseractLangProgress(0, 2, t('ocr.loadingModel'));
             }
 
-            // await 预下载，确保语言包就绪后再 resolve
-            await preloadLangData('chi_sim+eng', (downloaded, total, message) => {
+            // await 预下载，确保语言包就绪后再 resolve（俄语模式加载 rus+eng）
+            const ocrLang = (window.I18N && window.I18N.current === 'ru') ? 'rus+eng' : 'chi_sim+eng';
+            await preloadLangData(ocrLang, (downloaded, total, message) => {
                 if (window.onTesseractLangProgress) {
                     window.onTesseractLangProgress(downloaded, total, message);
                 }
@@ -105,14 +97,16 @@ function loadTesseract(onLangProgress) {
             // 标记为外部可读
             window._tesseractLangDataDownloaded = langDataDownloaded;
 
-            if (tesseractResolve) tesseractResolve();
+            resolve();
         };
         script.onerror = () => {
             alert(t('ocr.loadFailed'));
-            if (tesseractResolve) tesseractResolve();
+            resolve();
         };
         document.head.appendChild(script);
     });
+
+    return tesseractPromise;
 }
 
 // 暴露给全局供其他模块调用

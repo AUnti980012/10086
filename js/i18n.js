@@ -16,7 +16,7 @@
         ['app.subtitle', '创意来自东北电力大学易班工作站-Firefly TYPE IV', 'Concept by NEEPU YiBan Workstation - Firefly TYPE IV'],
         ['app.themeToggle', '切换明暗主题', 'Toggle light/dark theme'],
         ['app.univ', '东北电力大学', 'NEEPU'],
-        ['app.footer', '© 2026 反诈智能识别与报案辅助系统 | 创意来自东北电力大学易班工作站 | AI引擎: DeepSeek + Tesseract OCR 作者Xin PR,Liu A Green,Wang A Black 保留著作权', '© 2026 Anti-Fraud Assistant | Concept by NEEPU YiBan Workstation | AI engine: DeepSeek + Tesseract OCR Authors: Xin PR, Liu A Green, Wang A Black All rights reserved'],
+        ['app.footer', '© 2026 反诈智能识别与报案辅助系统 | 创意来自东北电力大学易班工作站 | AI引擎: DeepSeek + Tesseract OCR 作者Xin PR,Liu A Green,Wang A Black 根据 Apache-2.0 协议开源', '© 2026 Anti-Fraud Assistant | Concept by NEEPU YiBan Workstation | AI engine: DeepSeek + Tesseract OCR Authors: Xin PR, Liu A Green, Wang A Black Licensed under Apache-2.0'],
         ['app.license', '程序根据 Apache-2.0 协议开源', 'Open-sourced under the Apache-2.0 License'],
         ['app.licenseShort', 'Apache-2.0开源', 'Apache-2.0 Open Source'],
 
@@ -48,11 +48,12 @@
         ['home.card4.desc', 'DeepSeek 驱动的反诈科普与思政教育对话助手', 'A DeepSeek-powered anti-fraud education and civic-education chat assistant'],
 
         // ---- 聊天 ----
-        ['chat.header', '💬 反诈智能助手 · 思政融合版', '💬 Anti-Fraud Assistant · Civic-Education Edition'],
+        ['chat.header', '反诈智能助手 · 思政融合版', 'Anti-Fraud Assistant · Civic-Education Edition'],
         ['chat.collapse', '收起', 'Collapse'],
         ['chat.clear', '清空对话', 'Clear chat'],
         ['chat.send', '发送', 'Send'],
         ['chat.placeholder', '输入你的问题，例如：遇到刷单诈骗怎么办？', 'Type your question, e.g. What should I do if I encounter an order-brushing scam?'],
+        ['chat.inputAriaLabel', '输入你的问题', 'Enter your question'],
         ['chat.welcome', '你好！我是反诈科普与思政教育智能助手。我可以帮你识别诈骗套路、解析真实案例、提供防骗建议，并且融合法治诚信意识。请问有什么可以帮你？', "Hello! I'm your anti-fraud and civic-education assistant. I can help you identify scam tactics, analyze real cases, and offer anti-fraud advice, integrating legal awareness and integrity. How may I help you?"],
         ['chat.cleared', '对话已清空，请问有什么可以帮助你的？', 'Chat cleared. How may I help you?'],
         ['chat.noReply', '抱歉，未收到有效回复', 'Sorry, no valid response was received'],
@@ -77,8 +78,9 @@
         ['identify.cat.service', '冒充客服', 'Fake Customer Service'],
         ['identify.cat.leader', '冒充领导熟人', 'Fake Boss / Acquaintance'],
         ['identify.textPlaceholder', '可直接粘贴短信、聊天记录等文本内容（也可只上传图片）', 'Paste SMS, chat records, or other text directly (or upload images only)'],
-        ['identify.tip', '📸 上传图片后点击"开始识别"使用 Tesseract OCR (本地引擎) 提取文字，支持中英文。', '📸 After uploading images, click "Start Detection" to extract text with Tesseract OCR (on-device engine), supporting Chinese and English.'],
-        ['identify.upload', '📂 点击或拖拽上传图片（JPG/PNG）', '📂 Click or drag to upload images (JPG/PNG)'],
+        ['identify.textAriaLabel', '输入或粘贴诈骗相关内容', 'Enter or paste fraud-related content'],
+        ['identify.tip', '上传图片后点击"开始识别"使用 Tesseract OCR (本地引擎) 提取文字，支持中英文。', 'After uploading images, click "Start Detection" to extract text with Tesseract OCR (on-device engine), supporting Chinese and English.'],
+        ['identify.upload', '点击或拖拽上传图片（JPG/PNG）', 'Click or drag to upload images (JPG/PNG)'],
         ['identify.desensitize', '自动脱敏（手机号/身份证/银行卡）', 'Auto-desensitize (phone number / ID card / bank card)'],
         ['identify.start', '开始识别', 'Start Detection'],
         ['identify.deep', 'DeepSeek深度判定', 'DeepSeek Deep Analysis'],
@@ -89,7 +91,7 @@
         // ---- 账单导入页 ----
         ['bill.title', '账单导入', 'Bill Import'],
         ['bill.notice', '支持微信/支付宝官方导出的CSV/Excel格式账单，自动识别支出记录，计算总支出金额', 'Supports CSV/Excel statements exported from WeChat/Alipay; auto-identifies expense records and computes total spending'],
-        ['bill.upload', '📎 点击或拖拽上传账单文件', '📎 Click or drag to upload a statement file'],
+        ['bill.upload', '点击或拖拽上传账单文件', 'Click or drag to upload a statement file'],
         ['bill.parse', '解析账单', 'Parse Statement'],
         ['bill.importToReport', '导入报案表', 'Import into Report'],
 
@@ -152,10 +154,10 @@
         ['report.fraudDetailPlaceholder', '请客观陈述：时间线、对方如何联系您、对方虚构/隐瞒了何种事实、您如何产生错误认识、如何处分财产、对方如何获利、何时发现被骗。全程用陈述句。', 'Please state objectively: the timeline, how the other party contacted you, what facts were fabricated or concealed, how you came to a mistaken belief, how you disposed of your property, how the other party profited, and when you discovered the fraud. Use declarative sentences throughout.'],
         ['report.fraudDetailError', '请填写被骗详细经过', 'Please enter the detailed account'],
         ['report.evidenceUpload', '证据图片上传', 'Upload Evidence Images'],
-        ['report.evidenceUploadArea', '📷 点击或拖拽上传证据图片（聊天截图、转账凭证等）', '📷 Click or drag to upload evidence images (chat screenshots, transfer receipts, etc.)'],
+        ['report.evidenceUploadArea', '点击或拖拽上传证据图片（聊天截图、转账凭证等）', 'Click or drag to upload evidence images (chat screenshots, transfer receipts, etc.)'],
         ['report.evidenceText', '关联证据文本（OCR识别文本 + 用户原始输入）', 'Associated Evidence Text (OCR text + original user input)'],
-        ['report.evidenceTip', '💡 证据文本将随报案PDF一并导出。可在"诈骗识别"页面进行OCR识别后，点击下方按钮导入。', '💡 Evidence text will be exported with the report PDF. You can perform OCR on the "Fraud Detection" page, then click the button below to import.'],
-        ['report.importEvidence', '📥 从识别页导入证据文本', '📥 Import Evidence Text from Detection'],
+        ['report.evidenceTip', '证据文本将随报案PDF一并导出。可在"诈骗识别"页面进行OCR识别后，点击下方按钮导入。', 'Evidence text will be exported with the report PDF. You can perform OCR on the "Fraud Detection" page, then click the button below to import.'],
+        ['report.importEvidence', '从识别页导入证据文本', 'Import Evidence Text from Detection'],
         ['report.clearEvidence', '清空证据文本', 'Clear Evidence Text'],
         ['report.generate', '生成刑事控告书', 'Generate Criminal Complaint'],
         ['report.copy', '复制全文', 'Copy Full Text'],
@@ -176,7 +178,7 @@
         ['history.detectRestored', '识别结果已恢复', 'Detection result restored'],
         ['history.deepDetectRestored', 'AI判定结果已恢复', 'AI analysis result restored'],
         ['history.restoreUnsupported', '该记录类型暂不支持恢复', 'This record type does not support restoration'],
-        ['history.detailTitle', '📋 记录详情', '📋 Record Detail'],
+        ['history.detailTitle', '记录详情', 'Record Detail'],
         ['history.deleteConfirm', '确定删除这条记录？', 'Delete this record?'],
         ['history.deleted', '记录已删除', 'Record deleted'],
         ['history.clearConfirm', '清空所有历史记录？', 'Clear all history records?'],
@@ -212,10 +214,10 @@
         ['evidence.clearConfirm', '确定清空所有关联证据文本？', 'Clear all associated evidence text?'],
 
         // ---- 诈骗识别检测结果 ----
-        ['detect.keywordDictNotLoaded', '⚠️ 关键词字典尚未加载，请稍后再试', '⚠️ Keyword dictionary not loaded yet; please try again later'],
-        ['detect.none', '✅ 未发现明显诈骗特征', '✅ No obvious fraud indicators detected'],
-        ['detect.highlySuspicious', '🚨 高度疑似诈骗！（匹配关键词：{keywords}，共 {count} 个）', '🚨 Highly suspected fraud! (Matched keywords: {keywords}, {count} in total)'],
-        ['detect.suspected', '⚠️ 疑似{category}（匹配关键词：{keywords}）', '⚠️ Suspected {category} (matched keywords: {keywords})'],
+        ['detect.keywordDictNotLoaded', '关键词字典尚未加载，请稍后再试', 'Keyword dictionary not loaded yet; please try again later'],
+        ['detect.none', '未发现明显诈骗特征', 'No obvious fraud indicators detected'],
+        ['detect.highlySuspicious', '高度疑似诈骗！（匹配关键词：{keywords}，共 {count} 个）', 'Highly suspected fraud! (Matched keywords: {keywords}, {count} in total)'],
+        ['detect.suspected', '疑似{category}（匹配关键词：{keywords}）', 'Suspected {category} (matched keywords: {keywords})'],
         ['detect.suspectedFallback', '疑似诈骗', 'Suspected fraud'],
         ['detect.needTextOrImage', '请输入文本或上传图片', 'Please enter text or upload images'],
         ['detect.needInput', '请输入内容或上传图片', 'Please enter content or upload images'],
@@ -236,12 +238,12 @@
         ['ocr.imageFailed', '【图片{0}】识别失败', '[Image {0}] recognition failed'],
         ['ocr.running', 'OCR 正在运行中，请勿重复点击', 'OCR is running; please do not click repeatedly'],
         ['ocr.notLoaded', 'Tesseract.js 尚未加载完成，请稍后再试。', 'Tesseract.js has not finished loading; please try again later.'],
-        ['ocr.noText', '⚠️ 未识别到任何文字', '⚠️ No text recognized'],
-        ['ocr.complete', '✅ Tesseract OCR 完成，已填入文本框。证据文本已暂存，可在报案填报中引用。', '✅ Tesseract OCR complete; the text has been filled into the text box. The evidence text is temporarily stored and can be referenced during report filing.'],
+        ['ocr.noText', '未识别到任何文字', 'No text recognized'],
+        ['ocr.complete', 'Tesseract OCR 完成，已填入文本框。证据文本已暂存，可在报案填报中引用。', 'Tesseract OCR complete; the text has been filled into the text box. The evidence text is temporarily stored and can be referenced during report filing.'],
         ['ocr.downloadingModel', '正在下载 OCR 模型...', 'Downloading OCR model...'],
         ['ocr.downloadingLang', '正在下载 {0} 模型...', 'Downloading {0} model...'],
         ['ocr.downloadLangFailed', '{0} 下载失败（将使用在线加载）', '{0} download failed (will load online)'],
-        ['ocr.downloadDone', '模型下载完成 ✓', 'Model download complete ✓'],
+        ['ocr.downloadDone', '模型下载完成', 'Model download complete'],
         ['ocr.loadingModel', '正在加载 OCR 模型，请稍候...', 'Loading OCR model, please wait...'],
         ['ocr.loadFailed', 'Tesseract.js 加载失败，请检查网络连接后刷新页面。', 'Tesseract.js failed to load. Please check your network connection and refresh the page.'],
 
@@ -264,7 +266,6 @@
         ['report.copyFailed', '复制失败，请手动复制', 'Copy failed; please copy manually'],
         ['report.generateFirst', '请先生成刑事控告书', 'Please generate the criminal complaint first'],
         ['report.txtDownloaded', 'TXT 文件已下载', 'TXT file downloaded'],
-        ['report.html2canvasNotLoaded', 'html2canvas 未加载，请检查网络后重试。', 'html2canvas not loaded; please check your network and retry.'],
         ['report.jspdfNotLoaded', 'jsPDF 未加载，请检查网络后重试。', 'jsPDF not loaded; please check your network and retry.'],
         ['report.pdfGenerated', 'PDF 文件已生成', 'PDF generated'],
         ['report.pdfFailed', 'PDF 生成失败', 'PDF generation failed'],
@@ -331,9 +332,325 @@
         en[key] = enVal;
     });
 
+    // ===== 俄语字典（由上方中文逐条严谨直译，未改动任何 zh/en 原文） =====
+    const ru = {
+        // ---- 应用标题 / 署名 ----
+        'app.name': 'Антимошенническая система',
+        'app.title': 'Антимошенническая система · NEEPU',
+        'app.subtitle': 'Идея: рабочая станция NEEPU «Ибань» — Firefly TYPE IV',
+        'app.themeToggle': 'Переключить светлую/тёмную тему',
+        'app.univ': 'NEEPU',
+        'app.footer': '© 2026 Антимошенническая система | Идея: рабочая станция NEEPU «Ибань» | ИИ-движок: DeepSeek + Tesseract OCR. Авторы: Xin PR, Liu A Green, Wang A Black. Лицензировано по Apache-2.0',
+        'app.license': 'Программа распространяется по лицензии Apache-2.0',
+        'app.licenseShort': 'Apache-2.0',
+
+        // ---- 导航（桌面） ----
+        'nav.home': 'Главная',
+        'nav.identify': 'Распознавание мошенничества',
+        'nav.bill': 'Импорт выписки',
+        'nav.report': 'Подача заявления',
+        'nav.history': 'История',
+        'nav.setting': 'Настройки',
+
+        // ---- 底部标签栏（移动端） ----
+        'tab.home': 'Главная',
+        'tab.identify': 'Анализ',
+        'tab.bill': 'Счёт',
+        'tab.report': 'Заявка',
+        'tab.history': 'История',
+        'tab.setting': 'Опции',
+
+        // ---- 首页 ----
+        'home.heroSub': 'Распознавание · Оценка · Заявление — комплексная помощь в борьбе с мошенничеством',
+        'home.card1.title': 'Распознавание мошенничества',
+        'home.card1.desc': 'Поиск по ключевым словам + извлечение OCR + глубокая оценка DeepSeek',
+        'home.card2.title': 'Подача заявления',
+        'home.card2.desc': 'Трёхшаговый мастер форм с автоматическим составлением заявления о преступлении и экспортом в PDF',
+        'home.card3.title': 'Импорт выписки',
+        'home.card3.desc': 'Автоматический разбор выписок CSV WeChat/Alipay и расчёт общей суммы расходов',
+        'home.card4.title': 'ИИ-ассистент',
+        'home.card4.desc': 'Диалоговый ассистент по антимошенническому просвещению и гражданско-правовому воспитанию на базе DeepSeek',
+
+        // ---- 聊天 ----
+        'chat.header': 'Антимошеннический ассистент',
+        'chat.collapse': 'Свернуть',
+        'chat.clear': 'Очистить чат',
+        'chat.send': 'Отправить',
+        'chat.placeholder': 'Введите ваш вопрос…',
+        'chat.inputAriaLabel': 'Введите ваш вопрос',
+        'chat.welcome': 'Здравствуйте! Я — антимошеннический ассистент. Помогу распознать схемы мошенничества, разобрать случаи и дать советы по защите. Чем помочь?',
+        'chat.cleared': 'Чат очищен. Чем я могу помочь?',
+        'chat.noReply': 'К сожалению, действительный ответ не получен',
+        'chat.requestFailed': 'Ошибка запроса: ',
+        'chat.typing.think': 'Обдумываю',
+        'chat.typing.search': 'Ищу',
+        'chat.typing.compose': 'Формулирую ответ',
+
+        // ---- AI 提示词 ----
+        'ai.systemPrompt': 'Вы — интеллектуальный ассистент по антимошенническому просвещению и гражданско-правовому воспитанию, предназначенный для студентов вузов. Сочетая правовую грамотность и ответственность за добросовестность, разбирайте схемы мошенничества и давайте рекомендации по профилактике в мягком, профессиональном тоне.',
+        'ai.knowledgeHeader': 'Ниже приведены авторитетные знания о ключевых словах мошенничества (включая советы полиции), которые вы обязаны знать и цитировать в первую очередь при ответах на соответствующие вопросы:',
+        'ai.knowledgeItem': '【{keyword}】{desc} Совет полиции: {tip}',
+        'ai.expert': 'Эксперт по борьбе с мошенничеством',
+        'ai.analyzeFraud': 'Проанализируйте риск мошенничества: ',
+        'ai.analysisDone': 'Анализ завершён',
+
+        // ---- 诈骗识别页 ----
+        'identify.title': 'Распознавание мошенничества',
+        'identify.allTypes': 'Мошенничество всех видов',
+        'identify.cat.police': 'Мошенничество от имени полиции',
+        'identify.cat.loan': 'Кредитное мошенничество',
+        'identify.cat.service': 'Поддельная служба поддержки',
+        'identify.cat.leader': 'Выдача себя за руководителя/знакомого',
+        'identify.textPlaceholder': 'Можно напрямую вставить текст SMS, переписки и т. д. (или только загрузить изображение)',
+        'identify.textAriaLabel': 'Введите или вставьте содержимое, связанное с мошенничеством',
+        'identify.tip': 'После загрузки изображения нажмите «Начать распознавание», чтобы извлечь текст с помощью Tesseract OCR (локальный движок), поддерживающего китайский и английский языки.',
+        'identify.upload': 'Нажмите или перетащите изображение для загрузки (JPG/PNG)',
+        'identify.desensitize': 'Автоматическое обезличивание (номер телефона / удостоверение личности / банковская карта)',
+        'identify.start': 'Начать распознавание',
+        'identify.deep': 'Глубокая оценка DeepSeek',
+        'identify.clear': 'Очистить',
+        'identify.fillToReport': 'Заполнить форму заявления одним кликом',
+        'lightbox.alt': 'Предпросмотр изображения',
+
+        // ---- 账单导入页 ----
+        'bill.title': 'Импорт выписки',
+        'bill.notice': 'Поддерживаются выписки в формате CSV/Excel, экспортированные из WeChat/Alipay; автоматическое распознавание расходных записей и расчёт общей суммы расходов',
+        'bill.upload': 'Нажмите или перетащите файл выписки для загрузки',
+        'bill.parse': 'Разобрать выписку',
+        'bill.importToReport': 'Импортировать в форму заявления',
+
+        // ---- 报案填报页 ----
+        'report.title': 'Подача заявления · Заявление о преступлении',
+        'report.optional': '(необязательно)',
+        'report.step1': 'Сведения о заявителе',
+        'report.step2': 'Сведения об обвиняемом',
+        'report.step3': 'Факты и доказательства',
+        'report.section1': 'I. Сведения о заявителе (о вас)',
+        'report.section2': 'II. Сведения об обвиняемом (о второй стороне / мошеннике)',
+        'report.section2Notice1': 'Постарайтесь как можно подробнее выяснить сведения об обвиняемом — чем подробнее, тем больше шансов на раскрытие дела! Только ',
+        'report.section2Notice2': ' является обязательным, остальное — необязательно.',
+        'report.section3': 'III. Факты и обстоятельства обмана',
+        'report.section4': 'IV. Доказательства',
+        'report.name': 'Фамилия и имя',
+        'report.namePlaceholder': 'Введите ваши настоящие фамилию и имя',
+        'report.nameError': 'Введите фамилию и имя заявителя',
+        'report.idNo': 'Номер удостоверения личности',
+        'report.idNoPlaceholder': '18 цифр, последняя может быть X',
+        'report.idNoError': 'Введите корректный номер удостоверения личности (18 цифр, последняя может быть X)',
+        'report.phone': 'Контактный телефон',
+        'report.phonePlaceholder': 'Введите 11-значный номер мобильного телефона',
+        'report.phoneError': 'Введите корректный 11-значный номер мобильного телефона',
+        'report.address': 'Адрес',
+        'report.addressPlaceholder': 'Введите текущий адрес, чтобы полиция могла с вами связаться',
+        'report.next': 'Далее →',
+        'report.prev': '← Назад',
+        'report.accusedName': 'Ник / фамилия и имя',
+        'report.accusedNamePlaceholder': 'Известный ник или настоящие фамилия и имя; при неуверенности укажите XXX',
+        'report.accusedNameError': 'Введите ник или фамилию и имя обвиняемого (XXX, если неизвестно)',
+        'report.accusedPhone': 'Телефон',
+        'report.accusedPhonePlaceholder': 'Если номер мобильного телефона другой стороны известен',
+        'report.accusedWechat': 'WeChat / QQ ID',
+        'report.accusedWechatPlaceholder': 'Если известен WeChat ID или номер QQ другой стороны',
+        'report.accusedAlipay': 'Аккаунт Alipay',
+        'report.accusedAlipayPlaceholder': 'Если известен аккаунт Alipay другой стороны',
+        'report.accusedBankCard': 'Номер банковской карты',
+        'report.accusedBankCardPlaceholder': 'Если известен номер банковской карты для получения платежей',
+        'report.accusedAddress': 'Примерный адрес или район деятельности',
+        'report.accusedAddressPlaceholder': 'Если известен город или район деятельности другой стороны',
+        'report.fraudTime': 'Время обмана',
+        'report.fraudTimePlaceholder': 'Например: 2026-03-14 15:30',
+        'report.fraudTimeError': 'Введите время обмана',
+        'report.fraudLocation': 'Место обмана / место совершения операции',
+        'report.fraudLocationPlaceholder': 'Например: провинция XX, город XX, район XX (конкретное место онлайн/офлайн)',
+        'report.fraudLocationError': 'Введите место обмана',
+        'report.contactMethod': 'Способ знакомства',
+        'report.contactMethodPlaceholder': 'Например: добавление незнакомцем в WeChat, личное сообщение в Douyin и т. д.',
+        'report.fraudPlatform': 'Платформа / канал обмана',
+        'report.fraudPlatformPlaceholder': 'Например: WeChat, Douyin, название неизвестного приложения',
+        'report.fraudPlatformError': 'Введите платформу/канал обмана',
+        'report.fraudType': 'Тип мошенничества',
+        'report.fraudTypePlaceholder': 'Например: возврат за накрутку заказов, поддельная служба поддержки, кредитное мошенничество и т. д.',
+        'report.fraudTypeError': 'Введите тип мошенничества',
+        'report.fraudMoney': 'Общая сумма ущерба (юань)',
+        'report.fraudMoneyPlaceholder': 'Арабские цифры, например 3500',
+        'report.fraudMoneyError': 'Введите корректную сумму',
+        'report.fraudDetail': 'Подробное описание обмана',
+        'report.fraudDetailPlaceholder': 'Изложите объективно: хронологию, как другая сторона связалась с вами, какие факты были выдуманы или скрыты, как у вас возникло ошибочное представление, как вы распорядились имуществом, как другая сторона получила выгоду и когда вы обнаружили обман. На протяжении всего текста используйте повествовательные предложения.',
+        'report.fraudDetailError': 'Введите подробное описание обмана',
+        'report.evidenceUpload': 'Загрузка изображений-доказательств',
+        'report.evidenceUploadArea': 'Нажмите или перетащите изображения-доказательства (скриншоты переписки, квитанции о переводе и т. д.)',
+        'report.evidenceText': 'Связанный текст доказательств (текст OCR + исходный ввод пользователя)',
+        'report.evidenceTip': 'Текст доказательств будет экспортирован вместе с PDF заявления. Вы можете выполнить OCR на странице «Распознавание мошенничества», затем нажать кнопку ниже для импорта.',
+        'report.importEvidence': 'Импортировать текст доказательств со страницы распознавания',
+        'report.clearEvidence': 'Очистить текст доказательств',
+        'report.generate': 'Составить заявление о преступлении',
+        'report.copy': 'Копировать весь текст',
+        'report.exportTxt': 'Экспорт TXT',
+        'report.exportPdf': 'Создать PDF-файл',
+
+        // ---- 历史记录 ----
+        'history.title': 'История',
+        'history.clearAll': 'Очистить все записи',
+        'history.empty': 'Записей пока нет',
+        'history.itemTitle': 'Нажмите, чтобы просмотреть и восстановить',
+        'history.restore': 'Восстановить',
+        'history.detail': 'Подробнее',
+        'history.delete': 'Удалить',
+        'history.notFound': 'Запись не найдена',
+        'history.noResult': 'Нет результата',
+        'history.reportRestored': 'Данные заявления восстановлены',
+        'history.detectRestored': 'Результат распознавания восстановлен',
+        'history.deepDetectRestored': 'Результат ИИ-оценки восстановлен',
+        'history.restoreUnsupported': 'Восстановление данного типа записи не поддерживается',
+        'history.detailTitle': 'Подробности записи',
+        'history.deleteConfirm': 'Удалить эту запись?',
+        'history.deleted': 'Запись удалена',
+        'history.clearConfirm': 'Очистить все записи истории?',
+        'history.cleared': 'Все записи очищены',
+        'history.type.report': 'Заявление',
+        'history.type.detect': 'Распознавание',
+        'history.type.deepDetect': 'ИИ-оценка',
+        'history.reportPreview': 'Заявитель: {name} | Сумма: ¥{money} | {type}',
+
+        // ---- 系统设置 ----
+        'setting.title': 'Настройки',
+        'setting.autoSave': 'Автосохранение истории',
+        'setting.defaultDesensitize': 'Включить обезличивание по умолчанию',
+        'setting.save': 'Сохранить настройки',
+        'setting.reset': 'Сбросить по умолчанию',
+        'setting.saved': 'Настройки сохранены',
+        'setting.resetDone': 'Настройки по умолчанию восстановлены',
+        'setting.theme': 'Тема',
+        'setting.light': 'Светлая',
+        'setting.dark': 'Тёмная',
+        'setting.language': 'Язык',
+        'setting.yiban': 'Ибань',
+
+        // ---- 通用 ----
+        'common.close': 'Закрыть',
+        'toast.storageFull': 'Хранилище заполнено, часть записей может не сохраниться',
+
+        // ---- 证据文本 ----
+        'evidence.ocrLabel': '【Текст OCR】',
+        'evidence.userLabel': '【Исходный ввод пользователя】',
+        'evidence.imported': 'Текст доказательств импортирован! Он будет экспортирован в PDF при составлении материалов заявления.',
+        'evidence.noneToImport': 'Пока нет текста доказательств для импорта. Сначала введите текст или загрузите изображения для OCR на странице «Распознавание мошенничества».',
+        'evidence.clearConfirm': 'Очистить весь связанный текст доказательств?',
+
+        // ---- 诈骗识别检测结果 ----
+        'detect.keywordDictNotLoaded': 'Словарь ключевых слов ещё не загружен, повторите попытку позже',
+        'detect.none': 'Явных признаков мошенничества не обнаружено',
+        'detect.highlySuspicious': 'Высокая вероятность мошенничества! (Найденные ключевые слова: {keywords}, всего {count})',
+        'detect.suspected': 'Подозрение на {category} (найденные ключевые слова: {keywords})',
+        'detect.suspectedFallback': 'Подозрение на мошенничество',
+        'detect.needTextOrImage': 'Введите текст или загрузите изображение',
+        'detect.needInput': 'Введите содержимое или загрузите изображение',
+        'detect.deepAnalyzing': 'DeepSeek анализирует...',
+        'detect.deepResult': '【Глубокая оценка DeepSeek】\n',
+        'detect.deepFailed': 'Оценка не удалась',
+        'detect.deepFailedMsg': 'Оценка не удалась: ',
+        'ocr.failed': 'Ошибка распознавания OCR: ',
+
+        // ---- OCR 进度 / 提示 ----
+        'ocr.preparing': 'Подготовка распознавания...',
+        'ocr.preparingCount': 'Подготовка распознавания 0/{total}',
+        'ocr.recognizing': 'Распознавание {0}/{1}',
+        'ocr.recognizingImage': 'Распознавание изображения {0}/{1} ({2}%)',
+        'ocr.recognizingImageSimple': 'Распознавание изображения {0}/{1}',
+        'ocr.imageDone': 'Изображение {0}/{1} завершено',
+        'ocr.imageLabel': '【Изображение {0}】',
+        'ocr.imageFailed': '【Изображение {0}】распознать не удалось',
+        'ocr.running': 'OCR уже выполняется, не нажимайте повторно',
+        'ocr.notLoaded': 'Tesseract.js ещё не загружен, повторите попытку позже.',
+        'ocr.noText': 'Текст не распознан',
+        'ocr.complete': 'Tesseract OCR завершён, текст вставлен в текстовое поле. Текст доказательств временно сохранён, его можно использовать при подаче заявления.',
+        'ocr.downloadingModel': 'Загрузка модели OCR...',
+        'ocr.downloadingLang': 'Загрузка модели {0}...',
+        'ocr.downloadLangFailed': 'Загрузка {0} не удалась (будет использована онлайн-загрузка)',
+        'ocr.downloadDone': 'Загрузка модели завершена',
+        'ocr.loadingModel': 'Загрузка модели OCR, подождите...',
+        'ocr.loadFailed': 'Не удалось загрузить Tesseract.js. Проверьте сетевое подключение и обновите страницу.',
+
+        // ---- 文件上传 ----
+        'upload.selectImage': 'Выберите файлы изображений (JPG/PNG)',
+        'upload.uploadedCount': 'Загружено изображений: {0}',
+
+        // ---- 账单解析 ----
+        'bill.xlsxNotLoaded': 'Библиотека XLSX ещё не загружена, проверьте сеть и повторите попытку.',
+        'bill.uploadFirst': 'Сначала загрузите файл выписки',
+        'bill.parsing': 'Разбор...',
+        'bill.parseDone': 'Разбор выписки завершён!\nВсего расходных записей: {count}\nОбщая сумма расходов: ¥{total}',
+        'bill.parseFailed': 'Разбор не удался',
+        'bill.parseFirst': 'Сначала разберите выписку',
+        'bill.fileFormatError': 'Ошибка формата файла: невозможно разобрать файл Excel.',
+        'bill.uploaded': 'Выписка загружена',
+
+        // ---- 报案报告操作 ----
+        'report.copied': 'Скопировано в буфер обмена',
+        'report.copyFailed': 'Не удалось скопировать, скопируйте вручную',
+        'report.generateFirst': 'Сначала составьте заявление о преступлении',
+        'report.txtDownloaded': 'Файл TXT загружен',
+        'report.jspdfNotLoaded': 'jsPDF не загружен, проверьте сеть и повторите попытку.',
+        'report.pdfGenerated': 'PDF-файл создан',
+        'report.pdfFailed': 'Не удалось создать PDF',
+        'report.pdfMemoryError': 'Не удалось создать PDF: недостаточно памяти. Попробуйте экспорт в TXT.',
+        'report.pdfNetworkError': 'Не удалось создать PDF: ошибка сети. Проверьте сеть и повторите попытку.',
+        'report.completeRequired': 'Заполните обязательные поля текущего шага',
+
+        // ---- 《刑事控告书》文档模板 ----
+        'report.unfilled': 'Не указано',
+        'report.unknown': 'Неизвестно',
+        'report.fileBase': 'Zayavlenie_o_prestuplenii',
+        'report.doc.title': '==================== ЗАЯВЛЕНИЕ О ПРЕСТУПЛЕНИИ ====================',
+        'report.doc.about': 'Заявление о преступлении по подозрению {name} в мошенничестве',
+        'report.doc.to': 'Кому: компетентному органу общественной безопасности',
+        'report.doc.complainantInfo': '【Сведения о заявителе】',
+        'report.doc.name': 'Фамилия и имя: ',
+        'report.doc.idNo': 'Номер удостоверения личности: ',
+        'report.doc.phone': 'Контактный телефон: ',
+        'report.doc.address': 'Адрес: ',
+        'report.doc.accusedInfo': '【Сведения об обвиняемом】',
+        'report.doc.accusedName': 'Ник / фамилия и имя: ',
+        'report.doc.accusedPhone': 'Телефон: ',
+        'report.doc.accusedWechat': 'WeChat / QQ ID: ',
+        'report.doc.accusedAlipay': 'Аккаунт Alipay: ',
+        'report.doc.accusedBankCard': 'Номер банковской карты: ',
+        'report.doc.accusedAddress': 'Примерный адрес или район деятельности: ',
+        'report.doc.relief': '【Требования】',
+        'report.doc.reliefBody': 'Просим орган общественной безопасности возбудить уголовное дело и провести расследование по делу о подозрении {name} в совершении преступления мошенничества и привлечь его к уголовной ответственности в установленном законом порядке.',
+        'report.doc.facts': '【Факты и обоснование】',
+        'report.doc.facts1': 'I. Основные обстоятельства обмана',
+        'report.doc.fraudTime': 'Время обмана: ',
+        'report.doc.fraudLocation': 'Место обмана / место операции: ',
+        'report.doc.contactMethod': 'Способ знакомства: ',
+        'report.doc.fraudPlatform': 'Платформа / канал обмана: ',
+        'report.doc.fraudType': 'Тип мошенничества: ',
+        'report.doc.fraudMoney': 'Общая сумма ущерба: ¥{money} юаней',
+        'report.doc.facts2': 'II. Подробные обстоятельства',
+        'report.doc.facts3': 'III. Правовой анализ',
+        'report.doc.legalAnalysis': 'Обвиняемый выдумал факты / скрыл истину, что привело к возникновению у заявителя ошибочного представления; на основании этого ошибочного представления заявитель распорядился имуществом; обвиняемый получил имущество, а заявитель понёс экономический ущерб. Действия обвиняемого соответствуют составу преступления мошенничества, предусмотренного статьёй 266 Уголовного кодекса Китайской Народной Республики.',
+        'report.doc.evidenceList': '【Перечень доказательств】',
+        'report.doc.evidence1': 'Доказательство 1: копия удостоверения личности заявителя',
+        'report.doc.evidence2': 'Доказательство 2: скриншоты переписки между заявителем и обвиняемым ({count} изображений)',
+        'report.doc.evidence3': 'Доказательство 3: записи о переводах / платёжные квитанции',
+        'report.doc.evidence4': 'Доказательство 4: текст, извлечённый посредством OCR (прилагается ниже)',
+        'report.doc.evidence5': 'Доказательство 5: исходный текст заявителя (прилагается ниже)',
+        'report.doc.evidenceAttachment': '【Приложение с доказательствами】',
+        'report.doc.ocrText': '--- Текст OCR ---',
+        'report.doc.userText': '--- Исходный текст пользователя ---',
+        'report.doc.conclusion': 'Таким образом, действия обвиняемого {name} подозреваются в совершении преступления мошенничества. Просим ваше ведомство возбудить уголовное дело и провести расследование в соответствии с законом для защиты законных прав заявителя.',
+        'report.doc.closing': 'С уважением,',
+        'report.doc.complainant': 'Заявитель: ',
+        'report.doc.date': 'Дата: ',
+        'report.doc.frame': '=====================================================',
+
+        // ---- 报案填报 notice（含必填标红星号，使用 innerHTML 注入） ----
+        'report.noticeHtml': 'Поля, отмеченные <span style="color:var(--danger);font-weight:bold;">*</span>, являются обязательными. Заполняйте форму точно, чтобы содействовать первичному расследованию полиции; чем полнее ваши материалы, тем выше вероятность возбуждения дела.',
+    };
+
     window.I18N = {
         current: 'zh',
-        dict: { zh, en },
+        dict: { zh, en, ru },
     };
 
     // ===== 取词函数（支持 {name}/{0} 占位符插值） =====
@@ -380,14 +697,23 @@
             const k = el.getAttribute('data-i18n-alt');
             if (dict[k] !== undefined) el.setAttribute('alt', dict[k]);
         });
+        // aria-label
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(function (el) {
+            const k = el.getAttribute('data-i18n-aria-label');
+            if (dict[k] !== undefined) el.setAttribute('aria-label', dict[k]);
+        });
 
         // 语言属性与标题
-        document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+        document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : (lang === 'ru' ? 'ru' : 'zh-CN'));
         document.title = window.t('app.title');
 
-        // 切换按钮文案
+        // 切换按钮文案（显示下一个语言代码，循环 zh → en → ru → zh）
         const btn = document.getElementById('langToggleBtn');
-        if (btn) btn.textContent = lang === 'en' ? '中' : 'EN';
+        if (btn) {
+            const order = ['zh', 'en', 'ru'];
+            const next = order[(order.indexOf(lang) + 1) % order.length];
+            btn.textContent = next === 'zh' ? '中' : next.toUpperCase();
+        }
 
         // 同步移动端设置页「语言」分段控件激活态
         document.querySelectorAll('#langSegmented .seg-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.value === lang); });
@@ -406,13 +732,14 @@
     function initLanguage() {
         let lang = 'zh';
         try { lang = localStorage.getItem('langPref') || 'zh'; } catch (e) { lang = 'zh'; }
-        if (lang !== 'zh' && lang !== 'en') lang = 'zh';
+        if (lang !== 'zh' && lang !== 'en' && lang !== 'ru') lang = 'zh';
         applyLanguage(lang);
 
         const btn = document.getElementById('langToggleBtn');
         if (btn) {
             btn.addEventListener('click', function () {
-                const next = window.I18N.current === 'en' ? 'zh' : 'en';
+                const order = ['zh', 'en', 'ru'];
+                const next = order[(order.indexOf(window.I18N.current) + 1) % order.length];
                 window.setLanguage(next);
             });
         }

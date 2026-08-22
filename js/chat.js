@@ -5,14 +5,18 @@
 
 // ===== 构建 system prompt（注入反诈关键词知识库） =====
 function buildSystemPrompt() {
-    const isEn = window.I18N && window.I18N.current === 'en';
+    const lang = window.I18N && window.I18N.current;
+    const isEn = lang === 'en';
+    const isRu = lang === 'ru';
     let base = t('ai.systemPrompt');
     const knowledge = window.antiFraudKnowledge || [];
     if (knowledge.length) {
         base += "\n\n" + t('ai.knowledgeHeader') + "\n" +
             knowledge.map(k => t('ai.knowledgeItem', isEn
                 ? { keyword: k.keyword_en || k.keyword, desc: k.desc_en || k.desc, tip: k.tip_en || k.tip }
-                : { keyword: k.keyword, desc: k.desc, tip: k.tip }
+                : isRu
+                    ? { keyword: k.keyword_ru || k.keyword, desc: k.desc_ru || k.desc, tip: k.tip_ru || k.tip }
+                    : { keyword: k.keyword, desc: k.desc, tip: k.tip }
             )).join('\n');
     }
     return base;
@@ -45,9 +49,9 @@ let typingInterval = null;
 let typingStartTime = 0;
 
 const typingStates = [
-    { key: 'chat.typing.think', icon: '💭', minSec: 0 },
-    { key: 'chat.typing.search', icon: '🔎', minSec: 1.5 },
-    { key: 'chat.typing.compose', icon: '📝', minSec: 3 },
+    { key: 'chat.typing.think', icon: ICONS.chat, minSec: 0 },
+    { key: 'chat.typing.search', icon: ICONS.search, minSec: 1.5 },
+    { key: 'chat.typing.compose', icon: ICONS.doc, minSec: 3 },
 ];
 
 function showTypingIndicator() {
@@ -58,7 +62,7 @@ function showTypingIndicator() {
     let div = document.createElement('div');
     div.id = 'typingIndicator';
     div.className = 'message bot';
-    div.innerHTML = '<div class="message-avatar bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="typing-status" id="typingStatus"><span class="typing-icon">💭</span> <span class="typing-text">' + t('chat.typing.think') + '</span> <span class="typing-time">(0.0s)</span><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>';
+    div.innerHTML = '<div class="message-avatar bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="typing-status" id="typingStatus"><span class="typing-icon">' + ICONS.chat + '</span> <span class="typing-text">' + t('chat.typing.think') + '</span> <span class="typing-time">(0.0s)</span><span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>';
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
 
@@ -71,7 +75,7 @@ function showTypingIndicator() {
         for (let i = typingStates.length - 1; i >= 0; i--) {
             if (elapsed >= typingStates[i].minSec) { state = typingStates[i]; break; }
         }
-        timeEl.querySelector('.typing-icon').textContent = state.icon;
+        timeEl.querySelector('.typing-icon').innerHTML = state.icon;
         timeEl.querySelector('.typing-text').textContent = t(state.key);
         timeEl.querySelector('.typing-time').textContent = `(${elapsed.toFixed(1)}s)`;
     }, 200);
@@ -81,6 +85,13 @@ function removeTypingIndicator() {
     if (typingInterval) { clearInterval(typingInterval); typingInterval = null; }
     let ind = document.getElementById('typingIndicator');
     if (ind) ind.remove();
+}
+
+// ===== 构造发送载荷：始终保留 system 消息，仅截断非 system 的历史 =====
+function buildPayload() {
+    const system = conversationHistory.find(m => m.role === 'system');
+    const recent = conversationHistory.filter(m => m.role !== 'system').slice(-19);
+    return system ? [system, ...recent] : recent;
 }
 
 // ===== 发送用户消息 =====
@@ -97,11 +108,14 @@ async function sendUserMessage() {
     isWaitingReply = true;
     showTypingIndicator();
     try {
-        conversationHistory.push({ role: "user", content: msg });
+        // 外发前按设置脱敏（默认开启），本地 UI 显示仍为原文
+        const shouldMask = typeof systemSettings !== 'undefined' && systemSettings.defaultDesensitize;
+        const safeMsg = shouldMask ? desensitizeText(msg) : msg;
+        conversationHistory.push({ role: "user", content: safeMsg });
         let res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: conversationHistory.slice(-20) })
+            body: JSON.stringify({ messages: buildPayload() })
         });
         if (!res.ok) {
             let errText;

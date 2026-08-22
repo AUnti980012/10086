@@ -205,32 +205,36 @@ function showStep(step) {
     currentStep = step;
 }
 
-function validateStep(step) {
-    let fields = [];
-    if (step === 1) {
-        fields = [
-            { id: 'formName', getValue: () => document.getElementById('name').value.trim(), test: v => !!v },
-            { id: 'formIdNo', getValue: () => document.getElementById('idNo').value.trim().toUpperCase(), test: v => /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dX]$/.test(v) },
-            { id: 'formPhone', getValue: () => document.getElementById('phone').value.trim(), test: v => /^1[0-9]{10}$/.test(v) },
-        ];
-    } else if (step === 2) {
-        fields = [
-            { id: 'formAccusedName', getValue: () => document.getElementById('accusedName').value.trim(), test: v => !!v },
-        ];
-    } else if (step === 3) {
-        fields = [
-            { id: 'formTime', getValue: () => document.getElementById('fraudTime').value.trim(), test: v => !!v },
-            { id: 'formLocation', getValue: () => document.getElementById('fraudLocation').value.trim(), test: v => !!v },
-            { id: 'formPlatform', getValue: () => document.getElementById('fraudPlatform').value.trim(), test: v => !!v },
-            { id: 'formType', getValue: () => document.getElementById('fraudType').value.trim(), test: v => !!v },
-            { id: 'formMoney', getValue: () => document.getElementById('fraudMoney').value.trim(), test: v => /^(\d+)(\.\d{1,2})?$/.test(v) && parseFloat(v) > 0 },
-            { id: 'formDetail', getValue: () => document.getElementById('fraudDetail').value.trim(), test: v => !!v },
-        ];
-    }
+// ===== 身份证号校验（GB 11643-1999，含校验位） =====
+function isValidIdNo(v) {
+    if (!/^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dX]$/.test(v)) return false;
+    const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+    const codes = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+    let sum = 0;
+    for (let i = 0; i < 17; i++) sum += parseInt(v[i], 10) * weights[i];
+    return codes[sum % 11] === v[17].toUpperCase();
+}
+
+// ===== 必填字段统一定义（按步骤分组，供 validateStep / validateReportForm 复用） =====
+const REPORT_FIELDS = [
+    { step: 1, id: 'formName', getValue: () => document.getElementById('name').value.trim(), test: v => !!v },
+    { step: 1, id: 'formIdNo', getValue: () => document.getElementById('idNo').value.trim().toUpperCase(), test: isValidIdNo },
+    { step: 1, id: 'formPhone', getValue: () => document.getElementById('phone').value.trim(), test: v => /^1[0-9]{10}$/.test(v) },
+    { step: 2, id: 'formAccusedName', getValue: () => document.getElementById('accusedName').value.trim(), test: v => !!v },
+    { step: 3, id: 'formTime', getValue: () => document.getElementById('fraudTime').value.trim(), test: v => !!v },
+    { step: 3, id: 'formLocation', getValue: () => document.getElementById('fraudLocation').value.trim(), test: v => !!v },
+    { step: 3, id: 'formPlatform', getValue: () => document.getElementById('fraudPlatform').value.trim(), test: v => !!v },
+    { step: 3, id: 'formType', getValue: () => document.getElementById('fraudType').value.trim(), test: v => !!v },
+    { step: 3, id: 'formMoney', getValue: () => document.getElementById('fraudMoney').value.trim(), test: v => /^(\d+)(\.\d{1,2})?$/.test(v) && parseFloat(v) > 0 },
+    { step: 3, id: 'formDetail', getValue: () => document.getElementById('fraudDetail').value.trim(), test: v => !!v },
+];
+
+// ===== 校验一组字段，聚焦首个错误项 =====
+function validateFields(fields) {
     let isValid = true;
     let firstError = null;
     fields.forEach(f => {
-        let val = f.getValue();
+        const val = f.getValue();
         if (!f.test(val)) {
             markError(f.id, true);
             isValid = false;
@@ -242,45 +246,18 @@ function validateStep(step) {
     // 聚焦第一个错误字段
     if (firstError) {
         firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        let input = firstError.querySelector('input, textarea');
+        const input = firstError.querySelector('input, textarea');
         if (input) input.focus();
     }
     return isValid;
 }
 
-// ===== 表单验证 =====
+function validateStep(step) {
+    return validateFields(REPORT_FIELDS.filter(f => f.step === step));
+}
+
 function validateReportForm() {
-    let isValid = true;
-    let fields = [
-        { id: 'formName', getValue: () => document.getElementById('name').value.trim(), test: v => !!v },
-        { id: 'formIdNo', getValue: () => document.getElementById('idNo').value.trim().toUpperCase(), test: v => /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dX]$/.test(v) },
-        { id: 'formPhone', getValue: () => document.getElementById('phone').value.trim(), test: v => /^1[0-9]{10}$/.test(v) },
-        { id: 'formAccusedName', getValue: () => document.getElementById('accusedName').value.trim(), test: v => !!v },
-        { id: 'formTime', getValue: () => document.getElementById('fraudTime').value.trim(), test: v => !!v },
-        { id: 'formLocation', getValue: () => document.getElementById('fraudLocation').value.trim(), test: v => !!v },
-        { id: 'formPlatform', getValue: () => document.getElementById('fraudPlatform').value.trim(), test: v => !!v },
-        { id: 'formType', getValue: () => document.getElementById('fraudType').value.trim(), test: v => !!v },
-        { id: 'formMoney', getValue: () => document.getElementById('fraudMoney').value.trim(), test: v => /^(\d+)(\.\d{1,2})?$/.test(v) && parseFloat(v) > 0 },
-        { id: 'formDetail', getValue: () => document.getElementById('fraudDetail').value.trim(), test: v => !!v }
-    ];
-    let firstError = null;
-    fields.forEach(f => {
-        let val = f.getValue();
-        if (!f.test(val)) {
-            markError(f.id, true);
-            isValid = false;
-            if (!firstError) firstError = document.getElementById(f.id);
-        } else {
-            markError(f.id, false);
-        }
-    });
-    // 聚焦第一个错误字段
-    if (firstError) {
-        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        let input = firstError.querySelector('input, textarea');
-        if (input) input.focus();
-    }
-    return isValid;
+    return validateFields(REPORT_FIELDS);
 }
 
 function markError(formId, isError) {
@@ -288,6 +265,12 @@ function markError(formId, isError) {
     if (group) {
         if (isError) group.classList.add('error');
         else group.classList.remove('error');
+        // 同步 aria-invalid 给读屏（读屏可感知校验失败状态）
+        const input = group.querySelector('input, textarea, select');
+        if (input) {
+            if (isError) input.setAttribute('aria-invalid', 'true');
+            else input.removeAttribute('aria-invalid');
+        }
     }
 }
 
@@ -383,7 +366,7 @@ ${t('report.doc.conclusion', { name: formData.accusedName })}
 ${t('report.doc.closing')}
 
 ${t('report.doc.complainant')}${formData.name}
-${t('report.doc.date')}${new Date().toLocaleDateString(window.I18N.current === 'en' ? 'en-US' : 'zh-CN')}
+${t('report.doc.date')}${new Date().toLocaleDateString((window.I18N.current === 'en' ? 'en-US' : (window.I18N.current === 'ru' ? 'ru-RU' : 'zh-CN')))}
 ${t('report.doc.frame')}`;
 
     reportText = report; // 保存纯文本供 TXT 导出 / 复制全文（保持原格式不变）
@@ -399,7 +382,7 @@ function renderReportHtml(data, money) {
     const esc = escapeHtml;
     const escNl = (s) => escapeHtml(s).replace(/\n/g, '<br>');
     const title = t('report.doc.title').replace(/[=]+/g, '').trim();
-    const dateStr = new Date().toLocaleDateString(window.I18N.current === 'en' ? 'en-US' : 'zh-CN');
+    const dateStr = new Date().toLocaleDateString((window.I18N.current === 'en' ? 'en-US' : (window.I18N.current === 'ru' ? 'ru-RU' : 'zh-CN')));
 
     const rows = [];
     rows.push('<h1 class="doc-title">' + esc(title) + '</h1>');
@@ -501,6 +484,7 @@ function loadKeywordsAsync() {
 async function detectFraud() {
     let txt = document.getElementById('fraudText').value.trim();
     let hasImages = identifyImages && identifyImages.length > 0;
+    let userTyped = txt; // OCR 前的用户手打文本快照
 
     // 如果有图片，优先执行 OCR
     if (hasImages) {
@@ -520,13 +504,16 @@ async function detectFraud() {
 
     // 关键词检测（懒加载字典）
     if (txt) {
-        globalUserInputText = txt;
+        globalUserInputText = userTyped;
         updateEvidenceTextBox();
 
         // 确保关键词字典已加载
         await loadKeywordsAsync();
 
-        let kwMap = window.fraudKeywordsMap || {};
+        const lang = window.I18N && window.I18N.current;
+        let kwMap = (lang === 'ru' ? (window.fraudKeywordsMapRu || window.fraudKeywordsMap)
+            : lang === 'en' ? (window.fraudKeywordsMapEn || window.fraudKeywordsMap)
+            : window.fraudKeywordsMap) || {};
         if (!Object.keys(kwMap).length) {
             let resDiv = document.getElementById('detectResult');
             if (resDiv) {
@@ -545,10 +532,11 @@ async function detectFraud() {
         let categories = ['police', 'loan', 'service', 'leader'];
         let matchedCategories = [];
 
+        const hay = txt.toLowerCase(); // 大小写不敏感匹配（英文/俄文）
         for (let cat of categories) {
             let keywords = kwMap[cat];
             if (!keywords) continue;
-            let hits = keywords.filter(k => txt.includes(k));
+            let hits = keywords.filter(k => hay.includes(k.toLowerCase()));
             if (hits.length > 0) {
                 matchedCategories.push({ cat, keywords: hits, count: hits.length });
                 // 高亮对应的按钮
@@ -559,7 +547,7 @@ async function detectFraud() {
 
         // 检测"全类型"（all）关键词
         let allKeywords = kwMap.all || [];
-        let allHits = allKeywords.filter(k => txt.includes(k));
+        let allHits = allKeywords.filter(k => hay.includes(k.toLowerCase()));
 
         let result;
         let labelEl = document.getElementById('corpusLabel');
@@ -622,6 +610,7 @@ async function detectFraud() {
 async function deepDetect() {
     let txt = document.getElementById('fraudText').value.trim();
     let hasImages = identifyImages && identifyImages.length > 0;
+    let userTyped = txt; // OCR 前的用户手打文本快照
 
     // 如果有图片，先执行 OCR 提取文本
     if (hasImages) {
@@ -635,8 +624,9 @@ async function deepDetect() {
     }
 
     if (!txt) return showToast(t('detect.needInput'), 'warning');
-    globalUserInputText = txt;
+    globalUserInputText = userTyped;
     updateEvidenceTextBox();
+    const safeTxt = systemSettings.defaultDesensitize ? desensitizeText(txt) : txt;
     let resDiv = document.getElementById('detectResult');
     resDiv.innerHTML = '<div class="loading-tip"><span class="loading-spin"></span>' + t('detect.deepAnalyzing') + '</div>';
     resDiv.classList.add('show');
@@ -644,7 +634,7 @@ async function deepDetect() {
         let resp = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [{ role: "system", content: t('ai.expert') }, { role: "user", content: t('ai.analyzeFraud') + txt }] })
+            body: JSON.stringify({ messages: [{ role: "system", content: t('ai.expert') }, { role: "user", content: t('ai.analyzeFraud') + safeTxt }] })
         });
         if (!resp.ok) {
             let errText;
@@ -742,7 +732,7 @@ function parseBill() {
                         k.toLowerCase().includes('交易金额')
                     );
                     if (amtCol !== undefined) {
-                        amt = parseFloat(row[amtCol]);
+                        amt = parseFloat(String(row[amtCol]).replace(/[^0-9.-]/g, '')) || 0;
                     }
                     const isExpense = amt < 0 || ['收/支', '收支类型', '交易类型', '资金流向'].some(c => row[c] != null && String(row[c]).includes('支出'));
                     if (isExpense) {
@@ -795,8 +785,10 @@ function exportTxt() {
 }
 
 // ===== PDF 导出（纯文本排版 + 末尾证据图片附加页） =====
-let simSunFontBase64 = null; // 缓存宋体子集字体的 base64
-let simSunFontPromise = null;
+let pdfFontBase64 = null;   // 缓存的 PDF 字体 base64（按语言区分）
+let pdfFontPromise = null;
+let pdfFontName = 'SimSun'; // 当前 PDF 字体名（中文 SimSun / 俄文 DejaVuSans）
+let pdfFontLang = null;     // 已缓存字体的语言标识
 
 function arrayBufferToBase64(buffer) {
     let binary = '';
@@ -808,17 +800,30 @@ function arrayBufferToBase64(buffer) {
     return btoa(binary);
 }
 
-async function ensureSimSunFont(pdf) {
-    if (!simSunFontBase64) {
-        if (!simSunFontPromise) {
-            simSunFontPromise = fetch('fonts/simsun-subset.ttf')
-                .then(r => { if (!r.ok) throw new Error('font load failed'); return r.arrayBuffer(); })
-                .then(buf => { simSunFontBase64 = arrayBufferToBase64(buf); });
-        }
-        await simSunFontPromise;
+async function ensurePdfFont(pdf) {
+    const isRu = window.I18N && window.I18N.current === 'ru';
+    const url = isRu ? 'fonts/dejavu-sans-subset.ttf' : 'fonts/simsun-subset.ttf';
+    const name = isRu ? 'DejaVuSans' : 'SimSun';
+    const langTag = isRu ? 'ru' : 'zh';
+
+    // 语言变化时清空旧字体缓存
+    if (pdfFontLang !== langTag) {
+        pdfFontBase64 = null;
+        pdfFontPromise = null;
+        pdfFontLang = langTag;
     }
-    pdf.addFileToVFS('SimSun.ttf', simSunFontBase64);
-    pdf.addFont('SimSun.ttf', 'SimSun', 'normal');
+
+    if (!pdfFontBase64) {
+        if (!pdfFontPromise) {
+            pdfFontPromise = fetch(url)
+                .then(r => { if (!r.ok) throw new Error('font load failed'); return r.arrayBuffer(); })
+                .then(buf => { pdfFontBase64 = arrayBufferToBase64(buf); });
+        }
+        await pdfFontPromise;
+    }
+    pdfFontName = name;
+    pdf.addFileToVFS(name + '.ttf', pdfFontBase64);
+    pdf.addFont(name + '.ttf', name, 'normal');
 }
 
 // 创建一个带分页与排版状态的 PDF 写入器
@@ -846,15 +851,15 @@ function createPdfWriter(pdf) {
         const indentEm = opts.indentEm || 0;
         const keepTogether = opts.keepTogether !== false;
 
-        pdf.setFont('SimSun', 'normal');
+        pdf.setFont(pdfFontName, 'normal');
         pdf.setFontSize(size);
         pdf.setTextColor(0, 0, 0);
 
         const lineHmm = ptToMm(size) * lineHeight;
 
-        // 首行缩进：前置全角空格（U+3000 宽 1em），让 splitTextToSize 自然断行
+        // 首行缩进：中文用全角空格（U+3000），俄文用普通空格（DejaVu 无 U+3000）
         let content = text;
-        if (indentEm > 0) content = '　'.repeat(indentEm) + content;
+        if (indentEm > 0) content = (window.I18N && window.I18N.current === 'ru' ? ' '.repeat(6) : '　'.repeat(indentEm)) + content;
 
         const lines = pdf.splitTextToSize(content, contentW);
         const paraHmm = lines.length * lineHmm;
@@ -940,12 +945,12 @@ async function exportPdf() {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
 
-        // 注册宋体（嵌入子集字体，实现真正的文本）
-        await ensureSimSunFont(pdf);
+        // 注册 PDF 字体（中文嵌入宋体子集，俄文嵌入 DejaVu Sans 子集，实现真正的文本）
+        await ensurePdfFont(pdf);
 
         const w = createPdfWriter(pdf);
         const title = t('report.doc.title').replace(/[=]+/g, '').trim();
-        const dateStr = new Date().toLocaleDateString(window.I18N.current === 'en' ? 'en-US' : 'zh-CN');
+        const dateStr = new Date().toLocaleDateString((window.I18N.current === 'en' ? 'en-US' : (window.I18N.current === 'ru' ? 'ru-RU' : 'zh-CN')));
         let money = parseFloat(data.fraudMoney);
         if (isNaN(money)) money = 0;
         money = money.toFixed(2);
@@ -1043,8 +1048,18 @@ async function exportPdf() {
     }
 }
 
+// ===== 落盘前对敏感字段脱敏（避免 PII 明文写入 localStorage） =====
+function maskPiiForStorage(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    const masked = { ...obj };
+    ['idNo', 'phone', 'accusedPhone', 'accusedWechat', 'accusedAlipay', 'accusedBankCard'].forEach(k => {
+        if (typeof masked[k] === 'string' && masked[k]) masked[k] = desensitizeText(masked[k]);
+    });
+    return masked;
+}
+
 // ===== 历史记录（结构化存储 + 可点击恢复） =====
-async function addHistory(type, data) {
+function addHistory(type, data) {
     // data 现在可以是结构化对象（报案数据、检测结果等）
     let preview = '';
     let displayType = '';
@@ -1054,29 +1069,30 @@ async function addHistory(type, data) {
         // 报案：保存完整表单数据
         preview = t('history.reportPreview', { name: data.name || t('report.unknown'), money: data.fraudMoney || '0', type: data.fraudType || '' });
         displayType = t('history.type.report');
-        icon = '📄';
+        icon = ICONS.doc;
     } else if (type === 'detect') {
         // 识别：保存检测结果
         preview = data.result || '';
         displayType = t('history.type.detect');
-        icon = '🔍';
+        icon = ICONS.search;
     } else if (type === 'deepDetect') {
         // DeepSeek深度判定
         preview = (data.reply || '').substring(0, 80) + '...';
         displayType = t('history.type.deepDetect');
-        icon = '🤖';
+        icon = ICONS.zap;
     } else {
         // 其他类型
         preview = typeof data === 'string' ? data.substring(0, 100) : String(data);
         displayType = type;
-        icon = '📝';
+        icon = ICONS.doc;
     }
 
+    const storedData = type === 'report' ? maskPiiForStorage(data) : data;
     let record = {
         id: Date.now(),
         time: new Date().toLocaleString(),
         type,
-        data, // 完整结构化数据
+        data: storedData, // 敏感字段已脱敏
         preview,
         displayType,
         icon
@@ -1095,7 +1111,7 @@ function historyTypeLabel(record) {
     return key ? t(key) : (record.displayType || record.type);
 }
 
-async function renderHistory() {
+function renderHistory() {
     let listDiv = document.getElementById('historyList');
     if (!listDiv) return;
     if (!historyRecords.length) {
@@ -1105,9 +1121,9 @@ async function renderHistory() {
 
     let html = '';
     for (let r of historyRecords) {
-        html += `<div class="history-item" data-id="${r.id}" style="cursor:pointer;" title="${t('history.itemTitle')}">
+        html += `<div class="history-item" data-id="${r.id}" tabindex="0" role="button" style="cursor:pointer;" title="${t('history.itemTitle')}">
             <div class="history-header">
-                <span>${r.icon || '📝'} ${historyTypeLabel(r)}</span>
+                <span>${r.icon || ICONS.doc} ${historyTypeLabel(r)}</span>
                 <span>${r.time}</span>
             </div>
             <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">${escapeHtml(r.preview || '').substring(0, 80)}</div>
@@ -1122,11 +1138,16 @@ async function renderHistory() {
 
     // 事件委托绑定
     listDiv.querySelectorAll('.history-item').forEach(item => {
+        const activate = () => restoreHistoryRecord(item.dataset.id);
         item.addEventListener('click', (e) => {
             // 如果点击的是按钮则不触发卡片点击
             if (e.target.tagName === 'BUTTON') return;
-            let id = item.dataset.id;
-            restoreHistoryRecord(id);
+            activate();
+        });
+        item.addEventListener('keydown', (e) => {
+            // 键盘可达：Enter/Space 触发恢复（按钮自身已原生支持）
+            if (e.target.tagName === 'BUTTON') return;
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
         });
     });
     listDiv.querySelectorAll('.restore-btn').forEach(btn => {
@@ -1150,7 +1171,7 @@ async function renderHistory() {
 }
 
 // 恢复历史记录到表单
-window.restoreHistoryRecord = async function(id) {
+window.restoreHistoryRecord = function(id) {
     let record = historyRecords.find(r => String(r.id) === String(id));
     if (!record) {
         showToast(t('history.notFound'), 'error');
@@ -1213,7 +1234,7 @@ window.restoreHistoryRecord = async function(id) {
 };
 
 // 查看历史记录详情
-window.viewHistoryDetail = async function(id) {
+window.viewHistoryDetail = function(id) {
     let record = historyRecords.find(r => String(r.id) === String(id));
     if (!record) {
         showToast(t('history.notFound'), 'error');
@@ -1321,6 +1342,10 @@ function saveFormDraft() {
         globalUserInputText: globalUserInputText,
         savedAt: Date.now()
     };
+    // 落盘前对敏感字段脱敏
+    ['idNo', 'phone', 'accusedPhone', 'accusedWechat', 'accusedAlipay', 'accusedBankCard'].forEach(k => {
+        if (typeof draft[k] === 'string' && draft[k]) draft[k] = desensitizeText(draft[k]);
+    });
     try { localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(draft)); } catch(e) {}
 }
 
@@ -1507,7 +1532,7 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     currentTheme = theme;
     const btn = document.getElementById('themeToggleBtn');
-    if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    if (btn) btn.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
     // 同步移动端设置页「主题」分段控件激活态
     document.querySelectorAll('#themeSegmented .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.value === theme));
     // 持久化用户选择
@@ -1662,7 +1687,15 @@ window.onload = function() {
         }
     }));
 
-    document.querySelectorAll('[data-goto]').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-goto'))));
+    document.querySelectorAll('[data-goto]').forEach(btn => {
+        btn.setAttribute('tabindex', '0');
+        btn.setAttribute('role', 'button');
+        const goto = () => switchPage(btn.getAttribute('data-goto'));
+        btn.addEventListener('click', goto);
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goto(); }
+        });
+    });
     document.querySelectorAll('#globalNav .nav-btn').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-target'))));
     // 底部标签栏事件
     document.querySelectorAll('#bottomTabBar .tab-item').forEach(btn => btn.addEventListener('click', () => switchPage(btn.getAttribute('data-target'))));
@@ -1670,12 +1703,17 @@ window.onload = function() {
     // 快捷卡片 3D tilt 效果 + 按钮磁吸
     initMagneticEffects();
 
-    // 全局鼠标跟踪（按钮磁吸光照）
+    // 全局鼠标跟踪（按钮磁吸光照）— 用 rAF 节流，避免每次 mousemove 都触发全页样式重算
+    let mouseRaf = null;
     document.addEventListener('mousemove', (e) => {
-        const x = (e.clientX / window.innerWidth * 100).toFixed(1);
-        const y = (e.clientY / window.innerHeight * 100).toFixed(1);
-        document.documentElement.style.setProperty('--mx', x + '%');
-        document.documentElement.style.setProperty('--my', y + '%');
+        if (mouseRaf) return;
+        mouseRaf = requestAnimationFrame(() => {
+            mouseRaf = null;
+            const x = (e.clientX / window.innerWidth * 100).toFixed(1);
+            const y = (e.clientY / window.innerHeight * 100).toFixed(1);
+            document.documentElement.style.setProperty('--mx', x + '%');
+            document.documentElement.style.setProperty('--my', y + '%');
+        });
     });
 
     document.getElementById('clearChatBtn')?.addEventListener('click', clearChat);
@@ -1686,6 +1724,12 @@ window.onload = function() {
 
     // ===== 图片灯箱：点击缩略图放大查看 =====
     initImageLightbox();
+
+    // 注入统一 SVG 图标（替换 emoji 图标）
+    document.querySelectorAll('[data-icon]').forEach(el => {
+        const icon = ICONS[el.getAttribute('data-icon')];
+        if (icon) el.innerHTML = icon;
+    });
 };
 
 // ===== 磁吸+3D卡片+按钮光照效果 =====

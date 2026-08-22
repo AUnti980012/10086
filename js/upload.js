@@ -75,7 +75,13 @@ function initUpload(areaId, fileId, previewId, cb) {
         input = document.getElementById(fileId),
         container = document.getElementById(previewId);
     if (!area || !input) return;
+    // 键盘可达：设为可聚焦按钮，Enter/Space 触发文件选择
+    area.tabIndex = 0;
+    area.setAttribute('role', 'button');
     area.addEventListener('click', () => input.click());
+    area.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+    });
     input.addEventListener('change', e => handleFiles(e.target.files, container, cb));
     area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dragover'); });
     area.addEventListener('dragleave', () => area.classList.remove('dragover'));
@@ -135,7 +141,8 @@ function showModelDownloadProgress(downloaded, total, message) {
 // ===== OCR识别 =====
 async function ocrWithTesseract(file, index, total) {
     return new Promise((resolve, reject) => {
-        Tesseract.recognize(file, 'chi_sim+eng', {
+        const lang = (window.I18N && window.I18N.current === 'ru') ? 'rus+eng' : 'chi_sim+eng';
+        Tesseract.recognize(file, lang, {
             logger: (m) => {
                 if (m.status === 'recognizing text') {
                     updateOcrProgress(index, total, m.progress || 0,

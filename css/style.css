@@ -1,4 +1,4 @@
-/* ===== 🔮 反诈智能识别与报案辅助系统 — 华丽动画版 ===== */
+/* ===== 🔮 反诈智能识别与报案辅助系统===== */
 
 /* ===== 字体加载 ===== */
 @font-face {
@@ -10,6 +10,16 @@
     font-family: 'Kumbh Sans';
     font-style: normal; font-weight: 400; font-display: optional;
     src: url('../fonts/KumbhSans-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'DejaVu Sans';
+    font-style: normal; font-weight: 400; font-display: swap;
+    src: url('../fonts/dejavu-sans-subset.ttf') format('truetype');
+}
+
+/* ===== 俄语界面字体（西里尔字形，与 PDF 导出同字体） ===== */
+html[lang="ru"] * {
+    font-family: 'DejaVu Sans', "Kumbh Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* ===== 基础重置 ===== */
@@ -28,14 +38,14 @@
 :root, :root[data-theme="light"] {
     --bg-page: #F5F5F7; --bg-surface: #FFFFFF; --bg-elevated: #F0F0F2; --bg-elevated-hover: #E8E8EA;
     --bg-overlay: rgba(0,0,0,0.4);
-    --text-primary: #1D1D1F; --text-secondary: #6E6E73; --text-tertiary: #86868B; --text-placeholder: #AEAEB2; --text-inverse: #FFFFFF;
+    --text-primary: #1D1D1F; --text-secondary: #4F4F56; --text-tertiary: #63636A; --text-placeholder: #6A6A71; --text-inverse: #FFFFFF;
     --border-subtle: rgba(0,0,0,0.06); --border-medium: rgba(0,0,0,0.12); --border-strong: rgba(0,0,0,0.20);
     --primary: #0071E3; --primary-hover: #0077ED; --primary-active: #006BD6;
     --primary-subtle: rgba(0,113,227,0.08); --primary-glow: rgba(0,113,227,0.15);
-    --success: #34C759; --success-bg: rgba(52,199,89,0.08); --success-border: rgba(52,199,89,0.25);
+    --success: #12803A; --success-bg: rgba(18,128,58,0.08); --success-border: rgba(18,128,58,0.25);
     --warning: #FF9500; --warning-bg: rgba(255,149,0,0.08); --warning-border: rgba(255,149,0,0.25);
-    --danger: #FF3B30; --danger-bg: rgba(255,59,48,0.06); --danger-border: rgba(255,59,48,0.20);
-    --ai-gradient-start: #5856D6; --ai-gradient-end: #AF52DE;
+    --danger: #D93025; --danger-bg: rgba(217,48,37,0.06); --danger-border: rgba(217,48,37,0.20);
+    --ai-gradient-start: #5856D6; --ai-gradient-end: #9A46C4;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.04); --shadow-md: 0 4px 16px rgba(0,0,0,0.08); --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
     --shadow-focus: 0 0 0 3px var(--primary-glow);
     --scrollbar-thumb: rgba(0,0,0,0.18); --scrollbar-thumb-hover: rgba(0,0,0,0.28);
@@ -43,7 +53,7 @@
 :root[data-theme="dark"] {
     --bg-page: #050A14; --bg-surface: #0D1525; --bg-elevated: #131D33; --bg-elevated-hover: #1A2740;
     --bg-overlay: rgba(0,0,0,0.7);
-    --text-primary: #E8EDF4; --text-secondary: #9BA8BE; --text-tertiary: #5E6E88; --text-placeholder: #4A5568; --text-inverse: #0C1525;
+    --text-primary: #E8EDF4; --text-secondary: #9BA8BE; --text-tertiary: #7C8AA5; --text-placeholder: #75829C; --text-inverse: #0C1525;
     --border-subtle: rgba(255,255,255,0.06); --border-medium: rgba(255,255,255,0.10); --border-strong: rgba(255,255,255,0.16);
     --primary: #3B82F6; --primary-hover: #2563EB; --primary-active: #1D4ED8;
     --primary-subtle: rgba(59,130,246,0.1); --primary-glow: rgba(59,130,246,0.2);
@@ -1136,13 +1146,18 @@ body { font-size: 15px; }
     .container { padding: 12px 12px 90px; }
 
     /* 首页响应式 */
-    .home-grid { grid-template-columns: 1fr; padding: 0 12px 32px; }
-    .home-hero { padding: 32px 16px 24px; }
-    .home-hero-title { font-size: 26px; }
-    .home-hero-sub { font-size: 13px; }
-    .home-card { padding: 18px; gap: 12px; }
-    .home-card-icon { width: 48px; height: 48px; font-size: 28px; }
-    .home-chat-panel { padding: 0 12px; margin-bottom: 32px; }
+    .home-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 12px 24px; }
+    .home-hero { padding: 32px 16px 22px; }
+    .home-hero-title { font-size: 24px; letter-spacing: -0.01em; text-wrap: balance; }
+    .home-hero-sub { font-size: 13px; margin-top: 8px; line-height: 1.5; }
+    .home-card { padding: 16px 14px; gap: 10px; flex-direction: column; align-items: flex-start; }
+    .home-card-icon { width: 48px; height: 48px; font-size: 26px; border-radius: 13px; }
+    .home-card-info { width: 100%; }
+    .home-card-title { font-size: 17px; margin-bottom: 3px; }
+    .home-card-desc { font-size: 13px; line-height: 1.5; }
+    .home-card-arrow { position: absolute; top: 14px; right: 12px; font-size: 15px; }
+    .home-hero-glow { width: 340px; height: 340px; }
+    .home-chat-panel { padding: 0 12px; margin-bottom: 24px; }
 
     .page-content { padding: 16px; border-radius: 12px; }
     .btn-group { flex-direction: column; }
@@ -1156,6 +1171,10 @@ body { font-size: 15px; }
 
     /* 底部 Tab Bar 显示 */
     .bottom-tab-bar { display: flex; }
+    /* 底部 Dock 触控与层级 */
+    .bottom-tab-bar { padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px)); }
+    .tab-item { padding: 6px 4px; gap: 3px; min-width: 48px; }
+    .tab-label { font-size: 11px; line-height: 1.1; }
 
     /* Toast 移到顶部下方 */
     .toast-container { top: auto; bottom: 100px; right: 12px; left: 12px; }
@@ -1192,13 +1211,39 @@ body { font-size: 15px; }
 
     /* 主页英文提示显示 */
     .home-lang-hint { display: block; font-size: 12px; color: var(--text-tertiary); text-align: center; margin-top: 8px; }
+
+    /* 报案步骤指示器：连接线弹性伸缩，三步均布不溢出 */
+    .step-indicator { margin: 16px 0 20px; }
+    .step-connector { flex: 1 1 24px; width: auto; max-width: 32px; margin: 0 6px 20px; }
+}
+
+/* ===== SVG 图标对齐 ===== */
+[data-icon] svg, .toast-icon svg, .toast-close svg, .history-header svg { display: block; }
+.chat-header-title { display: inline-flex; align-items: center; gap: 6px; }
+.chat-header-icon { display: inline-flex; }
+
+/* ===== 键盘焦点可见性（自定义可聚焦 div） ===== */
+[role="button"]:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* ===== 长文本防溢出 ===== */
+.home-card-title, .header-title, .history-header span {
+    overflow-wrap: anywhere;
+}
+
+/* ===== iOS 防聚焦缩放：输入控件字号不低于 16px ===== */
+.form-group input, .form-group select, .form-group textarea, #fraudText, .chat-input {
+    font-size: 16px;
 }
 
 /* ===== 无障碍 ===== */
 @media (prefers-reduced-motion: reduce) {
-    *,*::before,*::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    *,*::before,*::after { animation-duration: 0.01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; transition-delay: 0s !important; }
     .page.active { animation: none; opacity: 1; transform: none; filter: none; }
     .page.active .page-content > * { animation: none; opacity: 1; transform: none; }
+    .home-card, .home-hero-title, .home-hero-sub { animation: none; opacity: 1; transform: none; }
     .nav-btn.active::after { animation: none; }
     .btn-primary { animation: none; }
 }

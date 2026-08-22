@@ -1,14 +1,14 @@
 # 反诈智能识别与报案辅助系统 · Firefly-IV
 # Anti-Fraud Recognition & Reporting Assistant · Firefly-IV
 
-> 反诈智能识别与报案辅助系统 · Ver.4.0.0-beta ｜ Smart Anti-Fraud Assistant · Ver.4.0.0-beta
+> 反诈智能识别与报案辅助系统 · Ver.4.2.0-beta ｜ Smart Anti-Fraud Assistant · Ver.4.2.0-beta
 > 创意来自东北电力大学易班工作站-Firefly TYPE IV ｜ Concept by NEEPU YiBan Workstation - Firefly TYPE IV
 
 一款面向大学生的智能反诈辅助系统：集关键词检测、OCR 识别、AI 深度判定、刑事控告书自动生成于一体，帮助用户识别诈骗套路、整理报案材料。
 
 An AI-powered anti-fraud assistant for students: combining keyword detection, OCR recognition, AI deep analysis, and one-click criminal complaint drafting to help users identify scam tactics and prepare reporting materials.
 
-> 📖 本 README 提供中英双语版本，点击下方标题展开对应语言 ｜ This README is bilingual — click a heading below to expand a language.
+> 📖 本 README 提供中英俄三语版本，点击下方标题展开对应语言 ｜ This README is trilingual — click a heading below to expand a language. ｜ Этот README доступен на трёх языках — нажмите на заголовок ниже, чтобы раскрыть нужный язык.
 
 ---
 
@@ -24,7 +24,7 @@ An AI-powered anti-fraud assistant for students: combining keyword detection, OC
 - **📋 历史记录** — 本地结构化存储，支持查看详情、一键恢复、删除。
 - **⚙️ 系统设置** — 自动保存历史、默认开启脱敏。
 - **🌙 明暗主题** — 跟随系统 / 手动切换，带过渡动画。
-- **🌐 中英双语** — 中文 / 英文一键切换，默认中文，选择持久化；覆盖界面与 AI 对话、报案文书等全部生成内容。
+- **🌐 中英俄三语** — 中文 / English / Русский 一键切换，默认中文，选择持久化；覆盖界面与 AI 对话、报案文书等全部生成内容。
 
 ### 反诈关键词知识库
 
@@ -52,7 +52,7 @@ An AI-powered anti-fraud assistant for students: combining keyword detection, OC
 ├── index.html                  # 单页入口（全部页面）
 ├── css/style.css               # 全局样式与主题 Token
 ├── js/
-│   ├── i18n.js                 # 中英双语字典与语言切换
+│   ├── i18n.js                 # 中英俄三语字典与语言切换
 │   ├── app.js                  # 主应用逻辑（表单 / 报案 / 账单 / 历史 / 导航）
 │   ├── chat.js                 # AI 聊天（Markdown 渲染、打字指示器）
 │   ├── anti-fraud-knowledge.js # 20 条反诈关键词知识库
@@ -61,8 +61,7 @@ An AI-powered anti-fraud assistant for students: combining keyword detection, OC
 │   ├── upload.js               # 文件上传 + OCR 识别
 │   └── utils.js                # 工具（转义 / Markdown / 脱敏 / Toast）
 ├── functions/api/chat.js       # Cloudflare Pages Function（DeepSeek 代理）
-├── fonts/                      # 本地字体文件（含 simsun-subset.ttf 宋体子集）
-└── dist/                       # 构建副本（已过期，仅供参考）
+└── fonts/                      # 本地字体文件（含 simsun-subset.ttf 宋体子集）
 ```
 
 ### API 配置
@@ -73,9 +72,12 @@ An AI-powered anti-fraud assistant for students: combining keyword detection, OC
 在 Cloudflare Pages 中设置环境变量：
 
 ```
-DEEPSEEK_API_KEY = sk-xxxxxxxxxxxxxxxx
+DEEPSEEK_API_KEY = sk-xxxxxxxxxxxxxxxx   # 必填
+ALLOWED_ORIGINS = https://你的域名        # 可选，跨域白名单（逗号分隔）；不设则仅同源可用
+SYSTEM_PROMPT = ...                       # 可选，服务端强制 system 提示词（可缓解提示注入）
 ```
 
+> 生产环境建议额外在 Cloudflare WAF 中配置速率限制规则，防止接口被滥用盗刷额度。
 > 任意兼容 OpenAI 格式的 LLM 服务均可替换接入，修改 `functions/api/chat.js` 中的 API 地址与模型名即可。
 
 ### 本地运行
@@ -117,6 +119,18 @@ npx serve .
 
 ### 更新日志
 
+- **Ver.4.2.0-beta**（2026-08-22）
+  - 🔒 安全加固：`/api/chat` 新增 CORS 白名单（`ALLOWED_ORIGINS`）、IP 滑动窗口速率限制、入参校验与错误脱敏，并支持服务端 `SYSTEM_PROMPT` 注入以缓解提示注入。
+  - 🛡️ 隐私保护：识别与 AI 对话外发前按设置自动脱敏（手机号/身份证/银行卡），历史记录与表单草稿落盘前掩码。
+  - 🇬🇧 英文识别补齐：新增英文关键词字典，英文模式可正常匹配诈骗关键词；俄语关键词字典去重。
+  - 🖼️ 图标系统：emoji 图标全面替换为统一线性 SVG 图标（`currentColor` 描边）。
+  - 🎨 视觉与无障碍：主题 Token 对比度修正（WCAG）、键盘焦点可见、iOS 输入框防缩放、`prefers-reduced-motion` 增强。
+  - 📱 移动端优化：首页 Hero/卡片排版节奏、报案步骤指示器弹性连接线、底部 Dock 触控区放大；俄文标签与首页对话文案精简。
+  - 🐛 修复：OCR 文本重复计入、多轮对话 system 提示词被截断、Excel 账单金额解析不一致、银行卡号脱敏正则、Tesseract 加载竞态、身份证校验位缺失；移除冗余 html2canvas 依赖。
+
+- **Ver.4.1.0-beta**（2026-08-21）
+  - 🌐 新增俄语版本（三语 zh/en/ru）：完整俄语界面、20 条反诈知识库、关键词检测字典全面俄化；俄语模式 OCR 使用 rus、PDF 嵌入西里尔字体；标题采用「Антимошенническая система」。
+
 - **Ver.4.0.0-beta**（2026-08-16）
   - 📜 开源协议更换：由 MIT 改为 Apache-2.0，新增 LICENSE 文件；README 双语改为可折叠下拉框。
   - 🖼️ 开源徽标：网页徽标更换为 ASF（Apache Software Foundation）logo，系统设置页新增 SPDX logo（链接至 SPDX Apache-2.0 页）。
@@ -149,7 +163,7 @@ npx serve .
 - **📋 History** — Local structured storage with detail view, one-click restore, and delete.
 - **⚙️ Settings** — Auto-save history and default desensitization.
 - **🌙 Light / Dark Theme** — System-following or manual toggle with transition animation.
-- **🌐 Bilingual (zh / en)** — One-click Chinese/English toggle (default Chinese, persisted), covering the UI and all generated content such as AI chat and the criminal complaint.
+- **🌐 Trilingual (zh / en / ru)** — One-click Chinese/English/Russian toggle (default Chinese, persisted), covering the UI and all generated content such as AI chat and the criminal complaint.
 
 ### Anti-Fraud Keyword Knowledge Base
 
@@ -177,7 +191,7 @@ Screen sharing · Million guarantee · Safe account · Credit repair · Brushing
 ├── index.html                  # Single-page entry (all pages)
 ├── css/style.css               # Global styles & theme tokens
 ├── js/
-│   ├── i18n.js                 # Bilingual (zh/en) dictionary & language toggle
+│   ├── i18n.js                 # Trilingual (zh/en/ru) dictionary & language toggle
 │   ├── app.js                  # Core logic (forms / report / bill / history / nav)
 │   ├── chat.js                 # AI chat (Markdown rendering, typing indicator)
 │   ├── anti-fraud-knowledge.js # 20 anti-fraud keyword knowledge entries
@@ -186,8 +200,7 @@ Screen sharing · Million guarantee · Safe account · Credit repair · Brushing
 │   ├── upload.js               # File upload + OCR recognition
 │   └── utils.js                # Utilities (escape / Markdown / desensitize / Toast)
 ├── functions/api/chat.js       # Cloudflare Pages Function (DeepSeek proxy)
-├── fonts/                      # Local font files (incl. simsun-subset.ttf SimSun subset)
-└── dist/                       # Stale build copy (reference only)
+└── fonts/                      # Local font files (incl. simsun-subset.ttf SimSun subset)
 ```
 
 ### API Configuration
@@ -195,12 +208,15 @@ Screen sharing · Million guarantee · Safe account · Credit repair · Brushing
 - **Default provider**: DeepSeek
 - **Default model**: `deepseek-chat`
 
-Set the environment variable in Cloudflare Pages:
+Set the environment variables in Cloudflare Pages:
 
 ```
-DEEPSEEK_API_KEY = sk-xxxxxxxxxxxxxxxx
+DEEPSEEK_API_KEY = sk-xxxxxxxxxxxxxxxx   # required
+ALLOWED_ORIGINS = https://your-domain    # optional, cross-origin allowlist (comma-separated); same-origin only if unset
+SYSTEM_PROMPT = ...                      # optional, server-enforced system prompt (mitigates prompt injection)
 ```
 
+> For production, also configure a rate-limiting rule in Cloudflare WAF to prevent API abuse.
 > Any OpenAI-compatible LLM service can be swapped in — edit the API endpoint and model name in `functions/api/chat.js`.
 
 ### Local Development
@@ -242,6 +258,18 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 ### Changelog
 
+- **Ver.4.2.0-beta** (2026-08-22)
+  - 🔒 Security hardening: `/api/chat` now has a CORS allowlist (`ALLOWED_ORIGINS`), IP sliding-window rate limiting, input validation and error sanitization, plus server-side `SYSTEM_PROMPT` injection to mitigate prompt injection.
+  - 🛡️ Privacy: outbound text in detection and AI chat is auto-desensitized (phone/ID/bank card) per settings; history records and form drafts are masked before storage.
+  - 🇬🇧 English detection: added the English keyword dictionary so English mode matches fraud keywords; deduplicated Russian keywords.
+  - 🖼️ Icon system: replaced emoji icons with a unified line-style SVG icon set (`currentColor` stroke).
+  - 🎨 Visual & accessibility: theme token contrast fixes (WCAG), visible keyboard focus, iOS input focus-zoom prevention, enhanced `prefers-reduced-motion`.
+  - 📱 Mobile: home hero/card rhythm, flexible step-indicator connectors, larger bottom-dock touch targets; tightened Russian dock labels and home chat copy.
+  - 🐛 Fixes: duplicate OCR text, truncated system prompt in long chats, inconsistent Excel amount parsing, bank-card desensitization regex, Tesseract load race, missing ID checksum; removed the redundant html2canvas dependency.
+
+- **Ver.4.1.0-beta** (2026-08-21)
+  - 🌐 Added the Russian version (trilingual zh/en/ru): full Russian UI, the 20-entry knowledge base, and the keyword-detection dictionary are fully Russian-ized; Russian mode uses `rus` for OCR and embeds a Cyrillic font for PDF; the title is「Антимошенническая система」.
+
 - **Ver.4.0.0-beta** (2026-08-16)
   - 📜 License change: switched from MIT to Apache-2.0, added a LICENSE file; the bilingual README sections are now collapsible dropdowns.
   - 🖼️ Open-source badges: replaced with the ASF (Apache Software Foundation) logo, and added an SPDX logo on the Settings page (linking to the SPDX Apache-2.0 page).
@@ -262,6 +290,145 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 </details>
 
+<details>
+<summary><b>🇷🇺 Русский</b></summary>
+
+### Возможности
+
+- **🔍 Распознавание мошенничества** — поиск по ключевым словам + локальное извлечение текста Tesseract OCR + глубокая оценка DeepSeek, с автоматическим обезличиванием (номер телефона / удостоверение личности / банковская карта).
+- **📝 Подача заявления** — трёхшаговый мастер форм с автоматическим составлением заявления о преступлении и экспортом в PDF (вёрстка шрифтом SimSun + изображения доказательств) / TXT, а также копированием в один клик.
+- **📊 Импорт выписки** — автоматический разбор выписок WeChat / Alipay в формате CSV / Excel, расчёт общей суммы расходов и импорт в форму заявления в один клик.
+- **💬 ИИ-ассистент** — диалоговый ассистент по антимошенническому просвещению и гражданско-правовому воспитанию на базе DeepSeek, со встроенной базой из 20 авторитетных ключевых слов о мошенничестве (определение + совет полиции).
+- **📋 История** — локальное структурированное хранение с просмотром подробностей, восстановлением в один клик и удалением.
+- **⚙️ Настройки** — автосохранение истории и включённое по умолчанию обезличивание.
+- **🌙 Светлая / тёмная тема** — следование за системой или ручное переключение с анимацией перехода.
+- **🌐 Три языка (zh / en / ru)** — переключение китайского / английского / русского в один клик (по умолчанию китайский, выбор сохраняется); охватывает интерфейс и весь генерируемый контент, включая диалог с ИИ и заявление о преступлении.
+
+### База знаний о ключевых словах мошенничества
+
+Система включает 20 высокочастотных ключевых слов телекоммуникационного и сетевого мошенничества, каждое с **определением** и **советом полиции**, используемых для просвещения ИИ-ассистента и сопоставления при распознавании:
+
+Демонстрация экрана · «Гарантия на миллион» · «Безопасный счёт» · Исправление кредитной истории · Накрутка заказов · Порнографические карточки · Неизвестные ссылки / QR-коды · Звонки из-за рубежа · Малоизвестные мессенджеры · Инсайдерская информация · Скимминг через NFC · Обнуление баллов · Привлечение через посылки · Виртуальная валюта · «Инструмент» мошенников · Пособничество информационным преступлениям · «Две карты» · Наличные / золото · Подарочные карты · Накрутка оборотов по счёту
+
+(Контент находится в `js/anti-fraud-knowledge.js`; словарь сопоставления — в `js/fraud-keywords.js`.)
+
+### Технологический стек
+
+| Модуль | Технология |
+|---|---|
+| Frontend | Нативный HTML / CSS / JS (без фреймворков, асинхронная загрузка) |
+| Fonts | HYRunYuan (HanYi RunYuan), Kumbh Sans (интерфейс); подмножество SimSun (встраивается в экспортируемый PDF), DejaVu Sans (русский интерфейс и PDF) |
+| OCR | Tesseract.js 5.x (ленивая загрузка, языковые пакеты кэшируются в IndexedDB) |
+| Export | jsPDF: текстовая вёрстка SimSun (PDF) + страницы с изображениями доказательств, SheetJS/xlsx (выписки) |
+| Backend | Cloudflare Pages Functions (`/api/chat` proxy) |
+| AI | DeepSeek `deepseek-chat` (совместимо с OpenAI) |
+
+### Структура каталогов
+
+```
+-1A/
+├── index.html                  # Одностраничная точка входа (все страницы)
+├── css/style.css               # Глобальные стили и токены тем
+├── js/
+│   ├── i18n.js                 # Словари zh / en / ru и переключение языка
+│   ├── app.js                  # Основная логика (формы / заявление / выписка / история / навигация)
+│   ├── chat.js                 # ИИ-чат (рендеринг Markdown, индикатор набора)
+│   ├── anti-fraud-knowledge.js # База из 20 ключевых слов (zh/en/ru)
+│   ├── fraud-keywords.js       # Словари сопоставления (zh/en/ru, ленивая загрузка)
+│   ├── tesseract-loader.js     # Отложенная загрузка движка OCR
+│   ├── upload.js               # Загрузка файлов + распознавание OCR
+│   └── utils.js                # Утилиты (экранирование / Markdown / обезличивание / Toast)
+├── functions/api/chat.js       # Cloudflare Pages Function (прокси DeepSeek)
+└── fonts/                      # Локальные шрифты (включая simsun-subset.ttf и dejavu-sans-subset.ttf)
+```
+
+### Конфигурация API
+
+- **Провайдер по умолчанию**: DeepSeek
+- **Модель по умолчанию**: `deepseek-chat`
+
+Установите переменные окружения в Cloudflare Pages:
+
+```
+DEEPSEEK_API_KEY = sk-xxxxxxxxxxxxxxxx   # обязательно
+ALLOWED_ORIGINS = https://ваш-домен      # опционально, белый список источников (через запятую); без него — только тот же источник
+SYSTEM_PROMPT = ...                      # опционально, принудительный system-промпт на сервере (снижает риск инъекции)
+```
+
+> Для продакшена дополнительно настройте правило ограничения частоты запросов в Cloudflare WAF, чтобы предотвратить злоупотребление.
+> Можно подключить любой LLM-сервис, совместимый с форматом OpenAI, изменив адрес API и имя модели в `functions/api/chat.js`.
+
+### Локальный запуск
+
+```bash
+# Подойдёт любой статический сервер
+python -m http.server 8080
+# или
+npx serve .
+```
+
+> Примечание: `/api/chat` зависит от Cloudflare Pages Functions и не может быть вызван из обычного статического сервера. Для проверки функций ИИ используйте `wrangler pages dev` или тестируйте после развёртывания; остальные функции (распознавание, OCR, выписки, заявление, экспорт) работают локально.
+
+### Развёртывание (Cloudflare Pages)
+
+1. Отправьте репозиторий на GitHub;
+2. В Cloudflare Pages нажмите **Create project → Connect to Git** и выберите репозиторий;
+3. Оставьте команду сборки пустой (чистая статика), укажите корневой каталог в качестве выходного;
+4. Добавьте переменную окружения `DEEPSEEK_API_KEY`;
+5. Разверните — функции вступают в силу автоматически.
+
+### ⚠️ Отказ от ответственности
+
+Система генерирует контент с помощью ИИ и оказывает вспомогательную поддержку в сценариях предупреждения о мошенничестве. Поскольку контент, генерируемый ИИ, может содержать неточности или ошибки, сохраняйте критическое мышление и самостоятельно проверяйте важную информацию.
+
+Проект предназначен исключительно для учебных, исследовательских и законных целей помощи в борьбе с мошенничеством. Пользователи самостоятельно оценивают точность и применимость генерируемого контента; команда проекта не несёт ответственности за любые прямые или косвенные последствия использования системы.
+
+### 📜 Лицензия
+
+Проект распространяется по лицензии Apache License 2.0 (Apache-2.0). Полный текст лицензии — в [LICENSE](./LICENSE), а также на [SPDX](https://spdx.org/licenses/Apache-2.0.html).
+
+### Благодарности
+
+- Владелец авторских прав: **Xin Firefly-IV**
+- Архитектор подсказок: **Wang A Black**
+- Консультант по UI-дизайну: **Liu A Green**
+- Вдохновение: конвейер автоматической обработки
+- Миссия: служение обществу через технологии
+
+### Журнал изменений
+
+- **Ver.4.2.0-beta** (2026-08-22)
+  - 🔒 Усиление безопасности: `/api/chat` получил белый список CORS (`ALLOWED_ORIGINS`), скользящее окно ограничения частоты по IP, проверку ввода и экранирование ошибок, а также серверную инъекцию `SYSTEM_PROMPT` для снижения риска инъекций.
+  - 🛡️ Приватность: исходящий текст в распознавании и ИИ-чате автоматически обезличивается (телефон/удостоверение/карта) согласно настройкам; история и черновики форм маскируются перед сохранением.
+  - 🇬🇧 Английское распознавание: добавлен английский словарь ключевых слов, поэтому английский режим корректно находит ключевые слова; удалены дубликаты в русском словаре.
+  - 🖼️ Система иконок: emoji-иконки полностью заменены единым набором линейных SVG (`currentColor`).
+  - 🎨 Визуал и доступность: исправлен контраст токенов тем (WCAG), видимый фокус клавиатуры, защита от зума при фокусе на iOS, улучшен `prefers-reduced-motion`.
+  - 📱 Мобильная версия: ритм hero/карточек, гибкие соединители шагового индикатора, увеличенные зоны касания нижней панели; сокращены русские подписи панели и текст чата на главной.
+  - 🐛 Исправления: дублирование OCR-текста, обрезка system-промпта в длинных диалогах, несогласованный разбор сумм Excel, регулярное выражение обезличивания банковских карт, гонка загрузки Tesseract, отсутствие контрольной цифры удостоверения; удалена избыточная зависимость html2canvas.
+
+- **Ver.4.1.0-beta** (2026-08-21)
+  - 🌐 Добавлена русская версия (три языка zh/en/ru): полный русский интерфейс, база из 20 ключевых слов и словарь обнаружения по ключевым словам полностью переведены на русский; в русском режиме OCR использует `rus`, а в PDF встраивается кириллический шрифт; заголовок — «Антимошенническая система».
+
+- **Ver.4.0.0-beta** (2026-08-16)
+  - 📜 Смена лицензии: с MIT на Apache-2.0, добавлен файл LICENSE; двуязычный README преобразован в раскрывающиеся блоки.
+  - 🖼️ Значки открытого кода: заменены на логотип ASF (Apache Software Foundation), на странице настроек добавлен логотип SPDX (ссылка на страницу SPDX Apache-2.0).
+  - 📱 Мобильная переработка: скрыта верхняя строка заголовка, переключатели темы/языка вынесены в настройки в виде сегментированных элементов, ссылка на NEEPU перенесена в настройки, на главной странице добавлена подсказка о переключении языка.
+  - 🎨 Нижняя панель: одноцветные линейные иконки (серые при невыбранном, цвет темы при выбранном).
+  - 🔗 Добавлена ссылка «Ибань» (настройки для настольных и мобильных устройств).
+  - 🐛 Исправления: неверное имя столбца доходов/расходов в Excel (сумма всегда была 0); отсутствие проверки обязательных полей на третьем шаге; излишне мягкая проверка суммы; преждевременное снятие блокировки конкурентного OCR; неэкранированный showToast (риск XSS).
+
+- **Ver.3.10.0** (2026-08-15)
+  - 📄 Переработка экспорта PDF: вместо скриншота html2canvas — нативная текстовая вёрстка jsPDF (выделяемый/копируемый текст) со встроенным подмножеством SimSun; заголовок 22pt по центру жирным, подзаголовок 14pt, заголовки разделов 12pt жирным, основной текст 12pt по ширине с отступом первой строки 2em, блок подписи по правому краю; A4 с полями 1,5 см сверху/снизу и 2 см слева/справа, абзацы не разрываются между страницами.
+  - 🖼️ Изображения доказательств добавляются по одному на страницу в конце PDF.
+  - 🏷️ Китайское название системы унифицировано как «反诈智能识别与报案辅助系统» (английское не изменилось).
+  - 🐛 Исправлено: удаление изображения доказательства больше не оставляет его в приложении PDF или счётчике доказательств.
+
+- **Ver.3.9.0** (2026-08-15)
+  - 🌐 Добавлена двуязычная поддержка: полный английский интерфейс с кнопкой переключения zh/en (по умолчанию китайский, выбор сохраняется), охватывающая диалог с ИИ, базу из 20 ключевых слов, генерируемое заявление о преступлении и весь прочий динамический контент.
+  - 🔍 Полировка UI: увеличены глобальные размеры шрифта и слегка увеличены внутренние отступы кнопок/полей (раскладка не изменилась).
+
+</details>
+
 ---
 
-© 2026 Xin Firefly-IV. All Rights Reserved. · Ver.4.0.0-beta
+© 2026 Xin Firefly-IV. Licensed under Apache-2.0. · Ver.4.2.0-beta
