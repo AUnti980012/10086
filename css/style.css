@@ -215,7 +215,7 @@ body {
     transition: color 0.2s var(--ease-out-expo), background 0.2s var(--ease-out-expo), transform 0.2s var(--spring-bounce);
     position: relative;
 }
-.nav-icon { font-size: 15px; display: none; }
+.nav-icon { font-size: 15px; display: inline-flex; align-items: center; }
 .nav-btn:hover { color: var(--text-secondary); background: var(--bg-elevated); transform: translateY(-1px); }
 .nav-btn:active { transform: scale(0.96); }
 

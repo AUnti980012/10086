@@ -123,7 +123,7 @@ npx serve .
   - 🔒 安全加固：`/api/chat` 新增 CORS 白名单（`ALLOWED_ORIGINS`）、IP 滑动窗口速率限制、入参校验与错误脱敏，并支持服务端 `SYSTEM_PROMPT` 注入以缓解提示注入。
   - 🛡️ 隐私保护：识别与 AI 对话外发前按设置自动脱敏（手机号/身份证/银行卡），历史记录与表单草稿落盘前掩码。
   - 🇬🇧 英文识别补齐：新增英文关键词字典，英文模式可正常匹配诈骗关键词；俄语关键词字典去重。
-  - 🖼️ 图标系统：emoji 图标全面替换为统一线性 SVG 图标（`currentColor` 描边）。
+  - 🖼️ 图标系统：emoji 图标全面替换为统一线性 SVG 图标（`currentColor` 描边）；修复桌面导航图标被 CSS 隐藏、图标注入时机提前至脚本加载。
   - 🎨 视觉与无障碍：主题 Token 对比度修正（WCAG）、键盘焦点可见、iOS 输入框防缩放、`prefers-reduced-motion` 增强。
   - 📱 移动端优化：首页 Hero/卡片排版节奏、报案步骤指示器弹性连接线、底部 Dock 触控区放大；俄文标签与首页对话文案精简。
   - 🐛 修复：OCR 文本重复计入、多轮对话 system 提示词被截断、Excel 账单金额解析不一致、银行卡号脱敏正则、Tesseract 加载竞态、身份证校验位缺失；移除冗余 html2canvas 依赖。
@@ -262,7 +262,7 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
   - 🔒 Security hardening: `/api/chat` now has a CORS allowlist (`ALLOWED_ORIGINS`), IP sliding-window rate limiting, input validation and error sanitization, plus server-side `SYSTEM_PROMPT` injection to mitigate prompt injection.
   - 🛡️ Privacy: outbound text in detection and AI chat is auto-desensitized (phone/ID/bank card) per settings; history records and form drafts are masked before storage.
   - 🇬🇧 English detection: added the English keyword dictionary so English mode matches fraud keywords; deduplicated Russian keywords.
-  - 🖼️ Icon system: replaced emoji icons with a unified line-style SVG icon set (`currentColor` stroke).
+  - 🖼️ Icon system: replaced emoji icons with a unified line-style SVG icon set (`currentColor` stroke); fixed desktop nav icons hidden by CSS and moved icon injection to script load.
   - 🎨 Visual & accessibility: theme token contrast fixes (WCAG), visible keyboard focus, iOS input focus-zoom prevention, enhanced `prefers-reduced-motion`.
   - 📱 Mobile: home hero/card rhythm, flexible step-indicator connectors, larger bottom-dock touch targets; tightened Russian dock labels and home chat copy.
   - 🐛 Fixes: duplicate OCR text, truncated system prompt in long chats, inconsistent Excel amount parsing, bank-card desensitization regex, Tesseract load race, missing ID checksum; removed the redundant html2canvas dependency.
@@ -401,7 +401,7 @@ npx serve .
   - 🔒 Усиление безопасности: `/api/chat` получил белый список CORS (`ALLOWED_ORIGINS`), скользящее окно ограничения частоты по IP, проверку ввода и экранирование ошибок, а также серверную инъекцию `SYSTEM_PROMPT` для снижения риска инъекций.
   - 🛡️ Приватность: исходящий текст в распознавании и ИИ-чате автоматически обезличивается (телефон/удостоверение/карта) согласно настройкам; история и черновики форм маскируются перед сохранением.
   - 🇬🇧 Английское распознавание: добавлен английский словарь ключевых слов, поэтому английский режим корректно находит ключевые слова; удалены дубликаты в русском словаре.
-  - 🖼️ Система иконок: emoji-иконки полностью заменены единым набором линейных SVG (`currentColor`).
+  - 🖼️ Система иконок: emoji-иконки полностью заменены единым набором линейных SVG (`currentColor`); исправлены скрытые CSS иконки навигации, инъекция выполняется при загрузке скрипта.
   - 🎨 Визуал и доступность: исправлен контраст токенов тем (WCAG), видимый фокус клавиатуры, защита от зума при фокусе на iOS, улучшен `prefers-reduced-motion`.
   - 📱 Мобильная версия: ритм hero/карточек, гибкие соединители шагового индикатора, увеличенные зоны касания нижней панели; сокращены русские подписи панели и текст чата на главной.
   - 🐛 Исправления: дублирование OCR-текста, обрезка system-промпта в длинных диалогах, несогласованный разбор сумм Excel, регулярное выражение обезличивания банковских карт, гонка загрузки Tesseract, отсутствие контрольной цифры удостоверения; удалена избыточная зависимость html2canvas.

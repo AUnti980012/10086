@@ -1577,6 +1577,17 @@ function initTheme() {
     document.querySelectorAll('#themeSegmented .seg-btn').forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.value)));
 }
 
+// ===== 注入统一 SVG 图标（替换 emoji 图标）=====
+// 独立函数：在 onload 前即调用一次，静态 [data-icon] 元素不受外部资源（CDN）加载阻塞；
+// onload 内再调用一次作为兜底，覆盖动态插入的 [data-icon]。
+function injectIcons() {
+    document.querySelectorAll('[data-icon]').forEach(el => {
+        const icon = ICONS[el.getAttribute('data-icon')];
+        if (icon) el.innerHTML = icon;
+    });
+}
+injectIcons();
+
 // ===== 初始化 =====
 window.onload = function() {
     // 主题初始化（同步，最快执行）
@@ -1725,11 +1736,8 @@ window.onload = function() {
     // ===== 图片灯箱：点击缩略图放大查看 =====
     initImageLightbox();
 
-    // 注入统一 SVG 图标（替换 emoji 图标）
-    document.querySelectorAll('[data-icon]').forEach(el => {
-        const icon = ICONS[el.getAttribute('data-icon')];
-        if (icon) el.innerHTML = icon;
-    });
+    // 注入统一 SVG 图标（onload 兜底，覆盖动态插入的 [data-icon]）
+    injectIcons();
 };
 
 // ===== 磁吸+3D卡片+按钮光照效果 =====
