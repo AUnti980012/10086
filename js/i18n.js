@@ -260,6 +260,14 @@
         ['bill.parseFirst', '请先解析账单', 'Please parse the statement first'],
         ['bill.fileFormatError', '文件格式错误，无法解析Excel文件。', 'File format error: unable to parse the Excel file.'],
         ['bill.uploaded', '账单已上传', 'Statement uploaded'],
+        ['bill.expenseCount', '总支出笔数', 'Total expense entries'],
+        ['bill.expenseTotal', '总支出金额', 'Total spending'],
+        ['bill.duplicate', '文件已存在，已跳过：', 'File already exists, skipped: '],
+        ['bill.removeFile', '移除该账单文件', 'Remove this statement file'],
+        ['bill.platform.wechat', '微信', 'WeChat'],
+        ['bill.platform.alipay', '支付宝', 'Alipay'],
+        ['bill.platform.bank', '银行', 'Bank'],
+        ['bill.platform.other', '账单', 'Statement'],
 
         // ---- 报案报告操作 ----
         ['report.copied', '已复制到剪贴板', 'Copied to clipboard'],
@@ -584,6 +592,14 @@
         'bill.parseFirst': 'Сначала разберите выписку',
         'bill.fileFormatError': 'Ошибка формата файла: невозможно разобрать файл Excel.',
         'bill.uploaded': 'Выписка загружена',
+        'bill.expenseCount': 'Всего расходных записей',
+        'bill.expenseTotal': 'Общая сумма расходов',
+        'bill.duplicate': 'Файл уже существует, пропущен: ',
+        'bill.removeFile': 'Удалить этот файл выписки',
+        'bill.platform.wechat': 'WeChat',
+        'bill.platform.alipay': 'Alipay',
+        'bill.platform.bank': 'Банк',
+        'bill.platform.other': 'Выписка',
 
         // ---- 报案报告操作 ----
         'report.copied': 'Скопировано в буфер обмена',

@@ -5,7 +5,8 @@
 
 let identifyImages = [];
 let reportImages = [];
-let billData = null;
+let billFiles = [];
+let billFileSeq = 0;
 let isOcrRunning = false; // 防止并发OCR
 
 // ===== 文件处理（Promise.all等待所有FileReader完成） =====
@@ -222,40 +223,104 @@ function initBillUpload() {
     let area = document.getElementById('billUpload'),
         input = document.getElementById('billFile');
     if (!area || !input) return;
-    area.addEventListener('click', () => input.click());
-    input.addEventListener('change', e => {
-        let file = e.target.files[0];
-        if (!file) return;
-        let ext = file.name.split('.').pop().toLowerCase();
-        let reader = new FileReader();
-        reader.onload = ev => {
-            if (ext === 'csv') {
-                // 去除 UTF-8 BOM（Windows 导出的 CSV 常带有 BOM）
-                let raw = ev.target.result.replace(/^﻿/, '');
-                // 自动检测分隔符：微信/支付宝 CSV 常用分号，标准 CSV 用逗号
-                let semiColonCount = (raw.match(/;/g) || []).length;
-                let commaCount = (raw.match(/,/g) || []).length;
-                let delimiter = semiColonCount > commaCount ? ';' : ',';
-                billData = { raw, type: 'csv', delimiter };
-            } else {
-                try {
-                    let wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-                    billData = { raw: wb, type: 'xlsx' };
-                } catch (e) {
-                    showToast(t('bill.fileFormatError'), 'error');
-                    return;
-                }
+
+    // 渲染已上传文件列表（图标 + 文件名 + 删除按钮）
+    function renderBillFileList() {
+        let list = document.getElementById('billFileList');
+        let hint = area.querySelector('span[data-i18n="bill.upload"]');
+        if (!list) return;
+        if (billFiles.length === 0) {
+            list.hidden = true;
+            list.innerHTML = '';
+            if (hint) hint.style.display = '';
+            return;
+        }
+        list.hidden = false;
+        if (hint) hint.style.display = 'none';
+        list.innerHTML = billFiles.map(f =>
+            '<div class="bill-file-chip">' +
+                ICONS.doc +
+                '<span class="bill-file-chip-name">' + escapeHtml(f.fileName) + '</span>' +
+                '<button type="button" class="bill-file-chip-del" title="' + escapeHtml(t('bill.removeFile')) + '" aria-label="' + escapeHtml(t('bill.removeFile')) + '" data-id="' + f.id + '">×</button>' +
+            '</div>'
+        ).join('');
+        list.querySelectorAll('.bill-file-chip-del').forEach(btn => {
+            btn.addEventListener('click', () => {
+                billFiles = billFiles.filter(f => f.id !== btn.getAttribute('data-id'));
+                renderBillFileList();
+            });
+        });
+    }
+
+    // 处理一批账单文件（点击选择与拖拽共用，支持多文件）
+    function handleBillFiles(files) {
+        let valid = Array.from(files || []).filter(f => {
+            let ext = f.name.split('.').pop().toLowerCase();
+            return ['csv', 'xlsx', 'xls'].includes(ext);
+        });
+        if (files && files.length && !valid.length) {
+            showToast(t('bill.fileFormatError'), 'error');
+            return;
+        }
+        valid.forEach(file => {
+            // 按文件名去重
+            if (billFiles.some(b => b.fileName === file.name)) {
+                showToast(t('bill.duplicate') + ' ' + file.name, 'warning');
+                return;
             }
-            showToast(t('bill.uploaded'), 'success');
-        };
-        ext === 'csv' ? reader.readAsText(file) : reader.readAsArrayBuffer(file);
+            let ext = file.name.split('.').pop().toLowerCase();
+            let reader = new FileReader();
+            reader.onload = ev => {
+                let id = 'bill_' + (++billFileSeq);
+                if (ext === 'csv') {
+                    let buf = ev.target.result; // ArrayBuffer
+                    let raw;
+                    // 编码探测：优先严格 UTF-8，非法则回退 GBK（兼容老版本微信/支付宝导出）
+                    try {
+                        raw = new TextDecoder('utf-8', { fatal: true }).decode(buf);
+                    } catch (e) {
+                        raw = new TextDecoder('gbk').decode(buf);
+                    }
+                    // 去除 UTF-8 BOM（Windows 导出的 CSV 常带有 BOM）
+                    raw = raw.replace(/^﻿/, '');
+                    // 自动检测分隔符：微信/支付宝 CSV 常用分号，标准 CSV 用逗号
+                    let semiColonCount = (raw.match(/;/g) || []).length;
+                    let commaCount = (raw.match(/,/g) || []).length;
+                    let delimiter = semiColonCount > commaCount ? ';' : ',';
+                    billFiles.push({ id, raw, type: 'csv', delimiter, fileName: file.name });
+                } else {
+                    try {
+                        let wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+                        billFiles.push({ id, raw: wb, type: 'xlsx', fileName: file.name });
+                    } catch (e) {
+                        showToast(t('bill.fileFormatError'), 'error');
+                        return;
+                    }
+                }
+                renderBillFileList();
+                showToast(t('bill.uploaded'), 'success');
+            };
+            reader.onerror = () => showToast(t('bill.fileFormatError'), 'error');
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    area.addEventListener('click', () => input.click());
+    input.addEventListener('change', e => handleBillFiles(e.target.files));
+    // 拖拽上传（与 initUpload 保持一致的 dragover/dragleave/drop）
+    area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dragover'); });
+    area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+    area.addEventListener('drop', e => {
+        e.preventDefault();
+        area.classList.remove('dragover');
+        handleBillFiles(e.dataTransfer.files);
     });
 }
 
 // 暴露给全局
 window.identifyImages = identifyImages;
 window.reportImages = reportImages;
-window.billData = billData;
+window.billFiles = billFiles;
 window.handleFiles = handleFiles;
 window.initUpload = initUpload;
 window.ocrImagesWithTesseract = ocrImagesWithTesseract;

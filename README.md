@@ -1,7 +1,7 @@
 # 反诈智能识别与报案辅助系统 · Firefly-IV
 # Anti-Fraud Recognition & Reporting Assistant · Firefly-IV
 
-> 反诈智能识别与报案辅助系统 · Ver.4.2.0-beta ｜ Smart Anti-Fraud Assistant · Ver.4.2.0-beta
+> 反诈智能识别与报案辅助系统 · Ver.4.3.0-beta ｜ Smart Anti-Fraud Assistant · Ver.4.3.0-beta
 > 创意来自东北电力大学易班工作站-Firefly TYPE IV ｜ Concept by NEEPU YiBan Workstation - Firefly TYPE IV
 
 一款面向大学生的智能反诈辅助系统：集关键词检测、OCR 识别、AI 深度判定、刑事控告书自动生成于一体，帮助用户识别诈骗套路、整理报案材料。
@@ -19,7 +19,7 @@ An AI-powered anti-fraud assistant for students: combining keyword detection, OC
 
 - **🔍 诈骗识别** — 关键词匹配 + Tesseract OCR 本地文字提取 + DeepSeek 深度判定，支持自动脱敏（手机号 / 身份证 / 银行卡）。
 - **📝 报案填报** — 三步表单向导，自动生成《刑事控告书》，支持 PDF（宋体排版 + 证据图片）/ TXT 导出与一键复制。
-- **📊 账单导入** — 微信 / 支付宝 CSV / Excel 账单自动解析，智能计算总支出金额并一键导入报案表。
+- **📊 账单导入** — 微信 / 支付宝 / 银行 CSV / Excel 账单自动解析，支持多文件上传与合并汇总，智能计算总支出金额并一键导入报案表。
 - **💬 AI 智能助手** — DeepSeek 驱动的反诈科普与思政教育对话助手，内置 20 条权威反诈关键词知识库（释义 + 警方提示）。
 - **📋 历史记录** — 本地结构化存储，支持查看详情、一键恢复、删除。
 - **⚙️ 系统设置** — 自动保存历史、默认开启脱敏。
@@ -119,6 +119,12 @@ npx serve .
 
 ### 更新日志
 
+- **Ver.4.3.0-beta**（2026-08-23）
+  - 📊 账单导入重构：支持一次/多次上传**多个账单文件**（可增删列表、按文件名去重），自动识别**微信 / 支付宝 / 银行**等平台并合并汇总总支出，结果以文件明细 + 合计统计卡展示。
+  - 🧾 账单解析增强：动态定位表头行（兼容各平台前置元信息行）、正确处理 CSV 引号内逗号、按「金额列 + 收支列」精确判定支出，并兼容银行「借方/贷方」语义。
+  - 🌐 GBK 编码支持：自动探测 CSV 编码（UTF-8 / GBK），兼容老版本微信/支付宝导出。
+  - 🐛 修复：账单上传区无法拖拽 CSV、账单表头定位错误导致总额恒为 0、收入行被误判为支出。
+
 - **Ver.4.2.0-beta**（2026-08-22）
   - 🔒 安全加固：`/api/chat` 新增 CORS 白名单（`ALLOWED_ORIGINS`）、IP 滑动窗口速率限制、入参校验与错误脱敏，并支持服务端 `SYSTEM_PROMPT` 注入以缓解提示注入。
   - 🛡️ 隐私保护：识别与 AI 对话外发前按设置自动脱敏（手机号/身份证/银行卡），历史记录与表单草稿落盘前掩码。
@@ -158,7 +164,7 @@ npx serve .
 
 - **🔍 Fraud Detection** — Keyword matching + Tesseract OCR (on-device) + DeepSeek deep analysis, with automatic desensitization (phone number / ID card / bank card).
 - **📝 Report Filing** — A three-step form wizard that auto-generates a criminal complaint, with PDF / TXT export and one-click copy.
-- **📊 Bill Import** — Auto-parses WeChat / Alipay CSV / Excel statements and computes total spending, with one-click import into the report.
+- **📊 Bill Import** — Auto-parses WeChat / Alipay / bank CSV / Excel statements, supports multiple files with combined totals, and computes total spending with one-click import into the report.
 - **💬 AI Assistant** — A DeepSeek-powered anti-fraud education & civic-education chat assistant, backed by a built-in knowledge base of 20 authoritative anti-fraud keywords (definition + police tip).
 - **📋 History** — Local structured storage with detail view, one-click restore, and delete.
 - **⚙️ Settings** — Auto-save history and default desensitization.
@@ -258,11 +264,17 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 ### Changelog
 
+- **Ver.4.3.0-beta** (2026-08-23)
+  - 📊 Bill import rework: upload **multiple statements** at once or over time (add/remove list, dedupe by filename), auto-detect **WeChat / Alipay / bank** platforms, and merge into a combined total shown as a per-file breakdown plus summary cards.
+  - 🧾 Parsing improvements: locate the header row dynamically (handles the meta rows prepended by each platform), correctly handle quoted commas in CSV, and determine expenses precisely from the amount + direction columns, including bank "debit/credit" semantics.
+  - 🌐 GBK support: auto-detect CSV encoding (UTF-8 / GBK) for legacy WeChat/Alipay exports.
+  - 🐛 Fixes: CSV drag-and-drop into the bill area did nothing, the header was misdetected so the total was always 0, and income rows could be miscounted as expenses.
+
 - **Ver.4.2.0-beta** (2026-08-22)
   - 🔒 Security hardening: `/api/chat` now has a CORS allowlist (`ALLOWED_ORIGINS`), IP sliding-window rate limiting, input validation and error sanitization, plus server-side `SYSTEM_PROMPT` injection to mitigate prompt injection.
   - 🛡️ Privacy: outbound text in detection and AI chat is auto-desensitized (phone/ID/bank card) per settings; history records and form drafts are masked before storage.
   - 🇬🇧 English detection: added the English keyword dictionary so English mode matches fraud keywords; deduplicated Russian keywords.
-  - 🖼️ Icon system: replaced emoji icons with a unified line-style SVG icon set (`currentColor` stroke); fixed desktop nav icons hidden by CSS and moved icon injection to script load.
+  - 🖼️ Icon system: replaced emoji icons with a unified line-style SVG icon set (`currentColor` stroke); fixed desktop navigation icons being hidden by CSS, and moved icon injection earlier to script load.
   - 🎨 Visual & accessibility: theme token contrast fixes (WCAG), visible keyboard focus, iOS input focus-zoom prevention, enhanced `prefers-reduced-motion`.
   - 📱 Mobile: home hero/card rhythm, flexible step-indicator connectors, larger bottom-dock touch targets; tightened Russian dock labels and home chat copy.
   - 🐛 Fixes: duplicate OCR text, truncated system prompt in long chats, inconsistent Excel amount parsing, bank-card desensitization regex, Tesseract load race, missing ID checksum; removed the redundant html2canvas dependency.
@@ -297,7 +309,7 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 - **🔍 Распознавание мошенничества** — поиск по ключевым словам + локальное извлечение текста Tesseract OCR + глубокая оценка DeepSeek, с автоматическим обезличиванием (номер телефона / удостоверение личности / банковская карта).
 - **📝 Подача заявления** — трёхшаговый мастер форм с автоматическим составлением заявления о преступлении и экспортом в PDF (вёрстка шрифтом SimSun + изображения доказательств) / TXT, а также копированием в один клик.
-- **📊 Импорт выписки** — автоматический разбор выписок WeChat / Alipay в формате CSV / Excel, расчёт общей суммы расходов и импорт в форму заявления в один клик.
+- **📊 Импорт выписки** — автоматический разбор выписок WeChat / Alipay / банка в формате CSV / Excel, поддержка нескольких файлов с объединением итогов, расчёт общей суммы расходов и импорт в форму заявления в один клик.
 - **💬 ИИ-ассистент** — диалоговый ассистент по антимошенническому просвещению и гражданско-правовому воспитанию на базе DeepSeek, со встроенной базой из 20 авторитетных ключевых слов о мошенничестве (определение + совет полиции).
 - **📋 История** — локальное структурированное хранение с просмотром подробностей, восстановлением в один клик и удалением.
 - **⚙️ Настройки** — автосохранение истории и включённое по умолчанию обезличивание.
@@ -397,11 +409,17 @@ npx serve .
 
 ### Журнал изменений
 
+- **Ver.4.3.0-beta** (2026-08-23)
+  - 📊 Переработка импорта выписок: загрузка **нескольких выписок** одновременно или постепенно (список с добавлением/удалением, дедупликация по имени файла), автоматическое определение платформы **WeChat / Alipay / банк** и объединение в общий итог с разбивкой по файлам и итоговыми карточками.
+  - 🧾 Улучшение разбора: динамический поиск строки заголовка (учёт мета-строк в начале выписок), корректная обработка запятых внутри кавычек CSV, точное определение расходов по столбцам суммы и направления, включая семантику банковских «дебет/кредит».
+  - 🌐 Поддержка GBK: автоматическое определение кодировки CSV (UTF-8 / GBK) для старых экспортов WeChat/Alipay.
+  - 🐛 Исправления: перетаскивание CSV в область выписок не работало, неверное определение заголовка приводило к нулевой сумме, строки доходов могли ошибочно считаться расходами.
+
 - **Ver.4.2.0-beta** (2026-08-22)
   - 🔒 Усиление безопасности: `/api/chat` получил белый список CORS (`ALLOWED_ORIGINS`), скользящее окно ограничения частоты по IP, проверку ввода и экранирование ошибок, а также серверную инъекцию `SYSTEM_PROMPT` для снижения риска инъекций.
   - 🛡️ Приватность: исходящий текст в распознавании и ИИ-чате автоматически обезличивается (телефон/удостоверение/карта) согласно настройкам; история и черновики форм маскируются перед сохранением.
   - 🇬🇧 Английское распознавание: добавлен английский словарь ключевых слов, поэтому английский режим корректно находит ключевые слова; удалены дубликаты в русском словаре.
-  - 🖼️ Система иконок: emoji-иконки полностью заменены единым набором линейных SVG (`currentColor`); исправлены скрытые CSS иконки навигации, инъекция выполняется при загрузке скрипта.
+  - 🖼️ Система иконок: emoji-иконки полностью заменены единым набором линейных SVG (`currentColor`); исправлено скрытие иконок навигации на десктопе через CSS, момент внедрения иконок перенесён на этап загрузки скриптов.
   - 🎨 Визуал и доступность: исправлен контраст токенов тем (WCAG), видимый фокус клавиатуры, защита от зума при фокусе на iOS, улучшен `prefers-reduced-motion`.
   - 📱 Мобильная версия: ритм hero/карточек, гибкие соединители шагового индикатора, увеличенные зоны касания нижней панели; сокращены русские подписи панели и текст чата на главной.
   - 🐛 Исправления: дублирование OCR-текста, обрезка system-промпта в длинных диалогах, несогласованный разбор сумм Excel, регулярное выражение обезличивания банковских карт, гонка загрузки Tesseract, отсутствие контрольной цифры удостоверения; удалена избыточная зависимость html2canvas.
@@ -431,4 +449,4 @@ npx serve .
 
 ---
 
-© 2026 Xin Firefly-IV. Licensed under Apache-2.0. · Ver.4.2.0-beta
+© 2026 Xin Firefly-IV. Licensed under Apache-2.0. · Ver.4.3.0-beta

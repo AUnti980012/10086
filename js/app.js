@@ -680,78 +680,137 @@ function clearIdentify() {
     updateEvidenceTextBox();
 }
 
+// ===== 账单解析辅助 =====
+// 判断一行（单元格数组）是否为账单表头行：需同时命中「交易标识」与「金额」两类关键词，
+// 避免把微信/支付宝账单前面的标题、账号、日期、收入/支出汇总等元信息行误判为表头
+function isBillHeaderCells(cells) {
+    const v = c => String(c == null ? '' : c).trim().toLowerCase();
+    const hasTx = cells.some(c => ['交易号', '交易时间', '交易创建时间', '商家订单号', '交易对方', '收/支', '收支', '交易类型', '交易流水号', '资金流向', 'transaction', 'counterparty'].some(k => v(c).includes(k)));
+    const hasAmt = cells.some(c => ['金额', '发生额', '交易金额', 'amount'].some(k => v(c).includes(k)));
+    return hasTx && hasAmt;
+}
+
+// 金额列识别：命中返回列索引，否则 -1
+function findAmountColumn(cells) {
+    const v = c => String(c == null ? '' : c).trim().toLowerCase();
+    for (let i = 0; i < cells.length; i++) {
+        const col = v(cells[i]);
+        if (col.includes('金额') || col.includes('发生额') || col.includes('交易金额') || col.includes('amount') || col.includes('支出') || col.includes('借方') || col.includes('消费')) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// 收支/类型列识别：优先「收/支」「收支」「借贷」这类直接表明资金方向的列，否则退化为「交易类型」「资金流向」
+function findTypeColumn(cells) {
+    for (let i = 0; i < cells.length; i++) {
+        const col = String(cells[i] == null ? '' : cells[i]).trim();
+        if (col.includes('收/支') || col.includes('收支') || col.includes('借贷')) return i;
+    }
+    for (let i = 0; i < cells.length; i++) {
+        const col = String(cells[i] == null ? '' : cells[i]).trim();
+        if (col.includes('交易类型') || col.includes('资金流向') || col.includes('资金方向')) return i;
+    }
+    return -1;
+}
+
+// ===== 账单解析辅助（多文件） =====
+// 识别账单来源平台（用于展示标签）
+function detectPlatform(text) {
+    const t = String(text || '');
+    if (/微信|wechat/i.test(t)) return 'wechat';
+    if (/支付宝|alipay/i.test(t)) return 'alipay';
+    if (/银行|bank|借方|贷方|交易流水/i.test(t)) return 'bank';
+    return 'other';
+}
+
+// 已解析的汇总总支出（供 billToReport 读取）
+let billParsedTotal = null;
+
+// 解析单个账单文件：行数组 → 表头定位 → 支出统计，返回 { count, total, platform }
+function parseBillFile(file) {
+    let rows;
+    if (file.type === 'csv') {
+        let wb = XLSX.read(file.raw, { type: 'string', FS: file.delimiter || ',' });
+        rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false });
+    } else {
+        let wb = file.raw,
+            ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false });
+    }
+    // 动态定位表头行：微信/支付宝/银行账单前面有标题/账号/日期等元信息行
+    let headerIdx = 0;
+    for (let i = 0; i < Math.min(rows.length, 50); i++) {
+        if (isBillHeaderCells(rows[i])) { headerIdx = i; break; }
+    }
+    let header = rows[headerIdx];
+    let amountIdx = findAmountColumn(header);
+    let typeIdx = findTypeColumn(header);
+    let total = 0, count = 0;
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+        let row = rows[i];
+        let amt = 0;
+        if (amountIdx >= 0 && row[amountIdx] != null && row[amountIdx] !== '') {
+            amt = parseFloat(String(row[amountIdx]).replace(/[^0-9.-]/g, '')) || 0;
+        }
+        // 支出判定：负金额，或方向列含「支出/借方/借/debit」
+        let isExpense = amt < 0 || (typeIdx >= 0 && row[typeIdx] != null && /支出|借方|借|debit/i.test(String(row[typeIdx])));
+        if (isExpense) {
+            total += Math.abs(amt);
+            count++;
+        }
+    }
+    let text = file.type === 'csv' ? file.raw : rows.flat().join(' ');
+    return { count, total, platform: detectPlatform(text) };
+}
+
 // ===== 账单解析 =====
 function parseBill() {
     if (typeof XLSX === 'undefined') { showToast(t('bill.xlsxNotLoaded'), 'error'); return; }
-    if (!billData) { showToast(t('bill.uploadFirst'), 'warning'); return; }
+    if (!billFiles.length) { showToast(t('bill.uploadFirst'), 'warning'); return; }
     let billRes = document.getElementById('billResult');
     billRes.innerHTML = '<div class="loading-tip"><span class="loading-spin"></span>' + t('bill.parsing') + '</div>';
     billRes.classList.add('show');
     setTimeout(() => {
-        try {
-            let total = 0, records = [];
-            if (billData.type === 'csv') {
-                let lines = billData.raw.split(/\r?\n/);
-                let delim = billData.delimiter || ',';
-                // 解析表头，找到金额列的索引
-                let headerParts = lines[0].split(delim);
-                let amountIdx = -1;
-                for (let h = 0; h < headerParts.length; h++) {
-                    let col = headerParts[h].trim().toLowerCase();
-                    if (col.includes('金额') || col.includes('amount') || col.includes('支出') || col.includes('借方') || col.includes('消费')) {
-                        amountIdx = h;
-                        break;
-                    }
-                }
-                lines.forEach((l, idx) => {
-                    if (idx === 0) return; // 跳过表头
-                    let parts = l.split(delim);
-                    if (amountIdx >= 0 && parts[amountIdx]) {
-                        let num = parseFloat(parts[amountIdx].trim().replace(/[^0-9.-]/g, ''));
-                        if (!isNaN(num) && num !== 0) {
-                            // 判断是否为支出：负数金额，或包含"支出"/"付款"标记
-                            let isExpense = num < 0 || l.includes('支出') || l.includes('付款');
-                            if (isExpense) {
-                                total += Math.abs(num);
-                                records.push(Math.abs(num));
-                            }
-                        }
-                    }
-                });
-            } else {
-                let wb = billData.raw,
-                    ws = wb.Sheets[wb.SheetNames[0]],
-                    data = XLSX.utils.sheet_to_json(ws);
-                data.forEach(row => {
-                    // 模糊匹配金额列：遍历所有键，找包含"金额"/"amount"的列
-                    let amt = 0;
-                    let amtCol = Object.keys(row).find(k =>
-                        k.toLowerCase().includes('金额') ||
-                        k.toLowerCase().includes('amount') ||
-                        k.toLowerCase().includes('发生额') ||
-                        k.toLowerCase().includes('交易金额')
-                    );
-                    if (amtCol !== undefined) {
-                        amt = parseFloat(String(row[amtCol]).replace(/[^0-9.-]/g, '')) || 0;
-                    }
-                    const isExpense = amt < 0 || ['收/支', '收支类型', '交易类型', '资金流向'].some(c => row[c] != null && String(row[c]).includes('支出'));
-                    if (isExpense) {
-                        total += Math.abs(amt);
-                        records.push(Math.abs(amt));
-                    }
-                });
+        let results = [];
+        let totalOut = 0, totalCount = 0;
+        billFiles.forEach(file => {
+            try {
+                let r = parseBillFile(file);
+                results.push({ fileName: file.fileName, platform: r.platform, count: r.count, total: r.total });
+                totalOut += r.total;
+                totalCount += r.count;
+            } catch (e) {
+                results.push({ fileName: file.fileName, platform: 'other', failed: true });
             }
-            billRes.textContent = t('bill.parseDone', { count: records.length, total: total.toFixed(2) });
-            billData.parsed = { totalOut: total };
-        } catch (e) {
-            billRes.textContent = t('bill.parseFailed');
-        }
+        });
+        billParsedTotal = totalOut;
+        // 渲染：文件明细列表 + 底部合计统计卡
+        let rowsHtml = results.map(r =>
+            '<div class="bill-file-row">' +
+                ICONS.doc +
+                '<span class="bill-file-row-name">' + escapeHtml(r.fileName) + '</span>' +
+                '<span class="bill-file-row-tag">' + t('bill.platform.' + r.platform) + '</span>' +
+                (r.failed
+                    ? '<span class="bill-file-row-amt bill-file-row-failed">' + t('bill.parseFailed') + '</span>'
+                    : '<span class="bill-file-row-amt">¥' + r.total.toFixed(2) + '</span>') +
+            '</div>'
+        ).join('');
+        billRes.innerHTML =
+            '<div class="bill-summary">' +
+                '<div class="bill-files">' + rowsHtml + '</div>' +
+                '<div class="bill-stats">' +
+                    '<div class="bill-stat"><div class="bill-stat-label">' + t('bill.expenseCount') + '</div><div class="bill-stat-value">' + totalCount + '</div></div>' +
+                    '<div class="bill-stat"><div class="bill-stat-label">' + t('bill.expenseTotal') + '</div><div class="bill-stat-value">¥' + totalOut.toFixed(2) + '</div></div>' +
+                '</div>' +
+            '</div>';
     }, 1000);
 }
 
 function billToReport() {
-    if (billData?.parsed) {
-        document.getElementById('fraudMoney').value = billData.parsed.totalOut;
+    if (billParsedTotal != null) {
+        document.getElementById('fraudMoney').value = billParsedTotal;
         switchPage('reportPage');
     } else {
         showToast(t('bill.parseFirst'), 'warning');
@@ -1577,17 +1636,6 @@ function initTheme() {
     document.querySelectorAll('#themeSegmented .seg-btn').forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.value)));
 }
 
-// ===== 注入统一 SVG 图标（替换 emoji 图标）=====
-// 独立函数：在 onload 前即调用一次，静态 [data-icon] 元素不受外部资源（CDN）加载阻塞；
-// onload 内再调用一次作为兜底，覆盖动态插入的 [data-icon]。
-function injectIcons() {
-    document.querySelectorAll('[data-icon]').forEach(el => {
-        const icon = ICONS[el.getAttribute('data-icon')];
-        if (icon) el.innerHTML = icon;
-    });
-}
-injectIcons();
-
 // ===== 初始化 =====
 window.onload = function() {
     // 主题初始化（同步，最快执行）
@@ -1736,8 +1784,11 @@ window.onload = function() {
     // ===== 图片灯箱：点击缩略图放大查看 =====
     initImageLightbox();
 
-    // 注入统一 SVG 图标（onload 兜底，覆盖动态插入的 [data-icon]）
-    injectIcons();
+    // 注入统一 SVG 图标（替换 emoji 图标）
+    document.querySelectorAll('[data-icon]').forEach(el => {
+        const icon = ICONS[el.getAttribute('data-icon')];
+        if (icon) el.innerHTML = icon;
+    });
 };
 
 // ===== 磁吸+3D卡片+按钮光照效果 =====

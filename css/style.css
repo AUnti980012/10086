@@ -215,7 +215,7 @@ body {
     transition: color 0.2s var(--ease-out-expo), background 0.2s var(--ease-out-expo), transform 0.2s var(--spring-bounce);
     position: relative;
 }
-.nav-icon { font-size: 15px; display: inline-flex; align-items: center; }
+.nav-icon { font-size: 15px; display: none; }
 .nav-btn:hover { color: var(--text-secondary); background: var(--bg-elevated); transform: translateY(-1px); }
 .nav-btn:active { transform: scale(0.96); }
 
@@ -672,6 +672,51 @@ body {
 .upload-area:hover { border-color: var(--primary); background: var(--primary-subtle); transform: translateY(-3px); box-shadow: var(--shadow-md); }
 .upload-area.dragover { border-color: var(--primary); background: var(--primary-glow); box-shadow: var(--shadow-focus); transform: scale(1.02); }
 .upload-area input { display: none; }
+
+/* ===== 账单文件列表（上传后显示，可删除） ===== */
+.bill-file-list {
+    display: flex; flex-direction: column; gap: 8px; margin-top: 8px;
+}
+.bill-file-list[hidden] { display: none; }
+.bill-file-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 8px; padding: 8px 10px; font-size: 13px;
+    color: var(--text-primary); text-align: left;
+}
+.bill-file-chip svg { width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; }
+.bill-file-chip-name { flex: 1; word-break: break-all; }
+.bill-file-chip-del {
+    flex-shrink: 0; width: 20px; height: 20px; border: none;
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    border-radius: 50%; cursor: pointer; font-size: 14px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+}
+.bill-file-chip-del:hover { background: var(--danger); color: #FFF; }
+
+/* ===== 账单解析结果：文件明细 + 统计卡 ===== */
+.bill-summary { display: flex; flex-direction: column; gap: 12px; }
+.bill-files { display: flex; flex-direction: column; gap: 6px; }
+.bill-file-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-bottom: 1px dashed var(--border-subtle);
+    font-size: 13px;
+}
+.bill-file-row svg { width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; }
+.bill-file-row-name { flex: 1; color: var(--text-secondary); word-break: break-all; }
+.bill-file-row-tag {
+    flex-shrink: 0; font-size: 11px; color: var(--primary);
+    background: var(--primary-subtle); border-radius: 999px; padding: 2px 8px;
+}
+.bill-file-row-amt { flex-shrink: 0; font-weight: 700; color: var(--text-primary); }
+.bill-file-row-failed { color: var(--danger); font-weight: 400; }
+.bill-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.bill-stat {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 12px 10px; text-align: center;
+}
+.bill-stat-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
+.bill-stat-value { font-size: 22px; font-weight: 700; color: var(--primary); }
 
 /* ===== 预览缩略图 ===== */
 .preview { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }

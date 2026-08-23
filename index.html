@@ -144,7 +144,7 @@
             <div class="page-content">
                 <div class="page-title" data-i18n="bill.title">账单导入</div>
                 <div class="notice" data-i18n="bill.notice">支持微信/支付宝官方导出的CSV/Excel格式账单，自动识别支出记录，计算总支出金额</div>
-                <div class="upload-area" id="billUpload"><span data-i18n="bill.upload">点击或拖拽上传账单文件</span><input type="file" id="billFile" accept=".csv,.xlsx,.xls"></div>
+                <div class="upload-area" id="billUpload"><span data-i18n="bill.upload">点击或拖拽上传账单文件</span><div class="bill-file-list" id="billFileList" hidden></div><input type="file" id="billFile" accept=".csv,.xlsx,.xls" multiple></div>
                 <div id="billResult" class="result-box"></div>
                 <div class="btn-group"><button class="btn btn-primary" id="parseBillBtn" data-i18n="bill.parse">解析账单</button><button class="btn btn-success" id="billToReportBtn" data-i18n="bill.importToReport">导入报案表</button></div>
             </div>
