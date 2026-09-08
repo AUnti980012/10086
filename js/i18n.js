@@ -69,6 +69,7 @@
         ['ai.expert', '反诈专家', 'Anti-fraud expert'],
         ['ai.analyzeFraud', '分析诈骗风险：', 'Analyze the fraud risk: '],
         ['ai.analysisDone', '分析完成', 'Analysis complete'],
+        ['ai.flowGuide', '【重要：每次回答都要温和引导用户走完整报案流程】请按以下步骤引导：\n1. 情绪价值：先表达理解与共情，安抚用户情绪，肯定其及时求助的做法；\n2. 引导识别：引导用户把相关聊天记录、短信等文本粘贴，或将截图上传到本系统「诈骗识别」页面，点击「开始识别」或「DeepSeek 深度判定」；\n3. 若识别为诈骗：引导用户点击「诈骗识别」页面下方的「一键填到报案表」按钮，把识别结果填入报案表；\n4. 说明原因：填写《刑事控告书》能让公安机关相关人员快速理解案情、快速立案，材料越完整越有利；\n5. 引导填写：引导用户按「报案填报」页三步向导如实填写控告人信息、被控告人信息、被骗事实与证据。\n全程语气温和、专业，不恐吓、不施压。', '【Important: gently guide the user through the full reporting flow in every reply】Follow these steps:\n1. Emotional support: first express understanding and empathy, soothe the user, and affirm their timely decision to seek help;\n2. Guide to detection: guide the user to paste chat records or SMS text, or upload screenshots to the "Fraud Detection" page, then click "Start Detection" or "DeepSeek Deep Analysis";\n3. If fraud is detected: guide the user to click the "Fill into Report" button at the bottom of the Fraud Detection page to fill the result into the report form;\n4. Explain why: completing the Criminal Complaint helps law-enforcement personnel quickly understand the case and file it promptly — the more complete the materials, the better;\n5. Guide the form: guide the user to truthfully fill in the complainant information, accused information, and facts & evidence via the three-step wizard on the Report Filing page.\nAlways keep a warm, professional tone; do not frighten or pressure.'],
 
         // ---- 诈骗识别页 ----
         ['identify.title', '诈骗识别', 'Fraud Detection'],
@@ -94,6 +95,10 @@
         ['bill.upload', '点击或拖拽上传账单文件', 'Click or drag to upload a statement file'],
         ['bill.parse', '解析账单', 'Parse Statement'],
         ['bill.importToReport', '导入报案表', 'Import into Report'],
+        ['bill.guide.title', '如何导出账单（微信 / 支付宝 / 手机银行）', 'How to export statements (WeChat / Alipay / mobile banking)'],
+        ['bill.guide.wechat', '微信：我 → 服务 → 钱包 → 账单 → 右上角「···」→ 账单下载 → 用于个人对账 → 选择时间范围 → 填写接收邮箱，邮件附件含 Excel(.xlsx) 或 CSV。', 'WeChat: Me → Services → Wallet → Bills → "···" (top-right) → Download bills → For personal reconciliation → select a date range → enter the receiving email; the attachment contains Excel (.xlsx) or CSV.'],
+        ['bill.guide.alipay', '支付宝：我的 → 账单 → 右上角「···」→ 开具交易流水证明（或「下载账单」）→ 选择时间范围 → 填写邮箱，附件为 Excel/CSV。', 'Alipay: Me → Bills → "···" (top-right) → Issue transaction statement (or "Download bills") → select a date range → enter the email; the attachment is Excel/CSV.'],
+        ['bill.guide.bank', '手机银行：登录银行 App → 账户 → 交易明细/流水 → 筛选时间范围 → 导出/下载 → 选择 Excel(.xlsx) 格式。', 'Mobile banking: sign in to the banking app → Account → Transaction details / statements → filter the date range → Export/Download → choose the Excel (.xlsx) format.'],
 
         // ---- 报案填报页 ----
         ['report.title', '报案填报 · 刑事控告书', 'Report Filing · Criminal Complaint'],
@@ -401,6 +406,7 @@
         'ai.expert': 'Эксперт по борьбе с мошенничеством',
         'ai.analyzeFraud': 'Проанализируйте риск мошенничества: ',
         'ai.analysisDone': 'Анализ завершён',
+        'ai.flowGuide': '【Важно: в каждом ответе мягко направляйте пользователя по полному процессу подачи заявления】Направляйте пользователя по следующим шагам:\n1. Эмоциональная поддержка: сначала выразите понимание и сочувствие, успокойте пользователя и похвалите его за своевременное обращение за помощью;\n2. Направьте к распознаванию: предложите вставить текст переписки или SMS, либо загрузить скриншоты на страницу «Распознавание мошенничества» и нажать «Начать распознавание» или «Глубокая оценка DeepSeek»;\n3. Если выявлено мошенничество: предложите нажать кнопку «Заполнить форму заявления одним кликом» внизу страницы распознавания, чтобы перенести результат в форму заявления;\n4. Объясните причину: заполнение «Заявления о преступлении» помогает сотрудникам органов быстро понять дело и оперативно возбудить его — чем полнее материалы, тем лучше;\n5. Направьте к заполнению: предложите честно заполнить сведения о заявителе, об обвиняемом, а также факты и доказательства по трёхшаговому мастеру на странице подачи заявления.\nСохраняйте тёплый, профессиональный тон; не пугайте и не давите.',
 
         // ---- 诈骗识别页 ----
         'identify.title': 'Распознавание мошенничества',
@@ -426,6 +432,10 @@
         'bill.upload': 'Нажмите или перетащите файл выписки для загрузки',
         'bill.parse': 'Разобрать выписку',
         'bill.importToReport': 'Импортировать в форму заявления',
+        'bill.guide.title': 'Как экспортировать выписку (WeChat / Alipay / мобильный банк)',
+        'bill.guide.wechat': 'WeChat: Я → Сервисы → Кошелёк → Счета → «···» (справа сверху) → Скачать выписку → Для личной сверки → выберите период → укажите email; во вложении Excel (.xlsx) или CSV.',
+        'bill.guide.alipay': 'Alipay: Мой → Счета → «···» (справа сверху) → Выдать справку о движении средств (или «Скачать выписку») → выберите период → укажите email; во вложении Excel/CSV.',
+        'bill.guide.bank': 'Мобильный банк: войдите в банковское приложение → Счёт → Детали операций / Выписка → выберите период → Экспорт/Скачать → выберите формат Excel (.xlsx).',
 
         // ---- 报案填报页 ----
         'report.title': 'Подача заявления · Заявление о преступлении',

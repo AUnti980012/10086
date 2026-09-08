@@ -1,7 +1,7 @@
 # 反诈智能识别与报案辅助系统 · Firefly-IV
 # Anti-Fraud Recognition & Reporting Assistant · Firefly-IV
 
-> 反诈智能识别与报案辅助系统 · Ver.4.3.0-beta ｜ Smart Anti-Fraud Assistant · Ver.4.3.0-beta
+> 反诈智能识别与报案辅助系统 · Ver.4.4.0-beta ｜ Smart Anti-Fraud Assistant · Ver.4.4.0-beta
 > 创意来自东北电力大学易班工作站-Firefly TYPE IV ｜ Concept by NEEPU YiBan Workstation - Firefly TYPE IV
 
 一款面向大学生的智能反诈辅助系统：集关键词检测、OCR 识别、AI 深度判定、刑事控告书自动生成于一体，帮助用户识别诈骗套路、整理报案材料。
@@ -19,8 +19,8 @@ An AI-powered anti-fraud assistant for students: combining keyword detection, OC
 
 - **🔍 诈骗识别** — 关键词匹配 + Tesseract OCR 本地文字提取 + DeepSeek 深度判定，支持自动脱敏（手机号 / 身份证 / 银行卡）。
 - **📝 报案填报** — 三步表单向导，自动生成《刑事控告书》，支持 PDF（宋体排版 + 证据图片）/ TXT 导出与一键复制。
-- **📊 账单导入** — 微信 / 支付宝 / 银行 CSV / Excel 账单自动解析，支持多文件上传与合并汇总，智能计算总支出金额并一键导入报案表。
-- **💬 AI 智能助手** — DeepSeek 驱动的反诈科普与思政教育对话助手，内置 20 条权威反诈关键词知识库（释义 + 警方提示）。
+- **📊 账单导入** — 微信 / 支付宝 / 银行 CSV / Excel 账单自动解析，支持多文件上传与合并汇总，内置微信 / 支付宝 / 手机银行导出账单教程，智能计算总支出金额并一键导入报案表。
+- **💬 AI 智能助手** — DeepSeek 驱动的反诈科普与思政教育对话助手，内置 20 条权威反诈关键词知识库（释义 + 警方提示），并在每次回答中引导用户走「情绪安抚 → 诈骗识别 → 一键填报 → 控告书」完整报案流程。
 - **📋 历史记录** — 本地结构化存储，支持查看详情、一键恢复、删除。
 - **⚙️ 系统设置** — 自动保存历史、默认开启脱敏。
 - **🌙 明暗主题** — 跟随系统 / 手动切换，带过渡动画。
@@ -119,6 +119,12 @@ npx serve .
 
 ### 更新日志
 
+- **Ver.4.4.0-beta**（2026-09-08）
+  - 💬 AI 智能助手：每次回答引导用户走「情绪安抚 → 诈骗识别 → 一键填报 → 控告书」完整报案流程，DeepSeek 深度识别同步注入该引导。
+  - 📊 账单导入：新增微信 / 支付宝 / 手机银行导出账单的折叠教程。
+  - 📋 历史记录：修复恢复内容为掩码文本无法直接使用的问题，本地历史与表单草稿改为明文存取，恢复后可直接编辑复用。
+  - ⚡ 性能优化：jsPDF / XLSX 改为按需加载 + 空闲后台预取，初始化提前到 DOMContentLoaded，首屏加载更快。
+
 - **Ver.4.3.0-beta**（2026-08-23）
   - 📊 账单导入重构：支持一次/多次上传**多个账单文件**（可增删列表、按文件名去重），自动识别**微信 / 支付宝 / 银行**等平台并合并汇总总支出，结果以文件明细 + 合计统计卡展示。
   - 🧾 账单解析增强：动态定位表头行（兼容各平台前置元信息行）、正确处理 CSV 引号内逗号、按「金额列 + 收支列」精确判定支出，并兼容银行「借方/贷方」语义。
@@ -164,8 +170,8 @@ npx serve .
 
 - **🔍 Fraud Detection** — Keyword matching + Tesseract OCR (on-device) + DeepSeek deep analysis, with automatic desensitization (phone number / ID card / bank card).
 - **📝 Report Filing** — A three-step form wizard that auto-generates a criminal complaint, with PDF / TXT export and one-click copy.
-- **📊 Bill Import** — Auto-parses WeChat / Alipay / bank CSV / Excel statements, supports multiple files with combined totals, and computes total spending with one-click import into the report.
-- **💬 AI Assistant** — A DeepSeek-powered anti-fraud education & civic-education chat assistant, backed by a built-in knowledge base of 20 authoritative anti-fraud keywords (definition + police tip).
+- **📊 Bill Import** — Auto-parses WeChat / Alipay / bank CSV / Excel statements, supports multiple files with combined totals, includes a built-in export tutorial for WeChat / Alipay / mobile banking, and computes total spending with one-click import into the report.
+- **💬 AI Assistant** — A DeepSeek-powered anti-fraud education & civic-education chat assistant, backed by a built-in knowledge base of 20 authoritative anti-fraud keywords (definition + police tip), that guides the user through the full "emotional support → fraud detection → one-click report → criminal complaint" flow in every reply.
 - **📋 History** — Local structured storage with detail view, one-click restore, and delete.
 - **⚙️ Settings** — Auto-save history and default desensitization.
 - **🌙 Light / Dark Theme** — System-following or manual toggle with transition animation.
@@ -264,6 +270,12 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 ### Changelog
 
+- **Ver.4.4.0-beta** (2026-09-08)
+  - 💬 AI Assistant: every reply now guides the user through the full "emotional support → fraud detection → one-click report → criminal complaint" flow; DeepSeek deep analysis injects the same guidance.
+  - 📊 Bill Import: added a collapsible tutorial for exporting statements from WeChat / Alipay / mobile banking.
+  - 📋 History: fixed restored content returning masked text that was unusable; local history and form drafts now store plaintext so restored data can be edited and reused directly.
+  - ⚡ Performance: jsPDF / XLSX now load on demand with idle background prefetch, and initialization moved to DOMContentLoaded for a faster first paint.
+
 - **Ver.4.3.0-beta** (2026-08-23)
   - 📊 Bill import rework: upload **multiple statements** at once or over time (add/remove list, dedupe by filename), auto-detect **WeChat / Alipay / bank** platforms, and merge into a combined total shown as a per-file breakdown plus summary cards.
   - 🧾 Parsing improvements: locate the header row dynamically (handles the meta rows prepended by each platform), correctly handle quoted commas in CSV, and determine expenses precisely from the amount + direction columns, including bank "debit/credit" semantics.
@@ -309,8 +321,8 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 - **🔍 Распознавание мошенничества** — поиск по ключевым словам + локальное извлечение текста Tesseract OCR + глубокая оценка DeepSeek, с автоматическим обезличиванием (номер телефона / удостоверение личности / банковская карта).
 - **📝 Подача заявления** — трёхшаговый мастер форм с автоматическим составлением заявления о преступлении и экспортом в PDF (вёрстка шрифтом SimSun + изображения доказательств) / TXT, а также копированием в один клик.
-- **📊 Импорт выписки** — автоматический разбор выписок WeChat / Alipay / банка в формате CSV / Excel, поддержка нескольких файлов с объединением итогов, расчёт общей суммы расходов и импорт в форму заявления в один клик.
-- **💬 ИИ-ассистент** — диалоговый ассистент по антимошенническому просвещению и гражданско-правовому воспитанию на базе DeepSeek, со встроенной базой из 20 авторитетных ключевых слов о мошенничестве (определение + совет полиции).
+- **📊 Импорт выписки** — автоматический разбор выписок WeChat / Alipay / банка в формате CSV / Excel, поддержка нескольких файлов с объединением итогов, встроенная инструкция по экспорту выписки из WeChat / Alipay / мобильного банка, расчёт общей суммы расходов и импорт в форму заявления в один клик.
+- **💬 ИИ-ассистент** — диалоговый ассистент по антимошенническому просвещению и гражданско-правовому воспитанию на базе DeepSeek, со встроенной базой из 20 авторитетных ключевых слов о мошенничестве (определение + совет полиции); в каждом ответе направляет пользователя по полному процессу «эмоциональная поддержка → распознавание мошенничества → заполнение в один клик → заявление о преступлении».
 - **📋 История** — локальное структурированное хранение с просмотром подробностей, восстановлением в один клик и удалением.
 - **⚙️ Настройки** — автосохранение истории и включённое по умолчанию обезличивание.
 - **🌙 Светлая / тёмная тема** — следование за системой или ручное переключение с анимацией перехода.
@@ -409,6 +421,12 @@ npx serve .
 
 ### Журнал изменений
 
+- **Ver.4.4.0-beta** (2026-09-08)
+  - 💬 ИИ-ассистент: в каждом ответе направляет пользователя по полному процессу «эмоциональная поддержка → распознавание мошенничества → заполнение в один клик → заявление о преступлении»; глубокая оценка DeepSeek внедряет то же руководство.
+  - 📊 Импорт выписки: добавлена сворачиваемая инструкция по экспорту выписки из WeChat / Alipay / мобильного банка.
+  - 📋 История: исправлено восстановление содержимого в виде маскированного текста, непригодного для использования; локальная история и черновики форм теперь хранятся открытым текстом, чтобы восстановленные данные можно было сразу редактировать и использовать повторно.
+  - ⚡ Производительность: jsPDF / XLSX загружаются по требованию с фоновой предвыборкой в простое, инициализация перенесена на DOMContentLoaded — первая отрисовка быстрее.
+
 - **Ver.4.3.0-beta** (2026-08-23)
   - 📊 Переработка импорта выписок: загрузка **нескольких выписок** одновременно или постепенно (список с добавлением/удалением, дедупликация по имени файла), автоматическое определение платформы **WeChat / Alipay / банк** и объединение в общий итог с разбивкой по файлам и итоговыми карточками.
   - 🧾 Улучшение разбора: динамический поиск строки заголовка (учёт мета-строк в начале выписок), корректная обработка запятых внутри кавычек CSV, точное определение расходов по столбцам суммы и направления, включая семантику банковских «дебет/кредит».
@@ -449,4 +467,4 @@ npx serve .
 
 ---
 
-© 2026 Xin Firefly-IV. Licensed under Apache-2.0. · Ver.4.3.0-beta
+© 2026 Xin Firefly-IV. Licensed under Apache-2.0. · Ver.4.4.0-beta

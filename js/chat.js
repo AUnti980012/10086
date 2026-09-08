@@ -19,6 +19,8 @@ function buildSystemPrompt() {
                     : { keyword: k.keyword, desc: k.desc, tip: k.tip }
             )).join('\n');
     }
+    // 追加「情绪价值 → 识别 → 一键填报 → 控告书」全流程引导
+    base += "\n\n" + t('ai.flowGuide');
     return base;
 }
 

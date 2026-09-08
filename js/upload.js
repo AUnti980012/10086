@@ -270,7 +270,7 @@ function initBillUpload() {
             }
             let ext = file.name.split('.').pop().toLowerCase();
             let reader = new FileReader();
-            reader.onload = ev => {
+            reader.onload = async ev => {
                 let id = 'bill_' + (++billFileSeq);
                 if (ext === 'csv') {
                     let buf = ev.target.result; // ArrayBuffer
@@ -290,6 +290,7 @@ function initBillUpload() {
                     billFiles.push({ id, raw, type: 'csv', delimiter, fileName: file.name });
                 } else {
                     try {
+                        if (window.ensureXlsx) await window.ensureXlsx();
                         let wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
                         billFiles.push({ id, raw: wb, type: 'xlsx', fileName: file.name });
                     } catch (e) {

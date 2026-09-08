@@ -480,6 +480,14 @@ function loadKeywordsAsync() {
     });
 }
 
+// ===== 按需加载 jsPDF / XLSX（共享 Promise，防重复加载，避免首屏阻塞） =====
+function ensureJspdf() {
+    return loadScriptOnce('https://lib.baomitu.com/jspdf/2.5.1/jspdf.umd.min.js', () => typeof window.jspdf !== 'undefined').catch(() => {});
+}
+function ensureXlsx() {
+    return loadScriptOnce('https://lib.baomitu.com/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined').catch(() => {});
+}
+
 // ===== 诈骗识别 =====
 async function detectFraud() {
     let txt = document.getElementById('fraudText').value.trim();
@@ -634,7 +642,7 @@ async function deepDetect() {
         let resp = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [{ role: "system", content: t('ai.expert') }, { role: "user", content: t('ai.analyzeFraud') + safeTxt }] })
+            body: JSON.stringify({ messages: [{ role: "system", content: t('ai.expert') + '\n\n' + t('ai.flowGuide') }, { role: "user", content: t('ai.analyzeFraud') + safeTxt }] })
         });
         if (!resp.ok) {
             let errText;
@@ -766,7 +774,8 @@ function parseBillFile(file) {
 }
 
 // ===== 账单解析 =====
-function parseBill() {
+async function parseBill() {
+    await ensureXlsx();
     if (typeof XLSX === 'undefined') { showToast(t('bill.xlsxNotLoaded'), 'error'); return; }
     if (!billFiles.length) { showToast(t('bill.uploadFirst'), 'warning'); return; }
     let billRes = document.getElementById('billResult');
@@ -1000,6 +1009,7 @@ async function exportPdf() {
         return;
     }
     try {
+        await ensureJspdf();
         if (typeof window.jspdf === 'undefined') { showToast(t('report.jspdfNotLoaded'), 'error'); return; }
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -1107,16 +1117,6 @@ async function exportPdf() {
     }
 }
 
-// ===== 落盘前对敏感字段脱敏（避免 PII 明文写入 localStorage） =====
-function maskPiiForStorage(obj) {
-    if (!obj || typeof obj !== 'object') return obj;
-    const masked = { ...obj };
-    ['idNo', 'phone', 'accusedPhone', 'accusedWechat', 'accusedAlipay', 'accusedBankCard'].forEach(k => {
-        if (typeof masked[k] === 'string' && masked[k]) masked[k] = desensitizeText(masked[k]);
-    });
-    return masked;
-}
-
 // ===== 历史记录（结构化存储 + 可点击恢复） =====
 function addHistory(type, data) {
     // data 现在可以是结构化对象（报案数据、检测结果等）
@@ -1146,7 +1146,7 @@ function addHistory(type, data) {
         icon = ICONS.doc;
     }
 
-    const storedData = type === 'report' ? maskPiiForStorage(data) : data;
+    const storedData = data;
     let record = {
         id: Date.now(),
         time: new Date().toLocaleString(),
@@ -1401,10 +1401,6 @@ function saveFormDraft() {
         globalUserInputText: globalUserInputText,
         savedAt: Date.now()
     };
-    // 落盘前对敏感字段脱敏
-    ['idNo', 'phone', 'accusedPhone', 'accusedWechat', 'accusedAlipay', 'accusedBankCard'].forEach(k => {
-        if (typeof draft[k] === 'string' && draft[k]) draft[k] = desensitizeText(draft[k]);
-    });
     try { localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(draft)); } catch(e) {}
 }
 
@@ -1500,6 +1496,10 @@ function switchPage(pageId) {
     // 切换到诈骗识别页时预加载Tesseract（静默加载，不阻塞）
     if (pageId === 'identifyPage') {
         loadTesseract();
+    }
+    // 切换到账单导入页时预加载 XLSX（静默加载，不阻塞）
+    if (pageId === 'billPage') {
+        ensureXlsx();
     }
 }
 
@@ -1637,7 +1637,7 @@ function initTheme() {
 }
 
 // ===== 初始化 =====
-window.onload = function() {
+document.addEventListener('DOMContentLoaded', function() {
     // 主题初始化（同步，最快执行）
     initTheme();
 
@@ -1789,7 +1789,33 @@ window.onload = function() {
         const icon = ICONS[el.getAttribute('data-icon')];
         if (icon) el.innerHTML = icon;
     });
-};
+
+    // 首屏空闲后台预取（预热关键词字典、OCR 库、jsPDF/XLSX）
+    scheduleIdlePrefetch();
+});
+
+// ===== 首屏空闲后台预取（不阻塞首屏，预热懒加载资源） =====
+function scheduleIdlePrefetch() {
+    const run = () => {
+        // 关键词字典：小体积，直接执行加载
+        if (typeof loadKeywordsAsync === 'function') loadKeywordsAsync();
+        // 预热 CDN 库与 OCR 脚本的 HTTP 缓存（仅 prefetch，不执行、无 alert 风险）
+        ['https://lib.baomitu.com/jspdf/2.5.1/jspdf.umd.min.js',
+         'https://lib.baomitu.com/xlsx/0.18.5/xlsx.full.min.js',
+         'https://lib.baomitu.com/tesseract.js/5.0.5/tesseract.min.js'].forEach(url => {
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = url;
+            link.as = 'script';
+            document.head.appendChild(link);
+        });
+    };
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(run, { timeout: 3000 });
+    } else {
+        setTimeout(run, 3000);
+    }
+}
 
 // ===== 磁吸+3D卡片+按钮光照效果 =====
 function initMagneticEffects() {
@@ -1832,6 +1858,8 @@ window.detectFraud = detectFraud;
 window.deepDetect = deepDetect;
 window.doubaoDeepDetect = deepDetect; // 保留别名以兼容外部调用
 window.fillToReport = fillToReport;
+window.ensureJspdf = ensureJspdf;
+window.ensureXlsx = ensureXlsx;
 window.clearIdentify = clearIdentify;
 window.parseBill = parseBill;
 window.billToReport = billToReport;

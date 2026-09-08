@@ -6,8 +6,6 @@
     <title>反诈智能识别与报案辅助系统 · 东北电力大学</title>
     <link rel="preconnect" href="https://lib.baomitu.com" crossorigin>
     <link rel="preconnect" href="https://unpkg.com" crossorigin>
-    <script src="https://lib.baomitu.com/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <script src="https://lib.baomitu.com/xlsx/0.18.5/xlsx.full.min.js" defer></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -144,6 +142,12 @@
             <div class="page-content">
                 <div class="page-title" data-i18n="bill.title">账单导入</div>
                 <div class="notice" data-i18n="bill.notice">支持微信/支付宝官方导出的CSV/Excel格式账单，自动识别支出记录，计算总支出金额</div>
+                <details class="bill-guide">
+                    <summary data-i18n="bill.guide.title">如何导出账单（微信 / 支付宝 / 手机银行）</summary>
+                    <p data-i18n="bill.guide.wechat">微信：我 → 服务 → 钱包 → 账单 → 右上角「···」→ 账单下载 → 用于个人对账 → 选择时间范围 → 填写接收邮箱，邮件附件含 Excel(.xlsx) 或 CSV。</p>
+                    <p data-i18n="bill.guide.alipay">支付宝：我的 → 账单 → 右上角「···」→ 开具交易流水证明（或「下载账单」）→ 选择时间范围 → 填写邮箱，附件为 Excel/CSV。</p>
+                    <p data-i18n="bill.guide.bank">手机银行：登录银行 App → 账户 → 交易明细/流水 → 筛选时间范围 → 导出/下载 → 选择 Excel(.xlsx) 格式。</p>
+                </details>
                 <div class="upload-area" id="billUpload"><span data-i18n="bill.upload">点击或拖拽上传账单文件</span><div class="bill-file-list" id="billFileList" hidden></div><input type="file" id="billFile" accept=".csv,.xlsx,.xls" multiple></div>
                 <div id="billResult" class="result-box"></div>
                 <div class="btn-group"><button class="btn btn-primary" id="parseBillBtn" data-i18n="bill.parse">解析账单</button><button class="btn btn-success" id="billToReportBtn" data-i18n="bill.importToReport">导入报案表</button></div>

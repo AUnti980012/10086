@@ -88,6 +88,22 @@ function hideLoader() {
     }
 }
 
+// ===== 通用脚本按需加载（共享 Promise，防重复加载） =====
+const _scriptPromises = {};
+function loadScriptOnce(url, globalCheck) {
+    if (globalCheck && globalCheck()) return Promise.resolve();
+    if (_scriptPromises[url]) return _scriptPromises[url];
+    _scriptPromises[url] = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = url;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => { delete _scriptPromises[url]; reject(new Error('Failed to load ' + url)); };
+        document.head.appendChild(script);
+    });
+    return _scriptPromises[url];
+}
+
 // ===== 统一 SVG 图标库（单一线宽 1.8，随 currentColor 着色，尺寸 1em 跟随字号） =====
 window.ICONS = (function () {
     const svg = (inner) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
