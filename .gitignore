@@ -1,0 +1,8 @@
+# 构建产物 / 依赖
+dist/
+node_modules/
+.wrangler/
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
