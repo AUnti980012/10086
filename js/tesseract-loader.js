@@ -72,6 +72,8 @@ function loadTesseract(onLangProgress) {
 
     // 单个共享 Promise：并发调用复用同一个加载过程，避免 resolve 被覆盖导致早期 Promise 永不 resolve
     tesseractPromise = new Promise((resolve) => {
+        // 全局「正在加载OCR引擎…」提示（与页面内百分比进度条并存，不冲突）
+        const noticeToast = (typeof showLoadingNotice === 'function') ? showLoadingNotice(t('load.ocr')) : null;
         // 使用 bootcdn（国内访问更快）
         const script = document.createElement('script');
         script.src = 'https://lib.baomitu.com/tesseract.js/5.0.5/tesseract.min.js';
@@ -97,9 +99,11 @@ function loadTesseract(onLangProgress) {
             // 标记为外部可读
             window._tesseractLangDataDownloaded = langDataDownloaded;
 
+            if (noticeToast && typeof finishLoadingNotice === 'function') finishLoadingNotice(noticeToast, t('load.ocr'), true);
             resolve();
         };
         script.onerror = () => {
+            if (noticeToast && typeof finishLoadingNotice === 'function') finishLoadingNotice(noticeToast, t('load.ocr'), false);
             alert(t('ocr.loadFailed'));
             resolve();
         };

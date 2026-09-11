@@ -1,7 +1,7 @@
 # 反诈智能识别与报案辅助系统 · Firefly-IV
 # Anti-Fraud Recognition & Reporting Assistant · Firefly-IV
 
-> 反诈智能识别与报案辅助系统 · Ver.4.5.0-beta ｜ Smart Anti-Fraud Assistant · Ver.4.5.0-beta
+> 反诈智能识别与报案辅助系统 · Ver.4.6.0-beta ｜ Smart Anti-Fraud Assistant · Ver.4.6.0-beta
 > 创意来自东北电力大学易班工作站-Firefly TYPE IV ｜ Concept by NEEPU YiBan Workstation - Firefly TYPE IV
 
 一款面向大学生的智能反诈辅助系统：集关键词检测、OCR 识别、AI 深度判定、刑事控告书自动生成于一体，帮助用户识别诈骗套路、整理报案材料。
@@ -17,22 +17,21 @@ An AI-powered anti-fraud assistant for students: combining keyword detection, OC
 
 ### 功能特性
 
-- **🔍 诈骗识别** — 关键词匹配 + Tesseract OCR 本地文字提取 + DeepSeek 深度判定，支持自动脱敏（手机号 / 身份证 / 银行卡）。
+- **🔍 诈骗识别** — 按八大类电信网络诈骗关键词匹配 + Tesseract OCR 本地文字提取 + DeepSeek 深度判定（含「案情分析」段落），支持自动脱敏（手机号 / 身份证 / 银行卡）。
 - **📝 报案填报** — 三步表单向导，自动生成《刑事控告书》，支持 PDF（宋体排版 + 证据图片）/ TXT 导出与一键复制。
 - **📊 账单导入** — 微信 / 支付宝 / 银行 CSV / Excel 账单自动解析，支持多文件上传与合并汇总，内置微信 / 支付宝 / 手机银行导出账单教程，智能计算总支出金额并一键导入报案表。
-- **💬 AI 智能助手** — DeepSeek 驱动的反诈科普与思政教育对话助手，内置 20 条权威反诈关键词知识库（释义 + 警方提示），并在每次回答中引导用户走「情绪安抚 → 诈骗识别 → 一键填报 → 控告书」完整报案流程。
+- **💬 AI 智能助手** — DeepSeek 驱动的反诈科普与思政教育对话助手，内置 80 条权威反诈关键词/手段知识库（释义 + 警方提示），并在每次回答中引导用户走「情绪安抚 → 诈骗识别 → 一键填报 → 控告书」完整报案流程。
 - **📋 历史记录** — 本地结构化存储，支持查看详情、一键恢复、删除。
 - **⚙️ 系统设置** — 自动保存历史、默认开启脱敏。
 - **🌙 明暗主题** — 跟随系统 / 手动切换，带过渡动画。
 - **🌐 中英俄三语** — 中文 / English / Русский 一键切换，默认中文，选择持久化；覆盖界面与 AI 对话、报案文书等全部生成内容。
 
-### 反诈关键词知识库
+### 反诈识别与关键词知识库
 
-系统内置 20 条高频电信网络诈骗关键词，每条含**释义**与**警方提示**，作为 AI 助手科普与识别匹配的依据：
+- **识别分类**：按八大类电信网络诈骗进行关键词匹配——仿冒身份欺诈 / 购物类诈骗 / 活动类诈骗 / 利诱类欺诈 / 虚构险情欺诈 / 日常生活消费欺诈 / 钓鱼木马病毒类欺诈 / 其他新型违法类欺诈（≥2 类命中判「全类型诈骗」）。
+- **知识库**：内置 80 条反诈关键词/手段（20 条高频关键词 + 60 条公安部典型案例手段），每条含**释义**与**警方提示**，作为 AI 助手科普依据。
 
-屏幕共享 · 百万保障 · 安全账户 · 修复征信 · 刷单做任务 · 色情小卡片 · 未知链接、二维码 · 境外来电 · 小众聊天软件 · 内幕消息 · NFC 盗刷 · 积分清零 · 快递引流 · 虚拟货币 · 电诈工具人 · 帮信行为 · 两卡 · 现金黄金 · 购物卡 · 刷流水
-
-（内容见 `js/anti-fraud-knowledge.js`，识别匹配字典见 `js/fraud-keywords.js`。）
+（知识库见 `js/anti-fraud-knowledge.js`，八大类识别匹配字典见 `js/fraud-keywords.js`。）
 
 ### 技术栈
 
@@ -55,8 +54,8 @@ An AI-powered anti-fraud assistant for students: combining keyword detection, OC
 │   ├── i18n.js                 # 中英俄三语字典与语言切换
 │   ├── app.js                  # 主应用逻辑（表单 / 报案 / 账单 / 历史 / 导航）
 │   ├── chat.js                 # AI 聊天（Markdown 渲染、打字指示器）
-│   ├── anti-fraud-knowledge.js # 20 条反诈关键词知识库
-│   ├── fraud-keywords.js       # 识别匹配字典（按需懒加载）
+│   ├── anti-fraud-knowledge.js # 80 条反诈关键词/手段知识库
+│   ├── fraud-keywords.js       # 八大类识别匹配字典（按需懒加载）
 │   ├── tesseract-loader.js     # OCR 引擎延迟加载
 │   ├── upload.js               # 文件上传 + OCR 识别
 │   └── utils.js                # 工具（转义 / Markdown / 脱敏 / Toast）
@@ -119,6 +118,15 @@ npx serve .
 
 ### 更新日志
 
+- **Ver.4.6.0-beta**（2026-09-10）
+  - 🔍 诈骗识别升级：由「公安 / 贷款 / 客服 / 领导熟人」四类重构为**八大类电信网络诈骗**（仿冒身份欺诈 / 购物类诈骗 / 活动类诈骗 / 利诱类欺诈 / 虚构险情欺诈 / 日常生活消费欺诈 / 钓鱼木马病毒类欺诈 / 其他新型违法类欺诈），关键词字典中英俄三语同步重组，识别逻辑不变（≥2 类命中判「全类型诈骗」）。
+  - 🔔 异步加载提示：关键词字典 / OCR 引擎 / jsPDF / XLSX 等异步加载时，弹出「正在加载(名称)… → 加载完成(名称)」toast 提示（懒加载与缓存逻辑不变）。
+  - 📚 语料库扩充：新增 60 条公安部典型案例诈骗手段，同时写入关键词字典与 AI 知识库（知识库 20 → 80 条，三语）。
+  - 🤖 DeepSeek 深度判定：输出「判定结论 + 【案情分析】」段落，一键填表时仅提取案情分析并附「使用Deepseek进行辅助案情分析，不作为最终解释」申明后填入「被骗详细经过」。
+  - 🖼️ 证据复用：识别页上传的图片同步作为报案「事实与证据」的图片证据（生成报告与 PDF 导出按并集计入）。
+  - 🐛 修复：DeepSeek 输出因错误换行产生的空行（归一化 `\r\n` 并合并列表项间空行）。
+  - 🧱 `dist/` 已与根目录同步。
+
 - **Ver.4.5.0-beta**（2026-09-09）
   - 🔍 全局字号放大：body / 表单输入 / 正文提升至约 18px，标签 / 按钮 / 导航等协调放大，布局不变。
   - 📋 历史记录详情：由 JSON 代码形式改为与「报案填报」页一致的表单式 UI（标签 + 只读值），未填字段输出为空（不再显示「未填写 / 未知」）；《刑事控告书》正文同样输出为空。
@@ -176,22 +184,21 @@ npx serve .
 
 ### Features
 
-- **🔍 Fraud Detection** — Keyword matching + Tesseract OCR (on-device) + DeepSeek deep analysis, with automatic desensitization (phone number / ID card / bank card).
+- **🔍 Fraud Detection** — Keyword matching against eight categories of telecom fraud + Tesseract OCR (on-device) + DeepSeek deep analysis (with a "Case Analysis" section), with automatic desensitization (phone number / ID card / bank card).
 - **📝 Report Filing** — A three-step form wizard that auto-generates a criminal complaint, with PDF / TXT export and one-click copy.
 - **📊 Bill Import** — Auto-parses WeChat / Alipay / bank CSV / Excel statements, supports multiple files with combined totals, includes a built-in export tutorial for WeChat / Alipay / mobile banking, and computes total spending with one-click import into the report.
-- **💬 AI Assistant** — A DeepSeek-powered anti-fraud education & civic-education chat assistant, backed by a built-in knowledge base of 20 authoritative anti-fraud keywords (definition + police tip), that guides the user through the full "emotional support → fraud detection → one-click report → criminal complaint" flow in every reply.
+- **💬 AI Assistant** — A DeepSeek-powered anti-fraud education & civic-education chat assistant, backed by a built-in knowledge base of 80 authoritative anti-fraud keywords/scams (definition + police tip), that guides the user through the full "emotional support → fraud detection → one-click report → criminal complaint" flow in every reply.
 - **📋 History** — Local structured storage with detail view, one-click restore, and delete.
 - **⚙️ Settings** — Auto-save history and default desensitization.
 - **🌙 Light / Dark Theme** — System-following or manual toggle with transition animation.
 - **🌐 Trilingual (zh / en / ru)** — One-click Chinese/English/Russian toggle (default Chinese, persisted), covering the UI and all generated content such as AI chat and the criminal complaint.
 
-### Anti-Fraud Keyword Knowledge Base
+### Anti-Fraud Detection & Knowledge Base
 
-The system ships with 20 high-frequency telecom-fraud keywords, each carrying a **definition** and a **police tip**, used both for AI-assistant education and recognition matching:
+- **Detection categories**: keyword matching against eight categories of telecom fraud — Impersonation Fraud / Shopping Fraud / Activity Fraud / Lure/Inducement Fraud / Fabricated Danger Fraud / Daily-Life Consumption Fraud / Phishing & Trojan Fraud / Other New-Type Illegal Fraud (≥2 categories → "All Fraud Types").
+- **Knowledge base**: ships with 80 anti-fraud keywords/scams (20 high-frequency keywords + 60 MPS typical-case scams), each with a **definition** and a **police tip**, used as the basis for AI-assistant education.
 
-Screen sharing · Million guarantee · Safe account · Credit repair · Brushing orders · Pornographic cards · Unknown links / QR codes · Overseas calls · Niche chat apps · Insider information · NFC skimming · Points clearing · Courier-based lead generation · Virtual currency · Fraud "tool person" · Aiding information crimes · "Two cards" · Cash / gold laundering · Gift cards · Fake transaction flow
-
-(Content lives in `js/anti-fraud-knowledge.js`; the matching dictionary lives in `js/fraud-keywords.js`.)
+(Knowledge base lives in `js/anti-fraud-knowledge.js`; the eight-category matching dictionary lives in `js/fraud-keywords.js`.)
 
 ### Tech Stack
 
@@ -214,8 +221,8 @@ Screen sharing · Million guarantee · Safe account · Credit repair · Brushing
 │   ├── i18n.js                 # Trilingual (zh/en/ru) dictionary & language toggle
 │   ├── app.js                  # Core logic (forms / report / bill / history / nav)
 │   ├── chat.js                 # AI chat (Markdown rendering, typing indicator)
-│   ├── anti-fraud-knowledge.js # 20 anti-fraud keyword knowledge entries
-│   ├── fraud-keywords.js       # Matching dictionary (lazy-loaded)
+│   ├── anti-fraud-knowledge.js # 80 anti-fraud keyword/scam knowledge entries
+│   ├── fraud-keywords.js       # Eight-category matching dictionary (lazy-loaded)
 │   ├── tesseract-loader.js     # OCR engine lazy loader
 │   ├── upload.js               # File upload + OCR recognition
 │   └── utils.js                # Utilities (escape / Markdown / desensitize / Toast)
@@ -278,6 +285,15 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 ### Changelog
 
+- **Ver.4.6.0-beta** (2026-09-10)
+  - 🔍 Fraud detection upgrade: refactored from four categories (public-security / loan / customer-service / boss-acquaintance) to **eight categories of telecom fraud** (Impersonation Fraud / Shopping Fraud / Activity Fraud / Lure/Inducement Fraud / Fabricated Danger Fraud / Daily-Life Consumption Fraud / Phishing & Trojan Fraud / Other New-Type Illegal Fraud), with the zh/en/ru keyword dictionaries reorganized in sync and the detection logic unchanged (≥2 categories → "All Fraud Types").
+  - 🔔 Async loading notices: the keyword dictionary / OCR engine / jsPDF / XLSX now show a "Loading {name}… → {name} loaded" toast during async load (lazy-loading & caching unchanged).
+  - 📚 Corpus expansion: added 60 MPS typical-case fraud scams, written into both the keyword dictionary and the AI knowledge base (knowledge base 20 → 80 entries, trilingual).
+  - 🤖 DeepSeek deep analysis: outputs a "Judgment + [Case Analysis]" structure; one-click report-fill extracts only the case analysis and prefixes it with "This is an auxiliary case analysis generated with DeepSeek and does not serve as a final interpretation" before filling "Detailed Account".
+  - 🖼️ Evidence reuse: images uploaded on the Detection page are also treated as image evidence in the report's "Facts & Evidence" (union counted in report generation and PDF export).
+  - 🐛 Fix: removed empty lines in DeepSeek output caused by wrong line breaks (normalized `\r\n` and merged blank lines between list items).
+  - 🧱 `dist/` synced with the root.
+
 - **Ver.4.5.0-beta** (2026-09-09)
   - 🔍 Larger global fonts: body / form inputs / body text raised to ~18px, with labels / buttons / navigation scaled proportionally (layout unchanged).
   - 📋 History detail: switched from a JSON code view to a form-style UI matching the Report Filing page (label + read-only value), with empty output for unfilled fields (no more "Not provided / Unknown"); the criminal complaint body also outputs empty.
@@ -335,22 +351,21 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 
 ### Возможности
 
-- **🔍 Распознавание мошенничества** — поиск по ключевым словам + локальное извлечение текста Tesseract OCR + глубокая оценка DeepSeek, с автоматическим обезличиванием (номер телефона / удостоверение личности / банковская карта).
+- **🔍 Распознавание мошенничества** — сопоставление по восьми категориям телекоммуникационного мошенничества + локальное извлечение текста Tesseract OCR + глубокая оценка DeepSeek (с разделом «Анализ дела»), с автоматическим обезличиванием (номер телефона / удостоверение личности / банковская карта).
 - **📝 Подача заявления** — трёхшаговый мастер форм с автоматическим составлением заявления о преступлении и экспортом в PDF (вёрстка шрифтом SimSun + изображения доказательств) / TXT, а также копированием в один клик.
 - **📊 Импорт выписки** — автоматический разбор выписок WeChat / Alipay / банка в формате CSV / Excel, поддержка нескольких файлов с объединением итогов, встроенная инструкция по экспорту выписки из WeChat / Alipay / мобильного банка, расчёт общей суммы расходов и импорт в форму заявления в один клик.
-- **💬 ИИ-ассистент** — диалоговый ассистент по антимошенническому просвещению и гражданско-правовому воспитанию на базе DeepSeek, со встроенной базой из 20 авторитетных ключевых слов о мошенничестве (определение + совет полиции); в каждом ответе направляет пользователя по полному процессу «эмоциональная поддержка → распознавание мошенничества → заполнение в один клик → заявление о преступлении».
+- **💬 ИИ-ассистент** — диалоговый ассистент по антимошенническому просвещению и гражданско-правовому воспитанию на базе DeepSeek, со встроенной базой из 80 авторитетных ключевых слов/схем о мошенничестве (определение + совет полиции); в каждом ответе направляет пользователя по полному процессу «эмоциональная поддержка → распознавание мошенничества → заполнение в один клик → заявление о преступлении».
 - **📋 История** — локальное структурированное хранение с просмотром подробностей, восстановлением в один клик и удалением.
 - **⚙️ Настройки** — автосохранение истории и включённое по умолчанию обезличивание.
 - **🌙 Светлая / тёмная тема** — следование за системой или ручное переключение с анимацией перехода.
 - **🌐 Три языка (zh / en / ru)** — переключение китайского / английского / русского в один клик (по умолчанию китайский, выбор сохраняется); охватывает интерфейс и весь генерируемый контент, включая диалог с ИИ и заявление о преступлении.
 
-### База знаний о ключевых словах мошенничества
+### Распознавание и база знаний о мошенничестве
 
-Система включает 20 высокочастотных ключевых слов телекоммуникационного и сетевого мошенничества, каждое с **определением** и **советом полиции**, используемых для просвещения ИИ-ассистента и сопоставления при распознавании:
+- **Категории распознавания**: сопоставление по восьми категориям телекоммуникационного мошенничества — мошенничество с выдачей себя за других / мошенничество при покупках / мошенничество с акциями / мошенничество с заманчивыми предложениями / мошенничество с вымышленной опасностью / мошенничество в повседневных тратах / фишинговое/троянское мошенничество / прочие новые виды мошенничества (≥2 категории → «Мошенничество всех видов»).
+- **База знаний**: включает 80 ключевых слов/схем мошенничества (20 высокочастотных ключевых слов + 60 типовых схем МВД), каждое с **определением** и **советом полиции**, используемых для просвещения ИИ-ассистента.
 
-Демонстрация экрана · «Гарантия на миллион» · «Безопасный счёт» · Исправление кредитной истории · Накрутка заказов · Порнографические карточки · Неизвестные ссылки / QR-коды · Звонки из-за рубежа · Малоизвестные мессенджеры · Инсайдерская информация · Скимминг через NFC · Обнуление баллов · Привлечение через посылки · Виртуальная валюта · «Инструмент» мошенников · Пособничество информационным преступлениям · «Две карты» · Наличные / золото · Подарочные карты · Накрутка оборотов по счёту
-
-(Контент находится в `js/anti-fraud-knowledge.js`; словарь сопоставления — в `js/fraud-keywords.js`.)
+(База знаний находится в `js/anti-fraud-knowledge.js`; словарь сопоставления по восьми категориям — в `js/fraud-keywords.js`.)
 
 ### Технологический стек
 
@@ -373,8 +388,8 @@ Released under the Apache License 2.0 (Apache-2.0). See the [LICENSE](./LICENSE)
 │   ├── i18n.js                 # Словари zh / en / ru и переключение языка
 │   ├── app.js                  # Основная логика (формы / заявление / выписка / история / навигация)
 │   ├── chat.js                 # ИИ-чат (рендеринг Markdown, индикатор набора)
-│   ├── anti-fraud-knowledge.js # База из 20 ключевых слов (zh/en/ru)
-│   ├── fraud-keywords.js       # Словари сопоставления (zh/en/ru, ленивая загрузка)
+│   ├── anti-fraud-knowledge.js # База из 80 ключевых слов/схем (zh/en/ru)
+│   ├── fraud-keywords.js       # Словари сопоставления по 8 категориям (zh/en/ru, ленивая загрузка)
 │   ├── tesseract-loader.js     # Отложенная загрузка движка OCR
 │   ├── upload.js               # Загрузка файлов + распознавание OCR
 │   └── utils.js                # Утилиты (экранирование / Markdown / обезличивание / Toast)
@@ -437,6 +452,15 @@ npx serve .
 
 ### Журнал изменений
 
+- **Ver.4.6.0-beta** (2026-09-10)
+  - 🔍 Обновление распознавания: вместо четырёх категорий (полиция / кредит / поддержка / руководитель-знакомый) — **восемь категорий телекоммуникационного мошенничества** (мошенничество с выдачей себя за других / мошенничество при покупках / мошенничество с акциями / мошенничество с заманчивыми предложениями / мошенничество с вымышленной опасностью / мошенничество в повседневных тратах / фишинговое/троянское мошенничество / прочие новые виды мошенничества); словари zh/en/ru реорганизованы синхронно, логика распознавания не изменилась (≥2 категории → «Мошенничество всех видов»).
+  - 🔔 Уведомления об асинхронной загрузке: словарь ключевых слов / движок OCR / jsPDF / XLSX показывают toast «Загрузка {name}… → Загружено: {name}» при асинхронной загрузке (ленивая загрузка и кэширование не изменились).
+  - 📚 Расширение базы: добавлены 60 типовых схем мошенничества МВД, внесены в словарь ключевых слов и в базу знаний ИИ (база 20 → 80 записей, три языка).
+  - 🤖 Глубокая оценка DeepSeek: вывод в формате «Заключение + [Анализ дела]»; заполнение в один клик берёт только анализ дела с префиксом «Данный вспомогательный анализ дела выполнен с помощью DeepSeek и не является окончательной трактовкой».
+  - 🖼️ Повторное использование доказательств: изображения со страницы распознавания также учитываются как изображения-доказательства в «Фактах и доказательствах» заявления (объединение при генерации и экспорте PDF).
+  - 🐛 Исправлено: пустые строки в выводе DeepSeek из-за неверных переносов (нормализация `\r\n` и объединение пустых строк между пунктами списков).
+  - 🧱 `dist/` синхронизирован с корнем.
+
 - **Ver.4.5.0-beta** (2026-09-09)
   - 🔍 Увеличен глобальный шрифт: body / поля форм / основной текст подняты примерно до 18px, подписи / кнопки / навигация масштабированы пропорционально (раскладка не изменилась).
   - 📋 Подробности истории: вместо JSON-кода — интерфейс в виде формы, как на странице «Подача заявления» (подпись + значение только для чтения), пустые поля выводятся пустыми (без «Не указано / Неизвестно»); текст заявления о преступлении также выводит пустые значения.
@@ -491,4 +515,4 @@ npx serve .
 
 ---
 
-© 2026 Xin Firefly-IV. Licensed under Apache-2.0. · Ver.4.5.0-beta
+© 2026 Xin Firefly-IV. Licensed under Apache-2.0. · Ver.4.6.0-beta

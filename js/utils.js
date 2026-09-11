@@ -12,6 +12,10 @@ function escapeHtml(text) {
 
 // ===== 轻量级Markdown渲染 =====
 function renderMarkdown(text) {
+    // 归一化换行：\r\n、\r → \n（AI 输出/粘贴文本来源不一，避免错误换行产生空行）
+    text = String(text == null ? '' : text).replace(/\r\n?/g, '\n');
+    // 预处理：合并相邻列表项之间的空行（有序/无序），避免列表被拆散产生多余空行
+    text = text.replace(/^([ \t]*(?:\d+\.|-)\s+.*\n)(?:[ \t]*\n)+(?=[ \t]*(?:\d+\.|-)\s+)/gm, '$1');
     let html = escapeHtml(text);
 
     // 1. 代码块（ fenced code block，必须在行内代码之前处理）
@@ -90,15 +94,23 @@ function hideLoader() {
 
 // ===== 通用脚本按需加载（共享 Promise，防重复加载） =====
 const _scriptPromises = {};
-function loadScriptOnce(url, globalCheck) {
+function loadScriptOnce(url, globalCheck, name) {
     if (globalCheck && globalCheck()) return Promise.resolve();
     if (_scriptPromises[url]) return _scriptPromises[url];
     _scriptPromises[url] = new Promise((resolve, reject) => {
+        const noticeToast = name && typeof showLoadingNotice === 'function' ? showLoadingNotice(name) : null;
         const script = document.createElement('script');
         script.src = url;
         script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => { delete _scriptPromises[url]; reject(new Error('Failed to load ' + url)); };
+        script.onload = () => {
+            if (noticeToast && typeof finishLoadingNotice === 'function') finishLoadingNotice(noticeToast, name, true);
+            resolve();
+        };
+        script.onerror = () => {
+            delete _scriptPromises[url];
+            if (noticeToast && typeof finishLoadingNotice === 'function') finishLoadingNotice(noticeToast, name, false);
+            reject(new Error('Failed to load ' + url));
+        };
         document.head.appendChild(script);
     });
     return _scriptPromises[url];
@@ -126,24 +138,26 @@ window.ICONS = (function () {
 
 // ===== Toast 通知组件 =====
 function showToast(message, type = 'success') {
-    // type: 'success' | 'error' | 'warning'
-    const icons = { success: ICONS.check, error: ICONS.close, warning: ICONS.warning };
+    // type: 'success' | 'error' | 'warning' | 'loading'（loading 不自动消失，需手动 finish）
+    const icons = { success: ICONS.check, error: ICONS.close, warning: ICONS.warning, loading: '<span class="loading-spin"></span>' };
     const container = document.getElementById('toastContainer');
-    if (!container) return;
+    if (!container) return null;
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
         <span class="toast-icon">${icons[type] || ICONS.check}</span>
         <span>${escapeHtml(message)}</span>
-        <button class="toast-close" aria-label="${t('common.close')}">${ICONS.close}</button>
+        ${type === 'loading' ? '' : `<button class="toast-close" aria-label="${t('common.close')}">${ICONS.close}</button>`}
     `;
-    toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
+    if (type !== 'loading') {
+        toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
+        // 3秒后自动消失
+        const timer = setTimeout(() => dismissToast(toast), 3000);
+        toast._timer = timer;
+    }
     container.appendChild(toast);
-
-    // 3秒后自动消失
-    const timer = setTimeout(() => dismissToast(toast), 3000);
-    toast._timer = timer;
+    return toast;
 }
 
 function dismissToast(toast) {
@@ -152,4 +166,14 @@ function dismissToast(toast) {
     clearTimeout(toast._timer);
     toast.classList.add('toast-out');
     toast.addEventListener('animationend', () => toast.remove(), { once: true });
+}
+
+// ===== 异步加载状态提示（复用 toast：loading 持续显示，完成/失败时切换） =====
+function showLoadingNotice(name) {
+    return showToast(t('load.loading', { name: name }), 'loading');
+}
+
+function finishLoadingNotice(toast, name, ok = true) {
+    if (toast) toast.remove(); // 立即移除 loading toast
+    showToast(t(ok ? 'load.done' : 'load.failed', { name: name }), ok ? 'success' : 'error');
 }

@@ -96,6 +96,7 @@ let systemSettings = { autoSave: true, defaultDesensitize: true };
 let globalOcrText = '';
 let globalUserInputText = '';
 let currentStep = 1;
+let lastDeepReply = null; // 最近一次 DeepSeek 深度判定的原始回复（供「一键填表」精确提取案情分析）
 
 // ===== 语料标签（随语言切换重渲染） =====
 let corpusLabelKey = 'identify.allTypes';
@@ -172,6 +173,22 @@ function clearEvidenceText() {
         globalUserInputText = '';
         updateEvidenceTextBox();
     }
+}
+
+// ===== 证据图片并集：报案页图片 + 识别页图片（按 url 去重） =====
+// 识别页上传的图片同样作为「事实与证据」中的图片证据（需求3）
+function getAllEvidenceImages() {
+    const seen = new Set();
+    const merged = [];
+    [reportImages, identifyImages].forEach(arr => {
+        (arr || []).forEach(img => {
+            if (img && img.url && !seen.has(img.url)) {
+                seen.add(img.url);
+                merged.push(img);
+            }
+        });
+    });
+    return merged;
 }
 
 // ===== 步骤导航 =====
@@ -300,7 +317,7 @@ function generateReport() {
         fraudType: document.getElementById('fraudType').value.trim(),
         fraudMoney: document.getElementById('fraudMoney').value.trim(),
         fraudDetail: document.getElementById('fraudDetail').value.trim(),
-        evidenceCount: reportImages?.length || 0,
+        evidenceCount: getAllEvidenceImages().length,
         hasOcr: globalOcrText.trim() ? true : false,
         hasUserInput: globalUserInputText.trim() ? true : false,
         ocrText: globalOcrText.trim(),
@@ -465,15 +482,18 @@ function loadKeywordsAsync() {
         }
 
         // 动态注入 <script> 按需加载
+        const noticeToast = (typeof showLoadingNotice === 'function') ? showLoadingNotice(t('load.keywords')) : null;
         const script = document.createElement('script');
         script.src = 'js/fraud-keywords.js';
         script.async = true;
         script.onload = () => {
+            if (noticeToast && typeof finishLoadingNotice === 'function') finishLoadingNotice(noticeToast, t('load.keywords'), true);
             if (kwMapResolve) kwMapResolve();
         };
         script.onerror = () => {
             console.warn('关键词字典加载失败，将使用空字典');
             window.fraudKeywordsMap = {};
+            if (noticeToast && typeof finishLoadingNotice === 'function') finishLoadingNotice(noticeToast, t('load.keywords'), false);
             if (kwMapResolve) kwMapResolve();
         };
         document.head.appendChild(script);
@@ -482,10 +502,10 @@ function loadKeywordsAsync() {
 
 // ===== 按需加载 jsPDF / XLSX（共享 Promise，防重复加载，避免首屏阻塞） =====
 function ensureJspdf() {
-    return loadScriptOnce('https://lib.baomitu.com/jspdf/2.5.1/jspdf.umd.min.js', () => typeof window.jspdf !== 'undefined').catch(() => {});
+    return loadScriptOnce('https://lib.baomitu.com/jspdf/2.5.1/jspdf.umd.min.js', () => typeof window.jspdf !== 'undefined', 'jsPDF').catch(() => {});
 }
 function ensureXlsx() {
-    return loadScriptOnce('https://lib.baomitu.com/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined').catch(() => {});
+    return loadScriptOnce('https://lib.baomitu.com/xlsx/0.18.5/xlsx.full.min.js', () => typeof window.XLSX !== 'undefined', 'XLSX').catch(() => {});
 }
 
 // ===== 诈骗识别 =====
@@ -514,6 +534,7 @@ async function detectFraud() {
     if (txt) {
         globalUserInputText = userTyped;
         updateEvidenceTextBox();
+        lastDeepReply = null; // 手动/关键词识别时，清除上次 DeepSeek 案情分析，避免「一键填表」误用旧结果
 
         // 确保关键词字典已加载
         await loadKeywordsAsync();
@@ -536,8 +557,18 @@ async function detectFraud() {
             btn.classList.remove('highlighted', 'multi-highlighted');
         });
 
-        // 逐个分类检测匹配
-        let categories = ['police', 'loan', 'service', 'leader'];
+        // 逐个分类检测匹配（八大类电信网络诈骗）
+        let categories = ['impersonate', 'shopping', 'activity', 'lure', 'fiction', 'consumption', 'phishing', 'other'];
+        let catNames = {
+            impersonate: t('identify.cat.impersonate'),
+            shopping: t('identify.cat.shopping'),
+            activity: t('identify.cat.activity'),
+            lure: t('identify.cat.lure'),
+            fiction: t('identify.cat.fiction'),
+            consumption: t('identify.cat.consumption'),
+            phishing: t('identify.cat.phishing'),
+            other: t('identify.cat.other')
+        };
         let matchedCategories = [];
 
         const hay = txt.toLowerCase(); // 大小写不敏感匹配（英文/俄文）
@@ -553,26 +584,13 @@ async function detectFraud() {
             }
         }
 
-        // 检测"全类型"（all）关键词
-        let allKeywords = kwMap.all || [];
-        let allHits = allKeywords.filter(k => hay.includes(k.toLowerCase()));
-
         let result;
         let labelEl = document.getElementById('corpusLabel');
 
-        if (matchedCategories.length === 0 && allHits.length === 0) {
+        if (matchedCategories.length === 0) {
             // 无任何匹配
             result = t('detect.none');
             if (labelEl) setCorpusLabel('identify.allTypes');
-        } else if (matchedCategories.length === 0 && allHits.length > 0) {
-            // 只有"all"匹配 → 亮起"全类型诈骗"标签（红色）
-            result = t('detect.highlySuspicious', { keywords: allHits.join('、'), count: allHits.length });
-            if (labelEl) {
-                setCorpusLabel('identify.allTypes');
-                labelEl.style.color = 'var(--danger)';
-                labelEl.style.borderColor = 'var(--danger)';
-                labelEl.style.background = 'var(--danger-bg)';
-            }
         } else if (matchedCategories.length >= 2) {
             // 多个分类同时匹配 → 红色高亮 + "全类型诈骗"
             let allHitKeywords = [];
@@ -594,10 +612,9 @@ async function detectFraud() {
                 labelEl.style.borderColor = 'var(--danger)';
                 labelEl.style.background = 'var(--danger-bg)';
             }
-        } else if (matchedCategories.length === 1) {
+        } else {
             // 单一分类匹配 → 蓝色高亮，标签保持"全类型诈骗"
             let m = matchedCategories[0];
-            let catNames = { police: t('identify.cat.police'), loan: t('identify.cat.loan'), service: t('identify.cat.service'), leader: t('identify.cat.leader') };
             result = t('detect.suspected', { category: catNames[m.cat], keywords: m.keywords.join('、') });
             if (labelEl) {
                 setCorpusLabel('identify.allTypes');
@@ -610,7 +627,7 @@ async function detectFraud() {
         let resDiv = document.getElementById('detectResult');
         resDiv.textContent = result;
         resDiv.classList.add('show');
-        if (systemSettings.autoSave) addHistory('detect', { result, matchedCategories, allHits, timestamp: Date.now() });
+        if (systemSettings.autoSave) addHistory('detect', { result, matchedCategories, timestamp: Date.now() });
     }
 }
 
@@ -642,7 +659,7 @@ async function deepDetect() {
         let resp = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [{ role: "system", content: t('ai.expert') + '\n\n' + t('ai.flowGuide') }, { role: "user", content: t('ai.analyzeFraud') + safeTxt }], lang: (window.I18N && window.I18N.current) || 'zh' })
+            body: JSON.stringify({ messages: [{ role: "system", content: t('ai.expert') + '\n\n' + t('ai.fraudCategories') + '\n\n' + t('ai.caseAnalysisInstruction') + '\n\n' + t('ai.flowGuide') }, { role: "user", content: t('ai.analyzeFraud') + safeTxt }], lang: (window.I18N && window.I18N.current) || 'zh' })
         });
         if (!resp.ok) {
             let errText;
@@ -651,6 +668,7 @@ async function deepDetect() {
         }
         let data = await resp.json();
         let reply = data.choices?.[0]?.message?.content || t('ai.analysisDone');
+        lastDeepReply = reply; // 保存原始回复，供「一键填表」提取案情分析
         resDiv.innerHTML = t('detect.deepResult') + renderMarkdown(reply);
         if (systemSettings.autoSave) addHistory('deepDetect', { reply, timestamp: Date.now() });
     } catch (e) {
@@ -661,11 +679,25 @@ async function deepDetect() {
 
 // ===== 填充到报案表 =====
 function fillToReport() {
-    let res = document.getElementById('detectResult').textContent;
-    // 只要不是判定失败或空结果，就允许填充
-    if (res && !res.includes(t('detect.deepFailed')) && res.trim()) {
-        document.getElementById('fraudDetail').value = res;
+    // 优先使用 DeepSeek 案情分析内容（附免责申明）；否则回退到识别结果文本
+    let detail = '';
+    if (lastDeepReply) {
+        const marker = t('ai.caseAnalysis');
+        const idx = lastDeepReply.indexOf(marker);
+        const section = idx >= 0 ? lastDeepReply.slice(idx + marker.length) : lastDeepReply;
+        if (section.trim()) {
+            detail = t('ai.caseAnalysisDisclaimer') + '\n\n' + section.trim();
+        }
     }
+    if (!detail) {
+        let res = document.getElementById('detectResult').textContent;
+        // 只要不是判定失败或空结果，就允许填充
+        if (res && !res.includes(t('detect.deepFailed')) && res.trim()) {
+            detail = res;
+        }
+    }
+    if (detail) document.getElementById('fraudDetail').value = detail;
+
     let fraudTextarea = document.getElementById('fraudText');
     if (fraudTextarea.value.trim()) {
         globalUserInputText = fraudTextarea.value.trim();
@@ -685,6 +717,7 @@ function clearIdentify() {
     // 重置全局变量
     globalOcrText = '';
     globalUserInputText = '';
+    lastDeepReply = null;
     updateEvidenceTextBox();
 }
 
@@ -1096,9 +1129,10 @@ async function exportPdf() {
         w.writeText(t('report.doc.complainant') + data.name, { size: 12, lineHeight: 1.5, align: 'right', keepTogether: false });
         w.writeText(t('report.doc.date') + dateStr, { size: 12, lineHeight: 1.5, align: 'right', keepTogether: false });
 
-        // 证据图片：逐张单独成页追加到 PDF 末尾
-        if (reportImages && reportImages.length) {
-            for (const img of reportImages) {
+        // 证据图片：逐张单独成页追加到 PDF 末尾（含识别页上传的图片）
+        const evidenceImages = getAllEvidenceImages();
+        if (evidenceImages.length) {
+            for (const img of evidenceImages) {
                 await appendImagePage(pdf, w, img.url);
             }
         }

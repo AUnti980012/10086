@@ -867,6 +867,8 @@ body {
 .toast-success { background: var(--success); }
 .toast-error { background: var(--danger); }
 .toast-warning { background: var(--warning); color: #1a1a1a; }
+.toast-loading { background: var(--primary); }
+.toast-loading .loading-spin { border-color: rgba(255,255,255,0.75); border-top-color: transparent; }
 
 /* ===== 全局底部 ===== */
 .global-footer {
